@@ -1,4 +1,4 @@
-// ===== Game Hub =====
+// ===== MaxwellGames =====
 // Loads games from games.json and shows them in a grid.
 // Each game's "iframe" field can be either a plain URL
 // or a full <iframe ...> embed code — both work.
