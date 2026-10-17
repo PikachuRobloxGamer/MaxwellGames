@@ -73,7 +73,7 @@ function renderGrid() {
   list.forEach((game) => {
     const card = document.createElement("div");
     card.className = "card";
-    card.onclick = () => openGame(game);
+    card.onclick = () => explodeThenOpen(card, game);
 
     let thumb;
     if (game.thumbnail) {
@@ -129,6 +129,128 @@ function openFromHash() {
   const id = decodeURIComponent(location.hash.slice(1));
   const game = games.find((g) => g.id === id);
   if (game) openGame(game);
+}
+
+// ===== Pixel explosion when a game is clicked =====
+let exploding = false;
+
+function explodeThenOpen(card, game) {
+  if (exploding) return;
+  exploding = true;
+  playBoom();
+
+  const rect = card.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 1.8;
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+
+  // Low-res canvas scaled up = chunky pixels
+  const GRID = 48;
+  const cvs = document.createElement("canvas");
+  cvs.width = cvs.height = GRID;
+  cvs.className = "boom";
+  Object.assign(cvs.style, {
+    left: cx - size / 2 + "px", top: cy - size / 2 + "px",
+    width: size + "px", height: size + "px"
+  });
+  document.body.appendChild(cvs);
+  const ctx = cvs.getContext("2d");
+
+  card.classList.add("shake");
+  document.body.classList.add("flash");
+
+  const colors = ["#ffffff", "#fff27a", "#ffc21a", "#ff7a00", "#e03200", "#7a1a00"];
+  const debris = Array.from({ length: 26 }, () => {
+    const a = Math.random() * Math.PI * 2, sp = 0.25 + Math.random() * 0.55;
+    return { a, sp, c: colors[1 + Math.floor(Math.random() * 3)] };
+  });
+  const noise = Array.from({ length: GRID * GRID }, () => Math.random());
+
+  const DURATION = 850;
+  const start = performance.now();
+  const R = GRID / 2 - 2;
+  const mid = GRID / 2;
+
+  function frame(now) {
+    const t = Math.min((now - start) / DURATION, 1);
+    ctx.clearRect(0, 0, GRID, GRID);
+
+    const outer = R * (1 - Math.pow(1 - Math.min(t * 1.6, 1), 3));
+    const inner = t > 0.45 ? R * ((t - 0.45) / 0.55) * 1.1 : 0;
+
+    for (let y = 0; y < GRID; y++) {
+      for (let x = 0; x < GRID; x++) {
+        const d = Math.hypot(x + 0.5 - mid, y + 0.5 - mid);
+        const n = noise[y * GRID + x];
+        const edge = outer - n * 3;
+        if (d > edge || d < inner + n * 2) continue;
+        // hotter in the middle, cooler as time goes on
+        let k = d / Math.max(edge, 1) + t * 3.2 + n * 0.6;
+        const idx = Math.min(colors.length - 1, Math.floor(k));
+        ctx.fillStyle = colors[idx];
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+
+    // flying chunks
+    for (const p of debris) {
+      const dist = (R * 0.3) + p.sp * R * 2.2 * t;
+      const px = Math.round(mid + Math.cos(p.a) * dist);
+      const py = Math.round(mid + Math.sin(p.a) * dist + t * t * 6);
+      ctx.globalAlpha = 1 - t;
+      ctx.fillStyle = p.c;
+      ctx.fillRect(px, py, 2, 2);
+      ctx.globalAlpha = 1;
+    }
+
+    if (t < 1) requestAnimationFrame(frame);
+    else {
+      cvs.remove();
+      card.classList.remove("shake");
+      document.body.classList.remove("flash");
+      exploding = false;
+      openGame(game);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+// Short retro "boom" made in the browser (no sound file needed)
+let audioCtx;
+function playBoom() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const ac = audioCtx, now = ac.currentTime;
+
+    // noise burst
+    const len = Math.floor(ac.sampleRate * 0.6);
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+    const noise = ac.createBufferSource();
+    noise.buffer = buf;
+    const lp = ac.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(3000, now);
+    lp.frequency.exponentialRampToValueAtTime(200, now + 0.5);
+    const ng = ac.createGain();
+    ng.gain.setValueAtTime(0.5, now);
+    ng.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+    noise.connect(lp).connect(ng).connect(ac.destination);
+    noise.start(now);
+
+    // low thump
+    const osc = ac.createOscillator();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+    const og = ac.createGain();
+    og.gain.setValueAtTime(0.25, now);
+    og.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    osc.connect(og).connect(ac.destination);
+    osc.start(now);
+    osc.stop(now + 0.4);
+  } catch (e) { /* sound is optional */ }
 }
 
 // Events
