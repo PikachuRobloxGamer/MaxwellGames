@@ -7,6 +7,14 @@
       "thumbnail": "images/tung-tung.png",
       "description": "",
       "url": "https://raphael.baby"
+    },
+    {
+      "id": "cherri",
+      "title": "Cherri",
+      "category": "Proxy",
+      "thumbnail": "images/cherri.png",
+      "description": "",
+      "url": "https://cherrion.top/"
     }
   ]
 }
