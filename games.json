@@ -1,28 +1,20 @@
 {
   "games": [
     {
-      "id": "snake",
-      "title": "Snake",
-      "category": "Arcade",
+      "id": "deltarune",
+      "title": "Deltarune",
+      "category": "RPG",
       "thumbnail": "",
-      "description": "Classic snake. Arrow keys or WASD to move. Built into this site.",
-      "iframe": "games/snake/index.html"
+      "description": "",
+      "iframe": "<iframe src=\"https://nite.games/embed/deltarune\" width=\"900\" height=\"500\" allow=\"fullscreen; autoplay; gamepad; pointer-lock\" style=\"border:none;border-radius:8px;display:block;\"></iframe>"
     },
     {
-      "id": "example-url",
-      "title": "Example (URL style)",
-      "category": "Puzzle",
+      "id": "undertale",
+      "title": "Undertale",
+      "category": "RPG",
       "thumbnail": "",
-      "description": "Replace this with a real game. Put the game's embed URL in the iframe field.",
-      "iframe": "https://example.com/"
-    },
-    {
-      "id": "example-embed",
-      "title": "Example (Embed code style)",
-      "category": "Action",
-      "thumbnail": "",
-      "description": "You can also paste a full iframe embed code — the site pulls out the src automatically.",
-      "iframe": "<iframe src=\"https://example.com/\" width=\"800\" height=\"600\"></iframe>"
+      "description": "",
+      "iframe": "games/Undertale/Undertale-main/index.html"
     }
   ]
 }
