@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Hub</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="#" class="logo" id="homeLink">🎮 Game Hub</a>
+    <input type="search" id="search" placeholder="Search games..." autocomplete="off">
+  </header>
+
+  <!-- Library view -->
+  <main id="libraryView">
+    <nav id="categories" class="categories"></nav>
+    <p id="status" class="status">Loading games...</p>
+    <section id="grid" class="grid"></section>
+  </main>
+
+  <!-- Player view -->
+  <main id="playerView" class="hidden">
+    <div class="player-bar">
+      <button id="backBtn" class="btn">← Back</button>
+      <h2 id="playerTitle"></h2>
+      <div class="player-actions">
+        <button id="reloadBtn" class="btn">⟳ Reload</button>
+        <button id="fullscreenBtn" class="btn">⛶ Fullscreen</button>
+      </div>
+    </div>
+    <div class="frame-wrap" id="frameWrap">
+      <iframe id="gameFrame" title="Game" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe>
+    </div>
+    <p id="playerDesc" class="player-desc"></p>
+  </main>
+
+  <footer class="footer">Game Hub</footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
