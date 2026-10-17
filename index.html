@@ -14,13 +14,17 @@
 
   <header class="topbar">
     <a href="#" class="logo" id="homeLink"><img src="maxwell.png" alt="Maxwell the cat" class="logo-img">MaxwellGames</a>
+    <nav class="tabs">
+      <button class="tab active" data-tab="games">Games</button>
+      <button class="tab" data-tab="proxies">Proxies</button>
+    </nav>
     <input type="search" id="search" placeholder="Search games..." autocomplete="off">
   </header>
 
   <!-- Library view -->
   <main id="libraryView">
     <nav id="categories" class="categories"></nav>
-    <p id="status" class="status">Loading games...</p>
+    <p id="status" class="status">Loading...</p>
     <section id="grid" class="grid"></section>
   </main>
 
@@ -38,7 +42,6 @@
       <iframe id="gameFrame" title="Game" allow="fullscreen; autoplay; gamepad; pointer-lock" allowfullscreen></iframe>
     </div>
     <p id="playerDesc" class="player-desc"></p>
-    <p class="player-credit"><a id="playerCredit" target="_blank" rel="noopener noreferrer"></a></p>
   </main>
 
   <footer class="footer">MaxwellGames</footer>

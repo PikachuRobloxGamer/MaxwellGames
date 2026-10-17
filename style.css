@@ -41,6 +41,16 @@ main { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px 16
 }
 .logo { display: flex; align-items: center; gap: 8px; font-size: 1.3rem; font-weight: 700; color: var(--text); text-decoration: none; white-space: nowrap; }
 .logo-img { height: 1.3em; width: auto; display: block; }
+/* Tabs */
+.tabs { display: flex; gap: 6px; }
+.tab {
+  padding: 8px 16px; border-radius: 999px; border: 1px solid #2c3142;
+  background: var(--panel); color: var(--muted); cursor: pointer;
+  font-size: 0.95rem; font-weight: 600;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
 #search {
   flex: 1; max-width: 400px; margin-left: auto;
   padding: 10px 14px; border-radius: 999px;

@@ -1,9 +1,13 @@
 // ===== MaxwellGames =====
-// Loads games from games1.json and shows them in a grid.
-// Each game's "iframe" field can be either a plain URL
+// Two tabs: Games (from games1.json) and Proxies (from proxies.json).
+// Each item's "iframe" (or "url") field can be a plain URL
 // or a full <iframe ...> embed code — both work.
 
-let games = [];
+const TABS = {
+  games:   { file: "games1.json",  key: "games",   word: "game",  items: [] },
+  proxies: { file: "proxies.json", key: "proxies", word: "proxy", items: [] }
+};
+let currentTab = "games";
 let activeCategory = "All";
 
 const $ = (id) => document.getElementById(id);
@@ -16,9 +20,9 @@ const playerView = $("playerView");
 const frame = $("gameFrame");
 
 // Pull the src out of an <iframe> string, or return the URL as-is
-function getSrc(iframeField) {
-  if (!iframeField) return "";
-  const trimmed = iframeField.trim();
+function getSrc(field) {
+  if (!field) return "";
+  const trimmed = field.trim();
   if (trimmed.startsWith("<")) {
     const match = trimmed.match(/src\s*=\s*["']([^"']+)["']/i);
     return match ? match[1] : "";
@@ -26,25 +30,41 @@ function getSrc(iframeField) {
   return trimmed;
 }
 
-async function loadGames() {
+async function loadTab(name) {
+  const tab = TABS[name];
   try {
-    const res = await fetch("games1.json", { cache: "no-store" });
+    const res = await fetch(tab.file, { cache: "no-store" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
-    games = Array.isArray(data) ? data : data.games || [];
-    renderCategories();
-    renderGrid();
-    openFromHash();
+    tab.items = Array.isArray(data) ? data : data[tab.key] || [];
   } catch (err) {
-    statusEl.textContent =
-      "Couldn't load games1.json. If you opened index.html directly from your computer, " +
-      "use GitHub Pages or a local server instead (see instructions).";
+    tab.error = true;
     console.error(err);
   }
 }
 
+async function loadAll() {
+  await Promise.all(Object.keys(TABS).map(loadTab));
+  if (!openFromHash()) switchTab(location.hash === "#proxies" ? "proxies" : "games");
+}
+
+function switchTab(name) {
+  currentTab = name;
+  activeCategory = "All";
+  searchEl.value = "";
+  searchEl.placeholder = name === "proxies" ? "Search proxies..." : "Search games...";
+  document.querySelectorAll(".tab").forEach((t) =>
+    t.classList.toggle("active", t.dataset.tab === name));
+  if (!playerView.classList.contains("hidden")) closeGame();
+  history.replaceState(null, "", name === "proxies" ? "#proxies" : location.pathname);
+  renderCategories();
+  renderGrid();
+}
+
+function items() { return TABS[currentTab].items; }
+
 function renderCategories() {
-  const cats = ["All", ...new Set(games.map((g) => g.category || "Other"))];
+  const cats = ["All", ...new Set(items().map((g) => g.category || "Other"))];
   categoriesEl.innerHTML = "";
   cats.forEach((cat) => {
     const btn = document.createElement("button");
@@ -60,38 +80,41 @@ function renderCategories() {
 }
 
 function renderGrid() {
+  const tab = TABS[currentTab];
   const q = searchEl.value.trim().toLowerCase();
-  const list = games.filter((g) => {
+  const list = items().filter((g) => {
     const inCat = activeCategory === "All" || (g.category || "Other") === activeCategory;
     const inSearch = !q || g.title.toLowerCase().includes(q);
     return inCat && inSearch;
   });
 
-  statusEl.textContent = list.length ? `${list.length} game${list.length === 1 ? "" : "s"}` : "No games found.";
+  const plural = tab.word === "proxy" ? "proxies" : tab.word + "s";
+  if (tab.error) statusEl.textContent = `Couldn't load ${tab.file}. Open the site through GitHub Pages, not by double-clicking index.html.`;
+  else statusEl.textContent = list.length ? `${list.length} ${list.length === 1 ? tab.word : plural}` : `No ${plural} found.`;
   grid.innerHTML = "";
 
-  list.forEach((game) => {
+  list.forEach((item) => {
     const card = document.createElement("div");
     card.className = "card";
-    card.onclick = () => explodeThenOpen(card, game);
+    card.onclick = () => explodeThenOpen(card, item);
 
     let thumb;
-    if (game.thumbnail) {
+    if (item.thumbnail) {
       thumb = document.createElement("img");
       thumb.className = "thumb";
-      thumb.src = game.thumbnail;
-      thumb.alt = game.title;
+      thumb.src = item.thumbnail;
+      thumb.alt = item.title;
       thumb.loading = "lazy";
-      thumb.onerror = () => thumb.replaceWith(makeFallback(game.title));
+      thumb.onerror = () => thumb.replaceWith(makeFallback(item.title));
     } else {
-      thumb = makeFallback(game.title);
+      thumb = makeFallback(item.title);
     }
 
     const body = document.createElement("div");
     body.className = "card-body";
     body.innerHTML = `<div class="card-title"></div><div class="card-cat"></div>`;
-    body.querySelector(".card-title").textContent = game.title;
-    body.querySelector(".card-cat").textContent = game.category || "Other";
+    body.querySelector(".card-title").textContent = item.title;
+    body.querySelector(".card-cat").textContent = item.category || "Other";
 
     card.append(thumb, body);
     grid.appendChild(card);
@@ -105,16 +128,13 @@ function makeFallback(title) {
   return div;
 }
 
-function openGame(game) {
-  frame.src = getSrc(game.iframe);
-  $("playerTitle").textContent = game.title;
-  $("playerDesc").textContent = game.description || "";
-  const credit = $("playerCredit");
-  credit.textContent = game.creditText || "";
-  if (game.creditUrl) credit.href = game.creditUrl; else credit.removeAttribute("href");
+function openGame(item) {
+  frame.src = getSrc(item.iframe || item.url);
+  $("playerTitle").textContent = item.title;
+  $("playerDesc").textContent = item.description || "";
   libraryView.classList.add("hidden");
   playerView.classList.remove("hidden");
-  location.hash = game.id;
+  location.hash = (currentTab === "proxies" ? "proxy-" : "") + item.id;
   window.scrollTo(0, 0);
 }
 
@@ -122,13 +142,20 @@ function closeGame() {
   frame.src = "about:blank"; // stops the game & its sound
   playerView.classList.add("hidden");
   libraryView.classList.remove("hidden");
-  history.replaceState(null, "", location.pathname);
+  history.replaceState(null, "", currentTab === "proxies" ? "#proxies" : location.pathname);
 }
 
 function openFromHash() {
-  const id = decodeURIComponent(location.hash.slice(1));
-  const game = games.find((g) => g.id === id);
-  if (game) openGame(game);
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (!h || h === "proxies") return false;
+  const isProxy = h.startsWith("proxy-");
+  const name = isProxy ? "proxies" : "games";
+  const id = isProxy ? h.slice(6) : h;
+  const item = TABS[name].items.find((g) => g.id === id);
+  if (!item) return false;
+  switchTab(name);
+  openGame(item);
+  return true;
 }
 
 // ===== Pixel explosion when a game is clicked =====
@@ -267,10 +294,15 @@ $("fullscreenBtn").onclick = () => {
   else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
 };
 window.addEventListener("hashchange", () => {
-  if (!location.hash) closeGame();
+  if (!location.hash || location.hash === "#proxies") {
+    if (!playerView.classList.contains("hidden")) closeGame();
+  }
+});
+document.querySelectorAll(".tab").forEach((t) => {
+  t.onclick = () => switchTab(t.dataset.tab);
 });
 
-loadGames();
+loadAll();
 
 // ===== Falling :3 particles =====
 (function () {
