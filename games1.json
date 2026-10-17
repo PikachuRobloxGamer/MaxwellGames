@@ -7,6 +7,14 @@
       "thumbnail": "images/deltarune.png",
       "description": "",
       "iframe": "https://nite.games/embed/deltarune"
+    },
+    {
+      "id": "bad-time-simulator",
+      "title": "Bad Time Simulator",
+      "category": "Action",
+      "thumbnail": "images/bad-time-simulator.png",
+      "description": "The Sans fight. Arrow keys to move, Z to confirm.",
+      "iframe": "https://jcw87.github.io/c2-sans-fight/"
     }
   ]
 }
