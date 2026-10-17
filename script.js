@@ -1,5 +1,5 @@
 // ===== MaxwellGames =====
-// Loads games from games.json and shows them in a grid.
+// Loads games from games1.json and shows them in a grid.
 // Each game's "iframe" field can be either a plain URL
 // or a full <iframe ...> embed code — both work.
 
@@ -28,7 +28,7 @@ function getSrc(iframeField) {
 
 async function loadGames() {
   try {
-    const res = await fetch("games.json", { cache: "no-store" });
+    const res = await fetch("games1.json", { cache: "no-store" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     games = Array.isArray(data) ? data : data.games || [];
@@ -37,7 +37,7 @@ async function loadGames() {
     openFromHash();
   } catch (err) {
     statusEl.textContent =
-      "Couldn't load games.json. If you opened index.html directly from your computer, " +
+      "Couldn't load games1.json. If you opened index.html directly from your computer, " +
       "use GitHub Pages or a local server instead (see instructions).";
     console.error(err);
   }
@@ -109,6 +109,9 @@ function openGame(game) {
   frame.src = getSrc(game.iframe);
   $("playerTitle").textContent = game.title;
   $("playerDesc").textContent = game.description || "";
+  const credit = $("playerCredit");
+  credit.textContent = game.creditText || "";
+  if (game.creditUrl) credit.href = game.creditUrl; else credit.removeAttribute("href");
   libraryView.classList.add("hidden");
   playerView.classList.remove("hidden");
   location.hash = game.id;
@@ -147,27 +150,55 @@ window.addEventListener("hashchange", () => {
 
 loadGames();
 
-// ===== Background video (YouTube) =====
-const BG_VIDEO_ID = "YRvOePz2OqQ";
-const BG_START = 143; // seconds (2:23)
+// ===== Falling :3 particles =====
+(function () {
+  const canvas = document.getElementById("particles");
+  const ctx = canvas.getContext("2d");
+  const COUNT = 45;
+  let w, h, parts = [];
 
-function onYouTubeIframeAPIReady() {
-  new YT.Player("bgPlayer", {
-    videoId: BG_VIDEO_ID,
-    playerVars: {
-      autoplay: 1, mute: 1, controls: 0, disablekb: 1, fs: 0,
-      modestbranding: 1, rel: 0, playsinline: 1, iv_load_policy: 3,
-      start: BG_START
-    },
-    events: {
-      onReady: (e) => { e.target.mute(); e.target.playVideo(); },
-      onStateChange: (e) => {
-        // When the video ends, jump back to the start time and keep playing
-        if (e.data === YT.PlayerState.ENDED) {
-          e.target.seekTo(BG_START, true);
-          e.target.playVideo();
-        }
-      }
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+
+  function makePart(startAnywhere) {
+    return {
+      x: Math.random() * w,
+      y: startAnywhere ? Math.random() * h : -30,
+      size: 12 + Math.random() * 14,
+      speed: 0.4 + Math.random() * 1.1,
+      drift: Math.random() * Math.PI * 2,
+      spin: (Math.random() - 0.5) * 0.02,
+      angle: (Math.random() - 0.5) * 0.6,
+      alpha: 0.45 + Math.random() * 0.45
+    };
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, w, h);
+    for (const p of parts) {
+      p.y += p.speed;
+      p.drift += 0.01;
+      p.x += Math.sin(p.drift) * 0.4;
+      p.angle += p.spin;
+      if (p.y > h + 30) Object.assign(p, makePart(false));
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.globalAlpha = p.alpha;
+      ctx.font = `bold ${p.size}px system-ui, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(":3", 0, 0);
+      ctx.restore();
     }
-  });
-}
+    requestAnimationFrame(tick);
+  }
+
+  resize();
+  parts = Array.from({ length: COUNT }, () => makePart(true));
+  window.addEventListener("resize", resize);
+  tick();
+})();

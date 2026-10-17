@@ -1,0 +1,12 @@
+{
+  "games": [
+    {
+      "id": "deltarune",
+      "title": "Deltarune",
+      "category": "RPG",
+      "thumbnail": "images/deltarune.png",
+      "description": "",
+      "iframe": "https://nite.games/embed/deltarune"
+    }
+  ]
+}
