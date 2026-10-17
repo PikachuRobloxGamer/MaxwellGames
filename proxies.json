@@ -1,3 +1,12 @@
 {
-  "proxies": []
+  "proxies": [
+    {
+      "id": "tung-tung",
+      "title": "Tung Tung",
+      "category": "Proxy",
+      "thumbnail": "",
+      "description": "",
+      "url": "https://raphael.baby"
+    }
+  ]
 }
