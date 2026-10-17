@@ -146,3 +146,28 @@ window.addEventListener("hashchange", () => {
 });
 
 loadGames();
+
+// ===== Background video (YouTube) =====
+const BG_VIDEO_ID = "YRvOePz2OqQ";
+const BG_START = 143; // seconds (2:23)
+
+function onYouTubeIframeAPIReady() {
+  new YT.Player("bgPlayer", {
+    videoId: BG_VIDEO_ID,
+    playerVars: {
+      autoplay: 1, mute: 1, controls: 0, disablekb: 1, fs: 0,
+      modestbranding: 1, rel: 0, playsinline: 1, iv_load_policy: 3,
+      start: BG_START
+    },
+    events: {
+      onReady: (e) => { e.target.mute(); e.target.playVideo(); },
+      onStateChange: (e) => {
+        // When the video ends, jump back to the start time and keep playing
+        if (e.data === YT.PlayerState.ENDED) {
+          e.target.seekTo(BG_START, true);
+          e.target.playVideo();
+        }
+      }
+    }
+  });
+}
