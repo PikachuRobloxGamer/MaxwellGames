@@ -1,12 +1,3 @@
 {
-  "games": [
-    {
-      "id": "undertale",
-      "title": "Undertale",
-      "category": "RPG",
-      "thumbnail": "",
-      "description": "",
-      "iframe": "games/Undertale/Undertale-main/index.html"
-    }
-  ]
+  "games": []
 }
