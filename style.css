@@ -150,3 +150,108 @@ body.flash::after {
   .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   .frame-wrap { aspect-ratio: 4 / 3; }
 }
+
+/* ===== Game layer ===== */
+:root { --cat-cursor: url("images/cursor-cat.png") 10 2, auto; }
+html, body, body *:not(iframe) { cursor: var(--cat-cursor) !important; }
+
+/* Treats / level button in the top bar */
+.profile-btn {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 6px 12px; border-radius: 999px; border: 1px solid #2c3142;
+  background: var(--panel); color: var(--text); font-size: 0.9rem; white-space: nowrap;
+}
+.profile-btn:hover { border-color: var(--accent); }
+.pb-level { color: var(--muted); }
+.pb-level b { color: var(--text); }
+.pb-bar { width: 60px; height: 6px; border-radius: 99px; background: #2c3142; overflow: hidden; }
+.pb-bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
+
+/* Maxwell logo pet */
+.logo-img { transition: transform 0.2s; }
+.logo-img.boing { animation: boing 0.4s; }
+@keyframes boing { 0%{transform:scale(1)} 30%{transform:scale(1.5) rotate(-12deg)} 60%{transform:scale(0.9) rotate(8deg)} 100%{transform:scale(1)} }
+body.logo-spin .logo-img { animation: spin 2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Floating "+1 🐟" text */
+.float-text {
+  position: fixed; z-index: 80; pointer-events: none; transform: translate(-50%, -50%);
+  font-weight: 800; font-size: 1rem; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+  animation: floatUp 0.9s ease-out forwards;
+}
+.float-text.gold { color: #ffd84a; font-size: 1.2rem; }
+.float-text.meow { color: var(--accent-2); font-size: 0.85rem; }
+.float-text.big { font-size: 2.6rem; color: #ffd84a; animation-duration: 1.6s; }
+@keyframes floatUp { from { opacity: 1; margin-top: 0; } to { opacity: 0; margin-top: -40px; } }
+
+.sparkle {
+  position: fixed; z-index: 79; pointer-events: none; transform: translate(-50%, -50%);
+  color: #ffe98a; font-size: 14px; animation: sparkle 0.7s ease-out forwards;
+}
+@keyframes sparkle { to { opacity: 0; transform: translate(-50%, 10px) scale(0.3); } }
+
+/* Toasts */
+.toasts { position: fixed; right: 16px; bottom: 16px; z-index: 90; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast {
+  display: flex; gap: 10px; align-items: center; min-width: 240px; max-width: 320px;
+  padding: 10px 14px; border-radius: 12px; background: rgba(26, 29, 39, 0.96);
+  border: 1px solid var(--accent); box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  animation: toastIn 0.3s ease-out; transition: opacity 0.4s, transform 0.4s;
+}
+.toast.out { opacity: 0; transform: translateX(30px); }
+.toast-icon { font-size: 1.6rem; }
+.t-title { display: block; font-size: 0.95rem; }
+.t-body { color: var(--muted); font-size: 0.82rem; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(30px); } }
+
+/* Panel */
+.panel { position: fixed; inset: 0; z-index: 70; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.panel-box {
+  width: 100%; max-width: 760px; max-height: 88vh; overflow: auto;
+  background: var(--bg); border: 1px solid #2c3142; border-radius: 16px; padding: 18px;
+}
+.panel-head { display: flex; gap: 12px; align-items: center; }
+.panel-maxwell { width: 48px; height: auto; }
+.panel-head h2 { font-size: 1.2rem; }
+.panel-sub { color: var(--muted); font-size: 0.88rem; margin-top: 2px; }
+.panel-x { margin-left: auto; }
+.panel-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0; }
+.ptab { padding: 7px 12px; border-radius: 999px; border: 1px solid #2c3142; background: var(--panel); color: var(--muted); font-size: 0.9rem; }
+.ptab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.panel-body h3 { font-size: 0.95rem; margin: 14px 0 8px; color: var(--muted); }
+.panel-note { color: var(--muted); font-size: 0.88rem; margin-bottom: 10px; }
+
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.shop-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 8px; border-radius: 12px; border: 1px solid #2c3142;
+  background: var(--panel); color: var(--text); font-size: 0.85rem;
+  border-bottom: 3px solid var(--swatch, #2c3142);
+}
+.shop-item:hover { border-color: var(--accent); }
+.shop-item.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+.si-icon { font-size: 1.6rem; }
+.si-name { font-weight: 600; text-align: center; }
+.si-price { color: #ffd84a; font-weight: 700; font-size: 0.8rem; }
+.shop-item.owned .si-price { color: var(--accent-2); }
+
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.ach { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 12px; background: var(--panel); border: 1px solid #2c3142; opacity: 0.55; filter: grayscale(1); }
+.ach.got { opacity: 1; filter: none; border-color: var(--accent); }
+.ach-icon { font-size: 1.6rem; }
+.ach-name { display: block; font-size: 0.9rem; }
+.ach-desc { color: var(--muted); font-size: 0.8rem; }
+
+.stats div { display: flex; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid #262a38; font-size: 0.92rem; }
+.reset { margin-top: 16px; }
+.help { padding-left: 18px; display: grid; gap: 8px; line-height: 1.45; font-size: 0.92rem; }
+
+/* Konami party mode */
+html.party { animation: hue 1.2s linear infinite; }
+@keyframes hue { to { filter: hue-rotate(360deg); } }
+
+@media (max-width: 760px) {
+  .topbar { flex-wrap: wrap; }
+  .profile-btn { order: 3; }
+}

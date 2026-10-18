@@ -20,6 +20,11 @@
       <button class="tab" data-tab="sounds">Soundboard</button>
     </nav>
     <input type="search" id="search" placeholder="Search games..." autocomplete="off">
+    <button id="profileBtn" class="profile-btn" title="Your treats, level, shop &amp; achievements">
+      <span class="pb-treats">🐟 <b id="treatCount">0</b></span>
+      <span class="pb-level">Lv <b id="levelNum">1</b></span>
+      <span class="pb-bar"><span id="xpFill"></span></span>
+    </button>
   </header>
 
   <!-- Library view -->
@@ -55,6 +60,30 @@
 
   <footer class="footer">MaxwellGames</footer>
 
+  <!-- Profile / Shop / Achievements panel -->
+  <div id="panel" class="panel hidden" role="dialog" aria-label="Profile">
+    <div class="panel-box">
+      <div class="panel-head">
+        <img src="maxwell.png" alt="" class="panel-maxwell">
+        <div>
+          <h2>Your Maxwell Profile</h2>
+          <p class="panel-sub">Lv <b id="pLevel">1</b> · <b id="pTreats">0</b> 🐟 treats · <span id="pXp"></span></p>
+        </div>
+        <button id="panelClose" class="btn panel-x" aria-label="Close">✕</button>
+      </div>
+      <nav class="panel-tabs">
+        <button class="ptab active" data-p="shop">🛒 Shop</button>
+        <button class="ptab" data-p="ach">🏆 Achievements</button>
+        <button class="ptab" data-p="stats">📊 Stats</button>
+        <button class="ptab" data-p="help">❓ How to earn</button>
+      </nav>
+      <div id="panelBody" class="panel-body"></div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
   <script src="script.js"></script>
+  <script src="features.js"></script>
 </body>
 </html>

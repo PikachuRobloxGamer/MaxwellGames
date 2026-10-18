@@ -104,6 +104,7 @@ function renderSounds() {
 
 function switchTab(name) {
   currentTab = name;
+  window.dispatchEvent(new CustomEvent("mg:tab", { detail: name }));
   if (name === "sounds") {
     searchEl.value = "";
     searchEl.placeholder = "Search sounds...";
@@ -206,10 +207,12 @@ function openGame(item) {
   playerView.classList.remove("hidden");
   location.hash = (currentTab === "proxies" ? "proxy-" : "") + item.id;
   window.scrollTo(0, 0);
+  window.dispatchEvent(new CustomEvent("mg:open", { detail: { id: currentTab + ":" + item.id } }));
 }
 
 function closeGame() {
   frame.src = "about:blank"; // stops the game & its sound
+  window.dispatchEvent(new Event("mg:close"));
   playerView.classList.add("hidden");
   libraryView.classList.remove("hidden");
   history.replaceState(null, "", currentTab === "proxies" ? "#proxies" : location.pathname);
@@ -374,56 +377,3 @@ document.querySelectorAll(".tab").forEach((t) => {
 });
 
 loadAll();
-
-// ===== Falling :3 particles =====
-(function () {
-  const canvas = document.getElementById("particles");
-  const ctx = canvas.getContext("2d");
-  const COUNT = 45;
-  let w, h, parts = [];
-
-  function resize() {
-    w = canvas.width = window.innerWidth;
-    h = canvas.height = window.innerHeight;
-  }
-
-  function makePart(startAnywhere) {
-    return {
-      x: Math.random() * w,
-      y: startAnywhere ? Math.random() * h : -30,
-      size: 12 + Math.random() * 14,
-      speed: 0.4 + Math.random() * 1.1,
-      drift: Math.random() * Math.PI * 2,
-      spin: (Math.random() - 0.5) * 0.02,
-      angle: (Math.random() - 0.5) * 0.6,
-      alpha: 0.45 + Math.random() * 0.45
-    };
-  }
-
-  function tick() {
-    ctx.clearRect(0, 0, w, h);
-    for (const p of parts) {
-      p.y += p.speed;
-      p.drift += 0.01;
-      p.x += Math.sin(p.drift) * 0.4;
-      p.angle += p.spin;
-      if (p.y > h + 30) Object.assign(p, makePart(false));
-
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.angle);
-      ctx.globalAlpha = p.alpha;
-      ctx.font = `bold ${p.size}px system-ui, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(":3", 0, 0);
-      ctx.restore();
-    }
-    requestAnimationFrame(tick);
-  }
-
-  resize();
-  parts = Array.from({ length: COUNT }, () => makePart(true));
-  window.addEventListener("resize", resize);
-  tick();
-})();

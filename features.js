@@ -1,0 +1,447 @@
+// ===== MaxwellGames: the "website is a game" layer =====
+// Treats (🐟), XP & levels, achievements, a shop, catchable :3 particles,
+// a daily bonus, and some secrets. Progress is saved in this browser.
+
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- Save data ----------
+  const SAVE_KEY = "maxwellgames-save-v1";
+  const DEFAULT = {
+    treats: 0, xp: 0, caught: 0, golden: 0, maxwellClicks: 0,
+    opened: [], tabs: [], owned: ["p-3", "c-cat", "t-purple"],
+    equip: { particle: "p-3", cursor: "c-cat", theme: "t-purple" },
+    ach: [], lastDaily: "", streak: 0, playSeconds: 0, bought: 0
+  };
+  let save;
+  try { save = Object.assign({}, DEFAULT, JSON.parse(localStorage.getItem(SAVE_KEY) || "{}")); }
+  catch (e) { save = Object.assign({}, DEFAULT); }
+  save.equip = Object.assign({}, DEFAULT.equip, save.equip);
+  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+
+  // ---------- Levels ----------
+  const levelFor = (xp) => Math.floor(Math.sqrt(xp / 15)) + 1;
+  const xpForLevel = (lv) => 15 * (lv - 1) * (lv - 1);
+
+  function addTreats(n, x, y) {
+    const before = levelFor(save.xp);
+    save.treats += n;
+    save.xp += n;
+    const after = levelFor(save.xp);
+    if (x !== undefined) floatText(`+${n} 🐟`, x, y);
+    if (after > before) {
+      toast("⬆️", `Level ${after}!`, "You're leveling up. Keep going!");
+      boomSound(0.15);
+    }
+    checkAch();
+    updateHud();
+    persist();
+  }
+
+  function updateHud() {
+    const lv = levelFor(save.xp);
+    const lo = xpForLevel(lv), hi = xpForLevel(lv + 1);
+    $("treatCount").textContent = save.treats;
+    $("levelNum").textContent = lv;
+    $("xpFill").style.width = Math.min(100, ((save.xp - lo) / (hi - lo)) * 100) + "%";
+    if (!$("panel").classList.contains("hidden")) renderPanelHead();
+  }
+
+  // ---------- Shop ----------
+  const SHOP = [
+    { id: "p-3",      type: "particle", name: ":3 Rain",        price: 0,   icon: ":3" },
+    { id: "p-fish",   type: "particle", name: "Fish Rain",      price: 25,  icon: "🐟" },
+    { id: "p-heart",  type: "particle", name: "Heart Rain",     price: 40,  icon: "❤️" },
+    { id: "p-star",   type: "particle", name: "Star Rain",      price: 60,  icon: "⭐" },
+    { id: "p-paw",    type: "particle", name: "Paw Prints",     price: 80,  icon: "🐾" },
+    { id: "p-maxwell",type: "particle", name: "Maxwell Rain",   price: 150, icon: "🐈‍⬛" },
+    { id: "p-mix",    type: "particle", name: "Chaos Mix",      price: 300, icon: "🌀" },
+    { id: "c-cat",    type: "cursor",   name: "Tabby Cat",      price: 0,   icon: "🐈" },
+    { id: "c-big",    type: "cursor",   name: "Big Tabby",      price: 50,  icon: "🐅" },
+    { id: "c-maxwell",type: "cursor",   name: "Maxwell Cursor", price: 120, icon: "🐈‍⬛" },
+    { id: "c-normal", type: "cursor",   name: "Normal Arrow",   price: 0,   icon: "🖱️" },
+    { id: "t-purple", type: "theme",    name: "Purple",         price: 0,   icon: "🟣", color: "#6c5ce7" },
+    { id: "t-green",  type: "theme",    name: "Toxic Green",    price: 30,  icon: "🟢", color: "#2ecc71" },
+    { id: "t-pink",   type: "theme",    name: "Bubblegum",      price: 30,  icon: "🩷", color: "#ff5fa2" },
+    { id: "t-blue",   type: "theme",    name: "Sans Blue",      price: 50,  icon: "🔵", color: "#2f8cff" },
+    { id: "t-red",    type: "theme",    name: "Determination",  price: 70,  icon: "❤️", color: "#e8303a" },
+    { id: "t-gold",   type: "theme",    name: "Golden Maxwell", price: 200, icon: "🟡", color: "#f5b82e" },
+    { id: "x-spin",   type: "extra",    name: "Spinning Logo",  price: 100, icon: "💫" },
+    { id: "x-trail",  type: "extra",    name: "Sparkle Trail",  price: 180, icon: "✨" }
+  ];
+  const item = (id) => SHOP.find((s) => s.id === id);
+  const owns = (id) => save.owned.includes(id);
+
+  function buy(id) {
+    const it = item(id);
+    if (!it || owns(id)) return;
+    if (save.treats < it.price) { toast("😿", "Not enough treats", `You need ${it.price - save.treats} more 🐟`); return; }
+    save.treats -= it.price;
+    save.owned.push(id);
+    save.bought++;
+    toast(it.icon, `Bought ${it.name}!`, it.type === "extra" ? "Turn it on in the shop." : "It's equipped now.");
+    if (it.type !== "extra") equip(id); else toggleExtra(id, true);
+    checkAch(); updateHud(); persist(); renderPanel();
+  }
+
+  function equip(id) {
+    const it = item(id);
+    if (!it || !owns(id)) return;
+    save.equip[it.type] = id;
+    applyLooks(); persist(); renderPanel();
+  }
+
+  function toggleExtra(id, force) {
+    save.equip[id] = force !== undefined ? force : !save.equip[id];
+    applyLooks(); persist(); renderPanel();
+  }
+
+  function applyLooks() {
+    const cur = save.equip.cursor;
+    const map = {
+      "c-cat": 'url("images/cursor-cat.png") 10 2, auto',
+      "c-big": 'url("images/cursor-cat-big.png") 15 3, auto',
+      "c-maxwell": 'url("images/cursor-maxwell.png") 20 4, auto',
+      "c-normal": "auto"
+    };
+    document.documentElement.style.setProperty("--cat-cursor", map[cur] || map["c-cat"]);
+    const th = item(save.equip.theme);
+    if (th) document.documentElement.style.setProperty("--accent", th.color);
+    document.body.classList.toggle("logo-spin", !!save.equip["x-spin"]);
+    particles.setStyle(save.equip.particle);
+  }
+
+  // ---------- Achievements ----------
+  const ACH = [
+    { id: "first",   icon: "🎮", name: "First Play",        desc: "Open any game or proxy",          test: () => save.opened.length >= 1 },
+    { id: "explore", icon: "🧭", name: "Explorer",          desc: "Open 5 different games/proxies",  test: () => save.opened.length >= 5 },
+    { id: "all-tabs",icon: "🗂️", name: "Tab Hopper",        desc: "Visit Games, Proxies & Soundboard", test: () => ["games","proxies","sounds"].every((t) => save.tabs.includes(t)) },
+    { id: "c10",     icon: "😺", name: "Kitten Catcher",    desc: "Catch 10 falling :3s",            test: () => save.caught >= 10 },
+    { id: "c100",    icon: "😸", name: "Cat Wrangler",      desc: "Catch 100 falling :3s",           test: () => save.caught >= 100 },
+    { id: "c500",    icon: "😻", name: ":3 Legend",         desc: "Catch 500 falling :3s",           test: () => save.caught >= 500 },
+    { id: "gold",    icon: "🌟", name: "Golden Paw",        desc: "Catch a rare golden :3",          test: () => save.golden >= 1 },
+    { id: "gold10",  icon: "👑", name: "Gold Rush",         desc: "Catch 10 golden :3s",             test: () => save.golden >= 10 },
+    { id: "pet",     icon: "🐈‍⬛", name: "Maxwell Petter",   desc: "Click Maxwell 25 times",          test: () => save.maxwellClicks >= 25 },
+    { id: "pet2",    icon: "💖", name: "Maxwell's Bestie",  desc: "Click Maxwell 250 times",         test: () => save.maxwellClicks >= 250 },
+    { id: "shop",    icon: "🛍️", name: "First Purchase",    desc: "Buy something in the shop",       test: () => save.bought >= 1 },
+    { id: "shop5",   icon: "💸", name: "Big Spender",       desc: "Buy 5 things in the shop",        test: () => save.bought >= 5 },
+    { id: "rich",    icon: "💰", name: "Fish Hoarder",      desc: "Hold 500 treats at once",         test: () => save.treats >= 500 },
+    { id: "lv5",     icon: "⭐", name: "Level 5",           desc: "Reach level 5",                   test: () => levelFor(save.xp) >= 5 },
+    { id: "lv10",    icon: "🌠", name: "Level 10",          desc: "Reach level 10",                  test: () => levelFor(save.xp) >= 10 },
+    { id: "gamer",   icon: "⏱️", name: "Gamer Moment",      desc: "Play games for 10 minutes total", test: () => save.playSeconds >= 600 },
+    { id: "gamer2",  icon: "🕹️", name: "No Life (jk)",      desc: "Play games for 1 hour total",     test: () => save.playSeconds >= 3600 },
+    { id: "streak3", icon: "📅", name: "Regular",           desc: "Get a 3 day login streak",        test: () => save.streak >= 3 },
+    { id: "night",   icon: "🌙", name: "Night Owl",         desc: "Visit between midnight and 5am",  test: () => new Date().getHours() < 5 },
+    { id: "konami",  icon: "🕹️", name: "Secret Code",       desc: "??? (an old-school cheat code)",  secret: true, test: () => save.ach.includes("konami") },
+    { id: "meow",    icon: "🙀", name: "Typed it",          desc: "??? (type a cat word anywhere)",   secret: true, test: () => save.ach.includes("meow") }
+  ];
+
+  function unlock(id) {
+    if (save.ach.includes(id)) return;
+    const a = ACH.find((x) => x.id === id);
+    save.ach.push(id);
+    if (a) toast(a.icon, "Achievement: " + a.name, a.secret ? "You found a secret!" : a.desc);
+    save.treats += 20; save.xp += 20; // bonus for every achievement
+    persist(); updateHud();
+    if (!$("panel").classList.contains("hidden")) renderPanel();
+  }
+  function checkAch() { ACH.forEach((a) => { if (!a.secret && !save.ach.includes(a.id) && a.test()) unlock(a.id); }); }
+
+  // ---------- Toasts & floating text ----------
+  function toast(icon, title, body) {
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.innerHTML = `<div class="toast-icon"></div><div><b class="t-title"></b><span class="t-body"></span></div>`;
+    t.querySelector(".toast-icon").textContent = icon;
+    t.querySelector(".t-title").textContent = title;
+    t.querySelector(".t-body").textContent = body || "";
+    $("toasts").appendChild(t);
+    setTimeout(() => t.classList.add("out"), 3200);
+    setTimeout(() => t.remove(), 3700);
+  }
+  function floatText(text, x, y, cls) {
+    const f = document.createElement("div");
+    f.className = "float-text " + (cls || "");
+    f.textContent = text;
+    f.style.left = x + "px"; f.style.top = y + "px";
+    document.body.appendChild(f);
+    setTimeout(() => f.remove(), 900);
+  }
+
+  // ---------- Little sounds (made in the browser) ----------
+  let ac;
+  function audio() { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); return ac; } catch (e) { return null; } }
+  function blip(freq, dur, type, vol) {
+    const a = audio(); if (!a) return;
+    const o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+    o.type = type || "square"; o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(freq * 1.8, t + dur);
+    g.gain.setValueAtTime(vol || 0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur);
+  }
+  function meow() {
+    const a = audio(); if (!a) return;
+    const o = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter(), t = a.currentTime;
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(520, t); o.frequency.linearRampToValueAtTime(820, t + 0.12);
+    o.frequency.linearRampToValueAtTime(430, t + 0.4);
+    f.type = "bandpass"; f.frequency.setValueAtTime(1200, t); f.Q.value = 3;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.18, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    o.connect(f).connect(g).connect(a.destination); o.start(t); o.stop(t + 0.46);
+  }
+  function boomSound(vol) { blip(300, 0.12, "triangle", vol || 0.1); setTimeout(() => blip(450, 0.12, "triangle", vol || 0.1), 110); setTimeout(() => blip(680, 0.2, "triangle", vol || 0.1), 220); }
+
+  // ---------- Falling particles you can catch ----------
+  const maxwellImg = new Image(); maxwellImg.src = "maxwell.png";
+  const particles = (function () {
+    const canvas = $("particles"), ctx = canvas.getContext("2d");
+    const COUNT = 45;
+    const STYLES = {
+      "p-3": [":3"], "p-fish": ["🐟"], "p-heart": ["❤️", "💖", "💜"], "p-star": ["⭐", "✨", "🌟"],
+      "p-paw": ["🐾"], "p-maxwell": ["MAXWELL"], "p-mix": [":3", "🐟", "❤️", "⭐", "🐾", "MAXWELL", "😺"]
+    };
+    let w, h, parts = [], style = "p-3", party = 0;
+
+    function resize() { w = canvas.width = innerWidth; h = canvas.height = innerHeight; }
+    function make(anywhere) {
+      const set = STYLES[style] || STYLES["p-3"];
+      const golden = Math.random() < 0.025;
+      return {
+        x: Math.random() * w, y: anywhere ? Math.random() * h : -40,
+        size: golden ? 26 : 12 + Math.random() * 14,
+        speed: 0.4 + Math.random() * 1.1, drift: Math.random() * 6.28,
+        spin: (Math.random() - 0.5) * 0.02, angle: (Math.random() - 0.5) * 0.6,
+        alpha: golden ? 1 : 0.45 + Math.random() * 0.45,
+        glyph: golden ? ":3" : set[Math.floor(Math.random() * set.length)],
+        golden, pop: 0
+      };
+    }
+    function draw(p) {
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
+      let a = p.alpha, s = 1;
+      if (p.pop) { s = 1 + p.pop * 1.5; a *= 1 - p.pop; }
+      ctx.globalAlpha = a; ctx.scale(s, s);
+      if (p.glyph === "MAXWELL") {
+        if (maxwellImg.complete) ctx.drawImage(maxwellImg, -p.size, -p.size, p.size * 2, p.size * 2 * (maxwellImg.height / maxwellImg.width));
+      } else {
+        ctx.font = `bold ${p.size}px system-ui, "Segoe UI Emoji", sans-serif`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        if (p.golden) { ctx.shadowColor = "#ffd84a"; ctx.shadowBlur = 18; ctx.fillStyle = "#ffd84a"; }
+        else ctx.fillStyle = "#ffffff";
+        ctx.fillText(p.glyph, 0, 0);
+      }
+      ctx.restore();
+    }
+    function tick() {
+      ctx.clearRect(0, 0, w, h);
+      const speedMul = party > 0 ? 3 : 1;
+      if (party > 0) party--;
+      for (const p of parts) {
+        if (p.pop) { p.pop += 0.08; if (p.pop >= 1) Object.assign(p, make(false)); }
+        else {
+          p.y += p.speed * speedMul; p.drift += 0.01;
+          p.x += Math.sin(p.drift) * 0.4; p.angle += p.spin;
+          if (p.y > h + 40) Object.assign(p, make(false));
+        }
+        draw(p);
+      }
+      requestAnimationFrame(tick);
+    }
+    // Try to catch a particle near (x, y). Returns the particle or null.
+    function catchAt(x, y) {
+      let best = null, bestD = 34;
+      for (const p of parts) {
+        if (p.pop) continue;
+        const d = Math.hypot(p.x - x, p.y - y);
+        if (d < bestD + p.size * 0.4) { best = p; bestD = d; }
+      }
+      if (best) best.pop = 0.01;
+      return best;
+    }
+    function setStyle(s) { style = s; parts.forEach((p, i) => { if (i % 2 === 0) Object.assign(p, make(true)); }); }
+    function partyMode(frames) { party = frames; }
+    function burst(n) { for (let i = 0; i < n; i++) parts.push(make(false)); setTimeout(() => parts.splice(COUNT), 12000); }
+    resize(); parts = Array.from({ length: COUNT }, () => make(true));
+    addEventListener("resize", resize); tick();
+    return { catchAt, setStyle, partyMode, burst };
+  })();
+
+  // Clicking empty space catches :3s (not when clicking buttons, cards, etc.)
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("button, a, input, .card, .sound, iframe, .panel, .player-bar, .frame-wrap")) return;
+    const p = particles.catchAt(e.clientX, e.clientY);
+    if (!p) return;
+    save.caught++;
+    if (p.golden) { save.golden++; blip(700, 0.25, "triangle", 0.12); addTreats(10, e.clientX, e.clientY); floatText("GOLDEN!", e.clientX, e.clientY - 22, "gold"); }
+    else { blip(500 + Math.random() * 300, 0.08); addTreats(1, e.clientX, e.clientY); }
+  });
+
+  // ---------- Pet Maxwell (the logo) ----------
+  const logoImg = document.querySelector(".logo-img");
+  logoImg.addEventListener("click", (e) => {
+    save.maxwellClicks++;
+    meow();
+    logoImg.classList.remove("boing"); void logoImg.offsetWidth; logoImg.classList.add("boing");
+    const r = logoImg.getBoundingClientRect();
+    floatText(["meow", "mrrp", ":3", "purr", "nya"][Math.floor(Math.random() * 5)], r.left + r.width / 2, r.bottom + 4, "meow");
+    if (save.maxwellClicks % 10 === 0) addTreats(3, r.left + r.width, r.bottom);
+    checkAch(); persist();
+  });
+
+  // ---------- Sparkle trail (shop extra) ----------
+  let lastTrail = 0;
+  document.addEventListener("mousemove", (e) => {
+    if (!save.equip["x-trail"]) return;
+    const now = performance.now();
+    if (now - lastTrail < 40) return;
+    lastTrail = now;
+    const s = document.createElement("div");
+    s.className = "sparkle";
+    s.textContent = ["✨", "⭐", "·", "✦"][Math.floor(Math.random() * 4)];
+    s.style.left = e.clientX + "px"; s.style.top = e.clientY + "px";
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 700);
+  });
+
+  // ---------- Earn treats while playing ----------
+  let playing = false;
+  addEventListener("mg:open", (e) => {
+    playing = true;
+    const id = e.detail.id;
+    if (!save.opened.includes(id)) { save.opened.push(id); addTreats(5); }
+    checkAch(); persist();
+  });
+  addEventListener("mg:close", () => { playing = false; });
+  addEventListener("mg:tab", (e) => {
+    if (!save.tabs.includes(e.detail)) { save.tabs.push(e.detail); checkAch(); persist(); }
+  });
+  setInterval(() => {
+    if (!playing || document.hidden) return;
+    save.playSeconds += 10;
+    if (save.playSeconds % 60 === 0) { addTreats(2); toast("🎮", "+2 🐟", "Treats for playing!"); }
+    else { checkAch(); persist(); }
+  }, 10000);
+
+  // ---------- Daily bonus ----------
+  function dailyBonus() {
+    const today = new Date().toDateString();
+    if (save.lastDaily === today) return;
+    const yesterday = new Date(Date.now() - 864e5).toDateString();
+    save.streak = save.lastDaily === yesterday ? save.streak + 1 : 1;
+    save.lastDaily = today;
+    const amount = 10 + Math.min(save.streak, 7) * 5;
+    setTimeout(() => { toast("🎁", `Daily bonus: +${amount} 🐟`, `Login streak: ${save.streak} day${save.streak === 1 ? "" : "s"}`); addTreats(amount); }, 1200);
+  }
+
+  // ---------- Secrets ----------
+  const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+  let kIdx = 0, typed = "";
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input, textarea")) return;
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    kIdx = k === KONAMI[kIdx] ? kIdx + 1 : (k === KONAMI[0] ? 1 : 0);
+    if (kIdx === KONAMI.length) { kIdx = 0; maxwellParty(); unlock("konami"); }
+    if (e.key.length === 1) {
+      typed = (typed + e.key.toLowerCase()).slice(-12);
+      if (typed.endsWith("meow") || typed.endsWith("maxwell")) { typed = ""; meow(); particles.burst(40); floatText("MEOW!", innerWidth / 2, innerHeight / 2, "big"); unlock("meow"); }
+    }
+  });
+  function maxwellParty() {
+    document.documentElement.classList.add("party");
+    particles.partyMode(600); particles.burst(80);
+    boomSound(0.12); meow();
+    floatText("🎉 MAXWELL PARTY 🎉", innerWidth / 2, innerHeight / 2, "big");
+    setTimeout(() => document.documentElement.classList.remove("party"), 10000);
+  }
+
+  // ---------- Panel ----------
+  let panelTab = "shop";
+  function renderPanelHead() {
+    const lv = levelFor(save.xp);
+    $("pLevel").textContent = lv;
+    $("pTreats").textContent = save.treats;
+    $("pXp").textContent = `${save.xp - xpForLevel(lv)} / ${xpForLevel(lv + 1) - xpForLevel(lv)} XP to next level`;
+  }
+  function renderPanel() {
+    renderPanelHead();
+    document.querySelectorAll(".ptab").forEach((b) => b.classList.toggle("active", b.dataset.p === panelTab));
+    const body = $("panelBody");
+    body.innerHTML = "";
+    if (panelTab === "shop") {
+      const groups = { particle: "Falling particles", cursor: "Cursors", theme: "Colors", extra: "Extras" };
+      for (const [type, label] of Object.entries(groups)) {
+        const h = document.createElement("h3"); h.textContent = label; body.appendChild(h);
+        const g = document.createElement("div"); g.className = "shop-grid"; body.appendChild(g);
+        SHOP.filter((s) => s.type === type).forEach((s) => {
+          const own = owns(s.id);
+          const on = type === "extra" ? !!save.equip[s.id] : save.equip[type] === s.id;
+          const el = document.createElement("button");
+          el.className = "shop-item" + (on ? " on" : "") + (own ? " owned" : "");
+          el.innerHTML = `<span class="si-icon"></span><span class="si-name"></span><span class="si-price"></span>`;
+          el.querySelector(".si-icon").textContent = s.icon;
+          el.querySelector(".si-name").textContent = s.name;
+          el.querySelector(".si-price").textContent = !own ? `${s.price} 🐟` : type === "extra" ? (on ? "ON" : "OFF") : (on ? "Equipped" : "Equip");
+          if (s.color) el.style.setProperty("--swatch", s.color);
+          el.onclick = () => !own ? buy(s.id) : type === "extra" ? toggleExtra(s.id) : equip(s.id);
+          g.appendChild(el);
+        });
+      }
+    } else if (panelTab === "ach") {
+      const p = document.createElement("p"); p.className = "panel-note";
+      p.textContent = `${save.ach.length} / ${ACH.length} unlocked · every achievement gives +20 🐟`;
+      body.appendChild(p);
+      const g = document.createElement("div"); g.className = "ach-grid"; body.appendChild(g);
+      ACH.forEach((a) => {
+        const got = save.ach.includes(a.id);
+        const el = document.createElement("div");
+        el.className = "ach" + (got ? " got" : "");
+        el.innerHTML = `<span class="ach-icon"></span><div><b class="ach-name"></b><span class="ach-desc"></span></div>`;
+        el.querySelector(".ach-icon").textContent = got || !a.secret ? a.icon : "❔";
+        el.querySelector(".ach-name").textContent = got || !a.secret ? a.name : "Secret";
+        el.querySelector(".ach-desc").textContent = a.desc;
+        g.appendChild(el);
+      });
+    } else if (panelTab === "stats") {
+      const rows = [
+        ["🐟 Treats right now", save.treats], ["⭐ Total XP", save.xp], ["📈 Level", levelFor(save.xp)],
+        [":3s caught", save.caught], ["🌟 Golden :3s caught", save.golden], ["🐈‍⬛ Maxwell pets", save.maxwellClicks],
+        ["🎮 Different games/proxies opened", save.opened.length], ["⏱️ Time playing", Math.floor(save.playSeconds / 60) + " min"],
+        ["📅 Login streak", save.streak + " days"], ["🛍️ Shop items bought", save.bought]
+      ];
+      const t = document.createElement("div"); t.className = "stats";
+      rows.forEach(([k, v]) => { const r = document.createElement("div"); r.innerHTML = "<span></span><b></b>"; r.querySelector("span").textContent = k; r.querySelector("b").textContent = v; t.appendChild(r); });
+      body.appendChild(t);
+      const reset = document.createElement("button"); reset.className = "btn reset"; reset.textContent = "Reset my progress";
+      reset.onclick = () => {
+        if (reset.dataset.sure) { save = JSON.parse(JSON.stringify(DEFAULT)); persist(); applyLooks(); updateHud(); renderPanel(); toast("🧹", "Progress reset", "Fresh start!"); }
+        else { reset.dataset.sure = "1"; reset.textContent = "Click again to really reset"; }
+      };
+      body.appendChild(reset);
+    } else {
+      body.innerHTML = `<ul class="help">
+        <li><b>Catch the falling :3s.</b> Click empty space near one for +1 🐟. Shiny <b style="color:#ffd84a">golden :3s</b> are worth +10.</li>
+        <li><b>Pet Maxwell.</b> Click the Maxwell logo at the top. Every 10 pets gives +3 🐟.</li>
+        <li><b>Try new games.</b> The first time you open each game or proxy: +5 🐟.</li>
+        <li><b>Keep playing.</b> +2 🐟 for every minute you're in a game.</li>
+        <li><b>Come back daily.</b> Daily bonus gets bigger with your login streak.</li>
+        <li><b>Unlock achievements.</b> Each one gives +20 🐟.</li>
+        <li><b>Secrets.</b> There are hidden things to find. Old-school gamers might know a certain code... and cats like it when you type their favorite word.</li>
+        <li>Spend treats in the <b>Shop</b> on new falling particles, cursors, colors, and extras.</li>
+        <li>Progress is saved in this browser.</li>
+      </ul>`;
+    }
+  }
+  $("profileBtn").onclick = () => { $("panel").classList.remove("hidden"); renderPanel(); };
+  $("panelClose").onclick = () => $("panel").classList.add("hidden");
+  $("panel").addEventListener("click", (e) => { if (e.target.id === "panel") $("panel").classList.add("hidden"); });
+  document.querySelectorAll(".ptab").forEach((b) => b.onclick = () => { panelTab = b.dataset.p; renderPanel(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("panel").classList.add("hidden"); });
+
+  // ---------- Start ----------
+  applyLooks();
+  updateHud();
+  dailyBonus();
+  checkAch();
+  persist();
+})();
