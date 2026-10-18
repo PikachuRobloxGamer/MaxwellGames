@@ -20,7 +20,7 @@
       "id": "bee-sans-fight",
       "title": "Bee Sans Fight Simulator",
       "category": "Action",
-      "thumbnail": "",
+      "thumbnail": "images/bee-sans.png",
       "description": "Arrow keys to move, Z to confirm.",
       "iframe": "https://hyzq.github.io/Bee-Sans-fight3/"
     },
@@ -28,7 +28,7 @@
       "id": "last-breath",
       "title": "Undertale: Last Breath",
       "category": "Action",
-      "thumbnail": "",
+      "thumbnail": "images/last-breath.png",
       "description": "",
       "iframe": "https://caijiqaq.github.io/LAST-BREATH/"
     }
