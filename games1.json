@@ -31,6 +31,14 @@
       "thumbnail": "images/last-breath.png",
       "description": "",
       "iframe": "https://caijiqaq.github.io/LAST-BREATH/"
+    },
+    {
+      "id": "gn-math",
+      "title": "GN-Math",
+      "category": "Game Sites",
+      "thumbnail": "images/gn-math.png",
+      "description": "",
+      "iframe": "https://codepen.io/Atharva_Dinesh7/embed/emZWzVo?default-tab=result"
     }
   ]
 }
