@@ -23,6 +23,14 @@
       "thumbnail": "images/fern.png",
       "description": "",
       "url": "https://s3.amazonaws.com/deaganfern/index.html"
+    },
+    {
+      "id": "opium",
+      "title": "Opium",
+      "category": "Proxy",
+      "thumbnail": "images/opium.png",
+      "description": "",
+      "url": "https://cdn.jsdelivr.net/npm/opiumbest/index.svg"
     }
   ]
 }
