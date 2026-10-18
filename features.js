@@ -10,7 +10,7 @@
   const DEFAULT = {
     treats: 0, xp: 0, caught: 0, golden: 0, maxwellClicks: 0,
     opened: [], tabs: [], owned: ["p-3", "c-cat", "t-purple"],
-    equip: { particle: "p-3", cursor: "c-cat", theme: "t-purple" },
+    equip: { particle: "p-3", cursor: "c-cat", theme: "t-purple", pet: "pet-none", skin: "sk-auto" },
     ach: [], lastDaily: "", streak: 0, playSeconds: 0, bought: 0,
     asc: 0, rebirths: 0, ascCaught: 0, yt: 0, abuses: 0
   };
@@ -74,10 +74,34 @@
     { id: "t-red",    type: "theme",    name: "Determination",  price: 70,  icon: "❤️", color: "#e8303a" },
     { id: "t-gold",   type: "theme",    name: "Golden Maxwell", price: 200, icon: "🟡", color: "#f5b82e" },
     { id: "x-spin",   type: "extra",    name: "Spinning Logo",  price: 100, icon: "💫" },
-    { id: "x-trail",  type: "extra",    name: "Sparkle Trail",  price: 180, icon: "✨" }
+    { id: "x-trail",  type: "extra",    name: "Sparkle Trail",  price: 180, icon: "✨" },
+    // ----- Owner / GamesOn786 exclusives -----
+    { id: "o-crown",  type: "particle", name: "Crown Rain",     role: "owner", icon: "👑" },
+    { id: "o-cursor", type: "cursor",   name: "Owner Cursor",   role: "owner", icon: "👑" },
+    { id: "o-rainbow",type: "theme",    name: "Owner Rainbow",  role: "owner", icon: "🌈", color: "#ff5fa2", rainbow: true },
+    { id: "pet-none", type: "pet",      name: "No Pet",         price: 0,      icon: "🚫" },
+    { id: "pet-owner",type: "pet",      name: "Owner Cat",      role: "owner", icon: "👑", img: "images/owner-cat.png" },
+    { id: "pet-sami", type: "pet",      name: "GamesOn Cat",    role: "sami",  icon: "💎", img: "images/sami-cat.png" },
+    { id: "p-ghost",  type: "particle", name: "Ghost Rain",     role: "sami",  icon: "👻" },
+    { id: "c-gengar", type: "cursor",   name: "Gengar Cursor",  role: "sami",  icon: "👻", cursor: 'url("images/cursor-gengar.png") 8 6, auto' },
+    { id: "sk-gengar",type: "skin",     name: "Gengar Maxwell", role: "sami",  img: "images/maxwell-gengar.png", icon: "👻" },
+    { id: "s-ocean",  type: "theme",    name: "GamesOn Blue",   role: "sami",  icon: "💎", color: "#20b4ff" },
+    { id: "sk-auto",  type: "skin",     name: "My Ascension",   role: "owner", icon: "✨" },
+    { id: "sk-0", type: "skin", name: "Classic",   role: "owner", tier: 0 },
+    { id: "sk-1", type: "skin", name: "Crimson",   role: "owner", tier: 1 },
+    { id: "sk-2", type: "skin", name: "Sunset",    role: "owner", tier: 2 },
+    { id: "sk-3", type: "skin", name: "Golden",    role: "owner", tier: 3 },
+    { id: "sk-4", type: "skin", name: "Emerald",   role: "owner", tier: 4 },
+    { id: "sk-5", type: "skin", name: "Ocean",     role: "owner", tier: 5 },
+    { id: "sk-6", type: "skin", name: "Galaxy",    role: "owner", tier: 6 },
+    { id: "sk-7", type: "skin", name: "Bubblegum", role: "owner", tier: 7 },
+    { id: "sk-8", type: "skin", name: "Rainbow",   role: "owner", tier: 8 },
+    { id: "sk-9", type: "skin", name: "Inverted",  role: "owner", tier: 9 }
   ];
+  let role = null; // "owner", "sami", or null
+  const canSee = (it) => !it.role || it.role === role || (role === "owner" && it.role === "sami");
   const item = (id) => SHOP.find((s) => s.id === id);
-  const owns = (id) => save.owned.includes(id);
+  const owns = (id) => { const it = item(id); if (it && it.role) return canSee(it); return save.owned.includes(id) || (role && it && !it.role); };
 
   function buy(id) {
     const it = item(id);
@@ -95,6 +119,7 @@
     const it = item(id);
     if (!it || !owns(id)) return;
     save.equip[it.type] = id;
+    if (it.type === "skin") { persist(); applyMaxwell(); renderPanel(); return; }
     applyLooks(); persist(); renderPanel();
   }
 
@@ -103,17 +128,52 @@
     applyLooks(); persist(); renderPanel();
   }
 
+  let rainbowTimer = null;
+
+  // ---------- Pets that follow your mouse ----------
+  let petEl = null, petX = innerWidth / 2, petY = innerHeight / 2, mouseX = petX, mouseY = petY;
+  addEventListener("mousemove", (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+  function setPet(id) {
+    const it = item(id);
+    if (petEl) { petEl.remove(); petEl = null; }
+    if (!it || !it.img || !canSee(it)) return;
+    petEl = document.createElement("img");
+    petEl.src = it.img; petEl.alt = it.name; petEl.className = "pet";
+    petEl.onclick = () => { meow(); floatText(role === "owner" ? "👑 meow" : "💎 meow", petX, petY - 40, "meow"); };
+    document.body.appendChild(petEl);
+  }
+  (function petLoop() {
+    if (petEl) {
+      const tx = mouseX + 40, ty = mouseY + 30;
+      petX += (tx - petX) * 0.08; petY += (ty - petY) * 0.08;
+      const flip = tx < petX ? -1 : 1;
+      petEl.style.transform = `translate(${petX - 35}px, ${petY - 40}px) scaleX(${flip}) rotate(${Math.sin(Date.now() / 200) * 4}deg)`;
+    }
+    requestAnimationFrame(petLoop);
+  })();
+
   function applyLooks() {
     const cur = save.equip.cursor;
     const map = {
       "c-cat": 'url("images/cursor-cat.png") 10 2, auto',
       "c-big": 'url("images/cursor-cat-big.png") 15 3, auto',
       "c-maxwell": 'url("images/cursor-maxwell.png") 20 4, auto',
-      "c-normal": "auto"
+      "c-normal": "auto",
+      "o-cursor": 'url("images/cursor-owner.png") 6 14, auto'
     };
-    document.documentElement.style.setProperty("--cat-cursor", map[cur] || map["c-cat"]);
-    const th = item(save.equip.theme);
-    if (th) document.documentElement.style.setProperty("--accent", th.color);
+    const curItem = item(cur);
+    let curCss = curItem && curItem.cursor ? curItem.cursor : (map[cur] || map["c-cat"]);
+    if (curItem && curItem.role && !canSee(curItem)) curCss = map["c-cat"];
+    document.documentElement.style.setProperty("--cat-cursor", curCss);
+    let th = item(save.equip.theme);
+    if (th && th.role && !canSee(th)) th = item("t-purple");
+    clearInterval(rainbowTimer);
+    if (th && th.rainbow) {
+      let hue = 0;
+      rainbowTimer = setInterval(() => { hue = (hue + 4) % 360; document.documentElement.style.setProperty("--accent", `hsl(${hue} 90% 60%)`); }, 80);
+    } else if (th) document.documentElement.style.setProperty("--accent", th.color);
+    setPet(save.equip.pet);
+    if (typeof applyMaxwell === "function" && window.MG) applyMaxwell();
     document.body.classList.toggle("logo-spin", !!save.equip["x-spin"]);
     particles.setStyle(save.equip.particle);
   }
@@ -139,7 +199,7 @@
     { id: "gamer2",  icon: "🕹️", name: "No Life (jk)",      desc: "Play games for 1 hour total",     test: () => save.playSeconds >= 3600 },
     { id: "streak3", icon: "📅", name: "Regular",           desc: "Get a 3 day login streak",        test: () => save.streak >= 3 },
     { id: "night",   icon: "🌙", name: "Night Owl",         desc: "Visit between midnight and 5am (bonus)", bonus: true, test: () => new Date().getHours() < 5 },
-    { id: "yt",      icon: "▶️", name: "Subscriber",        desc: "Visit Pikachu Roblox Gamer on YouTube (bonus)", bonus: true, test: () => save.yt >= 1 },
+    { id: "yt",      icon: "▶️", name: "Subscriber",        desc: "Visit a MaxwellGames YouTube channel (bonus)", bonus: true, test: () => save.yt >= 1 },
     { id: "abuse",   icon: "🚨", name: "Witness",           desc: "Be on the site during an Admin Abuse (bonus)", bonus: true, test: () => save.abuses >= 1 },
     { id: "asc1",    icon: "✨", name: "Ascended",          desc: "Ascend your Maxwell (bonus)",      bonus: true, test: () => save.asc >= 1 || save.rebirths >= 1 },
     { id: "inv",     icon: "🔄", name: "Inverted",          desc: "Reach Inverted Maxwell (bonus)",   bonus: true, test: () => save.asc >= 9 || save.rebirths >= 1 },
@@ -211,7 +271,7 @@
     const COUNT = 45;
     const STYLES = {
       "p-3": [":3"], "p-fish": ["🐟"], "p-heart": ["❤️", "💖", "💜"], "p-star": ["⭐", "✨", "🌟"],
-      "p-paw": ["🐾"], "p-maxwell": ["MAXWELL"], "p-mix": [":3", "🐟", "❤️", "⭐", "🐾", "MAXWELL", "😺"]
+      "p-paw": ["🐾"], "p-maxwell": ["MAXWELL"], "o-crown": ["👑", "💎", "MAXWELL"], "p-ghost": ["👻", "⭐", "✨"], "p-mix": [":3", "🐟", "❤️", "⭐", "🐾", "MAXWELL", "😺"]
     };
     let w, h, parts = [], style = "p-3", party = 0;
 
@@ -389,19 +449,30 @@
     const body = $("panelBody");
     body.innerHTML = "";
     if (panelTab === "shop") {
-      const groups = { particle: "Falling particles", cursor: "Cursors", theme: "Colors", extra: "Extras" };
+      if (role) {
+        const banner = document.createElement("div");
+        banner.className = "owner-shop-banner " + role;
+        banner.textContent = role === "owner" ? "👑 OWNER: you own everything in the shop, plus owner-only items!" : "💎 GamesOn786: everything's unlocked for you, plus your own GamesOn items!";
+        body.appendChild(banner);
+      }
+      const groups = { particle: "Falling particles", cursor: "Cursors", theme: "Colors", pet: "Pets (follow your mouse)", skin: "👑 Maxwell skin (owner only)", extra: "Extras" };
       for (const [type, label] of Object.entries(groups)) {
         const h = document.createElement("h3"); h.textContent = label; body.appendChild(h);
         const g = document.createElement("div"); g.className = "shop-grid"; body.appendChild(g);
-        SHOP.filter((s) => s.type === type).forEach((s) => {
+        const list = SHOP.filter((s) => s.type === type && canSee(s));
+        if (!list.length) { h.remove(); g.remove(); continue; }
+        list.forEach((s) => {
           const own = owns(s.id);
           const on = type === "extra" ? !!save.equip[s.id] : save.equip[type] === s.id;
           const el = document.createElement("button");
           el.className = "shop-item" + (on ? " on" : "") + (own ? " owned" : "");
           el.innerHTML = `<span class="si-icon"></span><span class="si-name"></span><span class="si-price"></span>`;
-          el.querySelector(".si-icon").textContent = s.icon;
+          if (s.tier !== undefined) { const im = document.createElement("img"); im.src = tierImg(s.tier); im.className = "si-img"; el.querySelector(".si-icon").appendChild(im); }
+          else if (s.img) { const im = document.createElement("img"); im.src = s.img; im.className = "si-img"; el.querySelector(".si-icon").appendChild(im); }
+          else el.querySelector(".si-icon").textContent = s.icon;
+          if (s.role) el.classList.add("exclusive", s.role);
           el.querySelector(".si-name").textContent = s.name;
-          el.querySelector(".si-price").textContent = !own ? `${s.price} 🐟` : type === "extra" ? (on ? "ON" : "OFF") : (on ? "Equipped" : "Equip");
+          el.querySelector(".si-price").textContent = !own ? `${s.price} 🐟` : s.role && !on ? (s.role === "owner" ? "👑 Equip" : "💎 Equip") : type === "extra" ? (on ? "ON" : "OFF") : (on ? "Equipped" : "Equip");
           if (s.color) el.style.setProperty("--swatch", s.color);
           el.onclick = () => !own ? buy(s.id) : type === "extra" ? toggleExtra(s.id) : equip(s.id);
           g.appendChild(el);
@@ -484,14 +555,26 @@
     return { lvOk, missing, catchOk, ready: lvOk && missing.length === 0 && catchOk };
   }
 
+  function skinImg() {
+    const sk = item(save.equip.skin);
+    if (sk && canSee(sk)) {
+      if (sk.img) return { src: sk.img, tier: -1 };
+      if (sk.tier !== undefined) return { src: tierImg(sk.tier), tier: sk.tier };
+    }
+    return { src: tierImg(save.asc), tier: save.asc };
+  }
   function applyMaxwell() {
-    const src = tierImg(save.asc);
-    document.querySelectorAll(".logo-img, .panel-maxwell, .credits-maxwell").forEach((img) => (img.src = src));
+    const sk = skinImg();
+    const tier = sk.tier;
+    const src = sk.src;
+    document.querySelectorAll(".logo-img, .panel-maxwell, .credits-maxwell, #loaderCat").forEach((img) => (img.src = src));
     maxwellImg.src = src;
     let fav = document.querySelector('link[rel="icon"]');
     if (fav) fav.href = src;
-    document.body.classList.toggle("tier-rainbow", save.asc === 8);
-    document.body.dataset.tier = save.asc;
+    document.body.classList.toggle("tier-rainbow", tier === 8);
+    document.body.dataset.tier = tier;
+    const tag = $("roleTag");
+    if (tag) { tag.className = "role-tag " + (role || ""); tag.textContent = role === "owner" ? "👑 OWNER" : role === "sami" ? "💎 GamesOn786" : ""; }
     const badge = $("rebirthBadge");
     if (badge) badge.textContent = save.rebirths ? "♾️" + save.rebirths : "";
   }
@@ -656,9 +739,12 @@
     if (save.yt === 1) addTreats(50);
     checkAch(); persist();
   });
+  let ytTurn = false;
   setInterval(() => {
     if (document.hidden) return;
-    toast("▶️", "Subscribe to Pikachu Roblox Gamer!", "Click the red YouTube button at the top to check out the channel.");
+    ytTurn = !ytTurn;
+    if (ytTurn) toast("▶️", "Subscribe to Pikachu Roblox Gamer!", "Click the red Subscribe button at the top.");
+    else toast("▶️", "Subscribe to Games On (GamesOn786)!", "Sami's channel. Click the Games On button at the top.");
   }, 6 * 60 * 1000);
 
   // ---------- For the owner / admin code ----------
@@ -668,7 +754,28 @@
     setEventMult(m) { eventMult = m; },
     sawAbuse() { save.abuses++; checkAch(); persist(); },
     maxLevel() { save.xp = Math.max(save.xp, xpForLevel(10)); checkAch(); updateHud(); persist(); },
-    give(n) { save.treats += n; save.xp += n; checkAch(); updateHud(); persist(); }
+    give(n) { save.treats += n; save.xp += n; checkAch(); updateHud(); persist(); },
+    get role() { return role; },
+    setRole(r) {
+      const was = role;
+      role = r;
+      if (r && !was) {
+        // first time this visit: equip the special stuff
+        if (r === "owner") { if (save.equip.pet === "pet-none") save.equip.pet = "pet-owner"; if (save.equip.cursor === "c-cat") save.equip.cursor = "o-cursor"; }
+        if (r === "sami" && save.equip.pet === "pet-none") save.equip.pet = "pet-sami";
+      }
+      if (!r) {
+        ["particle", "cursor", "theme", "pet"].forEach((t) => { const it = item(save.equip[t]); if (it && it.role) save.equip[t] = DEFAULT.equip[t]; if (it && !it.role && !save.owned.includes(it.id) && it.price) save.equip[t] = DEFAULT.equip[t]; });
+        save.equip.skin = "sk-auto";
+      }
+      persist(); applyLooks(); applyMaxwell(); updateHud();
+      if (!$("panel").classList.contains("hidden")) renderPanel();
+    },
+    unlockAllAch() { ACH.forEach((a) => { if (!save.ach.includes(a.id)) save.ach.push(a.id); }); persist(); updateHud(); },
+    setAsc(n) { save.asc = Math.max(0, Math.min(LAST, n)); save.xp = 0; persist(); applyMaxwell(); updateHud(); },
+    evolve(from, to, msg) { playEvolution(tierImg(from), tierImg(to), TIERS[to].color, msg, () => {}); },
+    resetSave() { save = JSON.parse(JSON.stringify(DEFAULT)); persist(); applyLooks(); applyMaxwell(); updateHud(); },
+    tierImg, TIERS
   };
 
   // ---------- Start ----------
