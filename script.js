@@ -50,7 +50,7 @@ async function loadAll() {
 }
 
 // ===== Soundboard (Myinstants embeds) =====
-let sounds = [], soundsLoaded = false;
+let sounds = [], soundCat = "All";
 const soundView = $("soundView");
 
 async function loadSounds() {
@@ -65,9 +65,24 @@ async function loadSounds() {
   }
 }
 
+function renderSoundCats() {
+  const el = $("soundCats");
+  const cats = ["All", ...new Set(sounds.map((s) => s.category || "Other"))];
+  el.innerHTML = "";
+  cats.forEach((cat) => {
+    const btn = document.createElement("button");
+    btn.className = "chip" + (cat === soundCat ? " active" : "");
+    btn.textContent = cat === "Cats" ? "🐱 Cats" : cat;
+    btn.onclick = () => { soundCat = cat; renderSoundCats(); renderSounds(); };
+    el.appendChild(btn);
+  });
+}
+
 function renderSounds() {
   const q = searchEl.value.trim().toLowerCase();
-  const list = sounds.filter((s) => !q || s.title.toLowerCase().includes(q));
+  const list = sounds.filter((s) =>
+    (soundCat === "All" || (s.category || "Other") === soundCat) &&
+    (!q || s.title.toLowerCase().includes(q)));
   $("soundStatus").textContent = list.length ? `${list.length} sound${list.length === 1 ? "" : "s"}` : "No sounds found.";
   const gridEl = $("soundGrid");
   gridEl.innerHTML = "";
@@ -99,6 +114,7 @@ function switchTab(name) {
     libraryView.classList.add("hidden");
     soundView.classList.remove("hidden");
     history.replaceState(null, "", "#sounds");
+    renderSoundCats();
     renderSounds();
     return;
   }
