@@ -39,6 +39,14 @@
       "thumbnail": "images/gn-math.png",
       "description": "",
       "iframe": "https://codepen.io/Atharva_Dinesh7/embed/emZWzVo?default-tab=result"
+    },
+    {
+      "id": "lumin",
+      "title": "LuminSDK",
+      "category": "Game Sites",
+      "thumbnail": "images/lumin.png",
+      "description": "",
+      "iframe": "games/lumin/index.html"
     }
   ]
 }
