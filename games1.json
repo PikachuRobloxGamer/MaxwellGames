@@ -15,6 +15,14 @@
       "thumbnail": "images/bad-time-simulator.png",
       "description": "The Sans fight. Arrow keys to move, Z to confirm.",
       "iframe": "https://jcw87.github.io/c2-sans-fight/"
+    },
+    {
+      "id": "bee-sans-fight",
+      "title": "Bee Sans Fight Simulator",
+      "category": "Action",
+      "thumbnail": "",
+      "description": "Arrow keys to move, Z to confirm.",
+      "iframe": "https://hyzq.github.io/Bee-Sans-fight3/"
     }
   ]
 }

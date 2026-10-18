@@ -15,6 +15,14 @@
       "thumbnail": "images/cherri.png",
       "description": "",
       "url": "https://cherrion.top/"
+    },
+    {
+      "id": "fern",
+      "title": "Fern",
+      "category": "Proxy",
+      "thumbnail": "images/fern.png",
+      "description": "",
+      "url": "https://s3.amazonaws.com/deaganfern/index.html"
     }
   ]
 }
