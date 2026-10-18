@@ -101,16 +101,54 @@
     MG.toast(r.icon, role === "owner" ? "Owner mode ON" : "GamesOn786 mode ON", role === "owner" ? "You own everything. Check the shop for owner-only stuff!" : "Admin powers unlocked. Abuses will say GamesOn786!");
   }
 
-  // ---------- Live connection ----------
+  // ---------- Live connection (Firebase if set up, else ntfy.sh) ----------
   let serverOffset = 0;
   const seen = new Set();
   const nowSec = () => Date.now() / 1000 + serverOffset;
   function setStatus(text, ok) { $("liveStatus").textContent = text; $("liveStatus").style.color = ok ? "#3ee08f" : "#ff7a7a"; }
+  let publishFn = null;
+  let lastWarn = 0;
+  function warnFail() {
+    if (!isAdmin() || Date.now() - lastWarn < 30000) return;
+    lastWarn = Date.now();
+    MG.toast("⚠️", "Couldn't reach everyone", "Only you saw that. Check your connection.");
+  }
+  function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 
-  function connect() {
+  async function connect() {
+    const FB = window.MG_FIREBASE_CONFIG;
+    if (FB && FB.databaseURL) {
+      try { await connectFirebase(FB); return; }
+      catch (e) { console.error(e); MG.toast("⚠️", "Firebase didn't load", "Falling back to ntfy.sh."); }
+    }
+    connectNtfy();
+  }
+
+  async function connectFirebase(FB) {
+    const V = "10.12.5";
+    await loadScript(`https://www.gstatic.com/firebasejs/${V}/firebase-app-compat.js`);
+    await loadScript(`https://www.gstatic.com/firebasejs/${V}/firebase-database-compat.js`);
+    firebase.initializeApp(FB);
+    const db = firebase.database();
+    db.ref(".info/serverTimeOffset").on("value", (s) => { serverOffset = (s.val() || 0) / 1000; });
+    db.ref(".info/connected").on("value", (s) => setStatus(s.val() ? "connected ✅ (Firebase — everyone online sees your powers)" : "connecting (Firebase)...", !!s.val()));
+    const msgs = db.ref("mg/msgs");
+    msgs.limitToLast(50).on("child_added", (snap) => {
+      const m = snap.val(); if (!m || m.k !== "mg1" || seen.has(m.id)) return;
+      seen.add(m.id);
+      const t = m.ts || (m.at ? m.at * 1000 : Date.now());
+      handle(m, Math.max(0, nowSec() - t / 1000));
+    });
+    publishFn = (msg) => { const m = Object.assign({}, msg, { ts: firebase.database.ServerValue.TIMESTAMP }); return msgs.push(m).catch(warnFail); };
+    // owner tidies old messages now and then so the database stays small
+    if (isOwner()) setInterval(() => { msgs.limitToLast(400).once("value", (s) => { const keys = Object.keys(s.val() || {}); if (keys.length > 300) msgs.limitToLast(300).once("value", (keep) => { const keepSet = new Set(Object.keys(keep.val() || {})); keys.forEach((k) => { if (!keepSet.has(k)) msgs.child(k).remove(); }); }); }); }, 120000);
+  }
+
+  function connectNtfy() {
     if (!window.EventSource) { setStatus("not supported in this browser", false); return; }
+    publishFn = (msg) => fetch(NTFY, { method: "POST", body: JSON.stringify(msg) }).catch(warnFail);
     const es = new EventSource(NTFY + "/sse?since=10m");
-    const ok = () => setStatus("connected ✅ (everyone online sees your powers)", true);
+    const ok = () => setStatus("connected ✅ (ntfy.sh — everyone online sees your powers)", true);
     es.addEventListener("open", (e) => { try { const d = JSON.parse(e.data); serverOffset = d.time - Date.now() / 1000; } catch (err) {} ok(); });
     es.onopen = ok;
     es.onmessage = (e) => {
@@ -122,25 +160,28 @@
       seen.add(msg.id);
       handle(msg, Math.max(0, nowSec() - (d.time || nowSec())));
     };
-    es.onerror = () => setStatus("not connected ❌ (this network may block ntfy.sh)", false);
+    es.onerror = () => setStatus("not connected ❌ (rate-limited by spamming, or this network blocks ntfy.sh — wait a bit, or switch to Firebase)", false);
   }
 
-  let lastWarn = 0;
-  function post(msg) {
-    return fetch(NTFY, { method: "POST", body: JSON.stringify(msg) }).catch(() => {
-      if (!isAdmin() || Date.now() - lastWarn < 30000) return;
-      lastWarn = Date.now();
-      MG.toast("⚠️", "Couldn't reach everyone", "Only you saw that. This network may block ntfy.sh.");
-    });
+  // Cooldown so nobody can spam powers and break the live connection.
+  const SPAMMY = new Set(["fish","jackpot","golden","golden2","giant","nyan","parade","tornado","maxwells","gift","xp","crowns","confetti","boom","quake","disco","spin","flip","bighead","meow","poke","freeze","give","announce"]);
+  const COOLDOWN_MS = 1200;
+  let lastAct = 0;
+  function cooled() {
+    const now = Date.now();
+    if (now - lastAct < COOLDOWN_MS) { MG.toast("⏳", "Slow down!", "Wait a moment between powers (stops the connection breaking)."); return false; }
+    lastAct = now; return true;
   }
+
   function send(msg, localToo = true) {
+    if (SPAMMY.has(msg.t) && !cooled()) return;
     msg.k = "mg1";
     msg.id = Math.random().toString(36).slice(2) + Date.now().toString(36);
     msg.at = Math.floor(nowSec());
     msg.by = role || "";
     seen.add(msg.id);
     if (localToo) handle(msg, 0);
-    post(msg);
+    if (publishFn) publishFn(msg); else warnFail();
   }
 
   // ---------- Admin Abuse ----------
