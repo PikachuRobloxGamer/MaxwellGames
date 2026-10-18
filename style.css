@@ -255,3 +255,20 @@ html.party { animation: hue 1.2s linear infinite; }
   .topbar { flex-wrap: wrap; }
   .profile-btn { order: 3; }
 }
+
+/* Big credits at the bottom */
+.credits {
+  margin: 120px auto 40px; max-width: 1200px; padding: 60px 16px;
+  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.credits-maxwell { width: 90px; height: auto; animation: bob 2.4s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-10px) rotate(-4deg); } }
+.credits-title {
+  font-size: clamp(2rem, 9.5vw, 7.5rem); font-weight: 900; line-height: 1; letter-spacing: 0;
+  color: #fff; text-shadow: 0 0 30px var(--accent), 0 6px 0 rgba(0,0,0,0.35);
+  white-space: nowrap;
+}
+.credits-by {
+  font-size: clamp(1.4rem, 5vw, 3.2rem); font-weight: 800; letter-spacing: 0.08em;
+  color: var(--accent-2); text-shadow: 0 4px 0 rgba(0,0,0,0.35);
+}

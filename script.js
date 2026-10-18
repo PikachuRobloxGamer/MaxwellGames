@@ -237,7 +237,7 @@ let exploding = false;
 function explodeThenOpen(card, game) {
   if (exploding) return;
   exploding = true;
-  playBoom();
+  playExplosionSound();
 
   const rect = card.getBoundingClientRect();
   const size = Math.max(rect.width, rect.height) * 1.8;
@@ -313,6 +313,18 @@ function explodeThenOpen(card, game) {
     }
   }
   requestAnimationFrame(frame);
+}
+
+// Deltarune explosion sound (falls back to the made-up boom if it can't play)
+const explosionSound = new Audio("sounds/deltarune-explosion.mp3");
+explosionSound.preload = "auto";
+function playExplosionSound() {
+  try {
+    const s = explosionSound.cloneNode();
+    s.volume = 0.8;
+    const p = s.play();
+    if (p && p.catch) p.catch(() => playBoom());
+  } catch (e) { playBoom(); }
 }
 
 // Short retro "boom" made in the browser (no sound file needed)
