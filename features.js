@@ -6,7 +6,16 @@
   const $ = (id) => document.getElementById(id);
 
   // ---------- Save data ----------
-  const SAVE_KEY = "maxwellgames-save-v1";
+  const SAVE_BASE = "maxwellgames-save-v1";
+  let activeProfile = "";
+  try { activeProfile = localStorage.getItem("mg-profile") || ""; } catch (e) {}
+  const SAVE_KEY = activeProfile ? SAVE_BASE + "::" + activeProfile : SAVE_BASE;
+  // First time you log into your own code, bring your current progress with you.
+  try {
+    if (activeProfile && !localStorage.getItem(SAVE_KEY) && localStorage.getItem(SAVE_BASE)) {
+      localStorage.setItem(SAVE_KEY, localStorage.getItem(SAVE_BASE));
+    }
+  } catch (e) {}
   const DEFAULT = {
     treats: 0, xp: 0, caught: 0, golden: 0, maxwellClicks: 0,
     opened: [], tabs: [], owned: ["p-3", "c-cat", "t-purple"],
@@ -883,6 +892,30 @@
     resetSave() { save = JSON.parse(JSON.stringify(DEFAULT)); persist(); applyLooks(); applyMaxwell(); updateHud(); },
     tierImg, TIERS
   };
+
+  // ---------- Account (log in with your own code) ----------
+  (function accountUI() {
+    const btn = $("accountBtn");
+    if (!btn) return;
+    btn.classList.toggle("logged", !!activeProfile);
+    btn.title = activeProfile ? "Your account is loaded — click to switch" : "Log into your account with your code";
+    btn.onclick = () => {
+      $("accountStatus").textContent = activeProfile ? "✅ Your account is loaded." : "You're on the shared (guest) account.";
+      $("accountInput").value = "";
+      $("accountMsg").textContent = "";
+      $("accountModal").classList.remove("hidden");
+      setTimeout(() => $("accountInput").focus(), 50);
+    };
+    $("accountCancel").onclick = () => $("accountModal").classList.add("hidden");
+    $("accountGuest").onclick = () => { try { localStorage.removeItem("mg-profile"); } catch (e) {} location.reload(); };
+    $("accountForm").onsubmit = (e) => {
+      e.preventDefault();
+      const code = $("accountInput").value.trim();
+      if (!code) { $("accountMsg").textContent = "Type your code first."; return; }
+      try { localStorage.setItem("mg-profile", code); } catch (er) {}
+      location.reload();
+    };
+  })();
 
   // ---------- Start ----------
   applyLooks();

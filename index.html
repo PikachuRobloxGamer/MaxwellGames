@@ -45,6 +45,7 @@
     <a class="yt-btn go yt-link" href="https://www.youtube.com/@GamesOn-786" target="_blank" rel="noopener noreferrer" title="Games On (GamesOn786) on YouTube">
       <span class="yt-logo">▶</span> <span class="yt-txt">Games On</span>
     </a>
+    <button id="accountBtn" class="lock-btn account-btn" title="Log into your account with your code">👤</button>
     <button id="jukeboxBtn" class="jukebox-btn" title="Play the Maxwell the Cat Theme">🎶</button>
     <button id="lockBtn" class="lock-btn" title="Owner login" aria-label="Owner login">🔒</button>
       <!-- Admin Abuse banner (everyone sees this) -->
@@ -144,6 +145,23 @@
   </div>
 
   <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <!-- Account login (your own code) -->
+  <div id="accountModal" class="panel hidden" role="dialog" aria-label="Account login">
+    <div class="panel-box lock-box">
+      <div class="lock-big">👤</div>
+      <h2>Your Account</h2>
+      <p class="panel-sub" id="accountStatus"></p>
+      <p class="panel-sub">Type your account code to load your treats, level, and Maxwell. Keep your code secret so only you can get into your account.</p>
+      <form id="accountForm">
+        <input type="text" id="accountInput" placeholder="Your account code (e.g. 12A)" autocomplete="off">
+        <button class="btn" type="submit">Load my account</button>
+      </form>
+      <p id="accountMsg" class="lock-msg"></p>
+      <button class="btn" id="accountGuest" type="button">Use shared/guest account</button>
+      <button class="btn" id="accountCancel" type="button">Cancel</button>
+    </div>
+  </div>
 
   <!-- Owner login -->
   <div id="lockModal" class="panel hidden" role="dialog" aria-label="Owner login">

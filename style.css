@@ -608,3 +608,4 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .whack-hint { color: var(--muted); font-size: 0.85rem; margin: 12px 0; }
 .whack-final { font-size: 1.1rem; margin: 10px 0; }
 .whack-box h2 { font-size: 1.6rem; margin-bottom: 6px; }
+.account-btn.logged { border-color: #3ee08f; box-shadow: 0 0 10px rgba(62,224,143,0.5); }
