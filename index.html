@@ -17,6 +17,7 @@
     <nav class="tabs">
       <button class="tab active" data-tab="games">Games</button>
       <button class="tab" data-tab="proxies">Proxies</button>
+      <button class="tab" data-tab="sounds">Soundboard</button>
     </nav>
     <input type="search" id="search" placeholder="Search games..." autocomplete="off">
   </header>
@@ -26,6 +27,13 @@
     <nav id="categories" class="categories"></nav>
     <p id="status" class="status">Loading...</p>
     <section id="grid" class="grid"></section>
+  </main>
+
+  <!-- Soundboard view -->
+  <main id="soundView" class="hidden">
+    <p id="soundStatus" class="status">Loading sounds...</p>
+    <section id="soundGrid" class="sound-grid"></section>
+    <p class="sound-credit">Sounds powered by <a href="https://www.myinstants.com" target="_blank" rel="noopener noreferrer">Myinstants.com</a></p>
   </main>
 
   <!-- Player view -->

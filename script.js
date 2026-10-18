@@ -44,12 +44,66 @@ async function loadTab(name) {
 }
 
 async function loadAll() {
-  await Promise.all(Object.keys(TABS).map(loadTab));
+  await Promise.all([...Object.keys(TABS).map(loadTab), loadSounds()]);
+  if (location.hash === "#sounds") return switchTab("sounds");
   if (!openFromHash()) switchTab(location.hash === "#proxies" ? "proxies" : "games");
+}
+
+// ===== Soundboard (Myinstants embeds) =====
+let sounds = [], soundsLoaded = false;
+const soundView = $("soundView");
+
+async function loadSounds() {
+  try {
+    const res = await fetch("sounds.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    sounds = data.sounds || [];
+  } catch (err) {
+    $("soundStatus").textContent = "Couldn't load sounds.json.";
+    console.error(err);
+  }
+}
+
+function renderSounds() {
+  const q = searchEl.value.trim().toLowerCase();
+  const list = sounds.filter((s) => !q || s.title.toLowerCase().includes(q));
+  $("soundStatus").textContent = list.length ? `${list.length} sound${list.length === 1 ? "" : "s"}` : "No sounds found.";
+  const gridEl = $("soundGrid");
+  gridEl.innerHTML = "";
+  list.forEach((s) => {
+    const box = document.createElement("div");
+    box.className = "sound";
+    const f = document.createElement("iframe");
+    f.src = `https://www.myinstants.com/instant/${encodeURIComponent(s.myinstants)}/embed/`;
+    f.title = s.title;
+    f.loading = "lazy";
+    f.scrolling = "no";
+    const name = document.createElement("div");
+    name.className = "sound-name";
+    name.textContent = s.title;
+    box.append(f, name);
+    gridEl.appendChild(box);
+  });
 }
 
 function switchTab(name) {
   currentTab = name;
+  if (name === "sounds") {
+    searchEl.value = "";
+    searchEl.placeholder = "Search sounds...";
+    document.querySelectorAll(".tab").forEach((t) =>
+      t.classList.toggle("active", t.dataset.tab === name));
+    if (!playerView.classList.contains("hidden")) frame.src = "about:blank";
+    playerView.classList.add("hidden");
+    libraryView.classList.add("hidden");
+    soundView.classList.remove("hidden");
+    history.replaceState(null, "", "#sounds");
+    renderSounds();
+    return;
+  }
+  soundView.classList.add("hidden");
+  libraryView.classList.remove("hidden");
   activeCategory = "All";
   searchEl.value = "";
   searchEl.placeholder = name === "proxies" ? "Search proxies..." : "Search games...";
@@ -147,7 +201,7 @@ function closeGame() {
 
 function openFromHash() {
   const h = decodeURIComponent(location.hash.slice(1));
-  if (!h || h === "proxies") return false;
+  if (!h || h === "proxies" || h === "sounds") return false;
   const isProxy = h.startsWith("proxy-");
   const name = isProxy ? "proxies" : "games";
   const id = isProxy ? h.slice(6) : h;
@@ -282,6 +336,7 @@ function playBoom() {
 
 // Events
 searchEl.addEventListener("input", () => {
+  if (currentTab === "sounds") return renderSounds();
   if (!playerView.classList.contains("hidden")) closeGame();
   renderGrid();
 });
