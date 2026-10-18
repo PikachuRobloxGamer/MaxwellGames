@@ -51,6 +51,7 @@
     document.body.classList.toggle("is-owner", role === "owner");
     document.body.classList.toggle("is-sami", role === "sami");
     document.querySelectorAll(".owner-only").forEach((el) => el.classList.toggle("hidden", !isOwner()));
+    document.querySelectorAll(".sami-note").forEach((el) => el.classList.toggle("hidden", role !== "sami"));
     $("adminTitle").textContent = role === "sami" ? "GamesOn786 Admin Panel" : "Owner Admin Panel";
     $("adminIcon").textContent = r ? r.icon : "👑";
   }
@@ -465,7 +466,7 @@
   const samiToggle = $("samiToggle"); if (samiToggle) samiToggle.onclick = () => { if (!isOwner()) return; const turnOn = samiOff(); send({ t: "setsami", on: turnOn }); MG.toast(turnOn ? "✅" : "⛔", turnOn ? "Sami's powers ON" : "Sami's powers OFF", ""); if ($("samiState")) $("samiState").textContent = turnOn ? "ON" : "OFF (turned off by owner)"; };
 
   // ---------- Admin panel ----------
-  function openAdmin() { $("adminModal").classList.remove("hidden"); renderPowers(); updateLock(); }
+  function openAdmin() { $("adminModal").classList.remove("hidden"); renderPowers(); updateLock(); fillTierSel(); }
   $("adminClose").onclick = () => $("adminModal").classList.add("hidden");
   $("adminModal").addEventListener("click", (e) => { if (e.target.id === "adminModal") $("adminModal").classList.add("hidden"); });
   $("abuseStart").onclick = () => { if (isAdmin()) send({ t: "abuse", dur: Number($("abuseDur").value), mult: Number($("abuseMultSel").value) }); };
@@ -489,11 +490,16 @@
   $("giveMe").onclick = () => { if (isAdmin()) { MG.give(1000); MG.toast(ROLES[role].icon, "+1000 🐟", "Admin perks!"); } };
   $("maxMe").onclick = () => { if (isAdmin()) { MG.maxLevel(); MG.toast(ROLES[role].icon, "Level 10!", "Admin perks!"); } };
   $("allAch").onclick = () => { if (isOwner()) { MG.unlockAllAch(); MG.toast("👑", "All achievements unlocked!", "Owner perks!"); } };
+  function fillTierSel() {
+    const sel = $("tierSel");
+    sel.innerHTML = "";
+    MG.skinList().forEach((sk) => { const o = document.createElement("option"); o.value = sk.id; o.textContent = sk.name; sel.appendChild(o); });
+  }
   $("setTier").onclick = () => {
-    if (!isOwner()) return;
-    const to = Number($("tierSel").value), from = MG.save.asc;
-    MG.setAsc(to);
-    MG.evolve(from, to, `Owner powers! Your Maxwell is now ${MG.TIERS[to].name} Maxwell!`);
+    if (!isAdmin()) return;
+    const sel = MG.skinList().find((s) => s.id === $("tierSel").value);
+    const name = sel ? sel.name.replace(/^[^ ]+ /, "") : "Maxwell";
+    MG.pickAscension($("tierSel").value, `${ROLES[role].icon} Admin powers! Your Maxwell is now ${sel ? sel.name.replace(/^[^\w]+\s*/, "") : "set"}!`);
     $("adminModal").classList.add("hidden");
   };
   $("resetMe").onclick = (e) => {
@@ -502,7 +508,7 @@
     if (b.dataset.sure) { MG.resetSave(); MG.setRole(role); b.textContent = "Reset my save"; delete b.dataset.sure; MG.toast("🧹", "Save reset", ""); }
     else { b.dataset.sure = "1"; b.textContent = "Click again to reset"; }
   };
-  MG.TIERS.forEach((t, i) => { const o = document.createElement("option"); o.value = i; o.textContent = `${i}. ${t.name} Maxwell`; $("tierSel").appendChild(o); });
+  fillTierSel();
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") { $("adminModal").classList.add("hidden"); $("lockModal").classList.add("hidden"); } });
 
   // ---------- Loading screen ----------
