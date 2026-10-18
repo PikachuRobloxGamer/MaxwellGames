@@ -11,7 +11,8 @@
     treats: 0, xp: 0, caught: 0, golden: 0, maxwellClicks: 0,
     opened: [], tabs: [], owned: ["p-3", "c-cat", "t-purple"],
     equip: { particle: "p-3", cursor: "c-cat", theme: "t-purple" },
-    ach: [], lastDaily: "", streak: 0, playSeconds: 0, bought: 0
+    ach: [], lastDaily: "", streak: 0, playSeconds: 0, bought: 0,
+    asc: 0, rebirths: 0, ascCaught: 0, yt: 0, abuses: 0
   };
   let save;
   try { save = Object.assign({}, DEFAULT, JSON.parse(localStorage.getItem(SAVE_KEY) || "{}")); }
@@ -20,10 +21,16 @@
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
 
   // ---------- Levels ----------
-  const levelFor = (xp) => Math.floor(Math.sqrt(xp / 15)) + 1;
-  const xpForLevel = (lv) => 15 * (lv - 1) * (lv - 1);
+  // Every ascension makes levels harder to get.
+  const ascMul = () => 1 + 0.6 * (save.asc || 0);
+  const levelFor = (xp) => Math.floor(Math.sqrt(xp / (15 * ascMul()))) + 1;
+  const xpForLevel = (lv) => 15 * ascMul() * (lv - 1) * (lv - 1);
+  // Bonus from rebirths (+25% each) and from live Admin Abuse events.
+  let eventMult = 1;
+  const treatMult = () => eventMult * (1 + 0.25 * (save.rebirths || 0));
 
   function addTreats(n, x, y) {
+    n = Math.max(1, Math.round(n * treatMult()));
     const before = levelFor(save.xp);
     save.treats += n;
     save.xp += n;
@@ -131,7 +138,12 @@
     { id: "gamer",   icon: "⏱️", name: "Gamer Moment",      desc: "Play games for 10 minutes total", test: () => save.playSeconds >= 600 },
     { id: "gamer2",  icon: "🕹️", name: "No Life (jk)",      desc: "Play games for 1 hour total",     test: () => save.playSeconds >= 3600 },
     { id: "streak3", icon: "📅", name: "Regular",           desc: "Get a 3 day login streak",        test: () => save.streak >= 3 },
-    { id: "night",   icon: "🌙", name: "Night Owl",         desc: "Visit between midnight and 5am",  test: () => new Date().getHours() < 5 },
+    { id: "night",   icon: "🌙", name: "Night Owl",         desc: "Visit between midnight and 5am (bonus)", bonus: true, test: () => new Date().getHours() < 5 },
+    { id: "yt",      icon: "▶️", name: "Subscriber",        desc: "Visit Pikachu Roblox Gamer on YouTube (bonus)", bonus: true, test: () => save.yt >= 1 },
+    { id: "abuse",   icon: "🚨", name: "Witness",           desc: "Be on the site during an Admin Abuse (bonus)", bonus: true, test: () => save.abuses >= 1 },
+    { id: "asc1",    icon: "✨", name: "Ascended",          desc: "Ascend your Maxwell (bonus)",      bonus: true, test: () => save.asc >= 1 || save.rebirths >= 1 },
+    { id: "inv",     icon: "🔄", name: "Inverted",          desc: "Reach Inverted Maxwell (bonus)",   bonus: true, test: () => save.asc >= 9 || save.rebirths >= 1 },
+    { id: "reborn",  icon: "♾️", name: "Reborn",            desc: "Rebirth for the first time (bonus)", bonus: true, test: () => save.rebirths >= 1 },
     { id: "konami",  icon: "🕹️", name: "Secret Code",       desc: "??? (an old-school cheat code)",  secret: true, test: () => save.ach.includes("konami") },
     { id: "meow",    icon: "🙀", name: "Typed it",          desc: "??? (type a cat word anywhere)",   secret: true, test: () => save.ach.includes("meow") }
   ];
@@ -262,9 +274,17 @@
     function setStyle(s) { style = s; parts.forEach((p, i) => { if (i % 2 === 0) Object.assign(p, make(true)); }); }
     function partyMode(frames) { party = frames; }
     function burst(n) { for (let i = 0; i < n; i++) parts.push(make(false)); setTimeout(() => parts.splice(COUNT), 12000); }
+    function goldenStorm(n) {
+      for (let i = 0; i < n; i++) {
+        const p = make(false);
+        Object.assign(p, { golden: true, glyph: ":3", size: 26, alpha: 1, y: -40 - Math.random() * 500 });
+        parts.push(p);
+      }
+      setTimeout(() => parts.splice(COUNT), 15000);
+    }
     resize(); parts = Array.from({ length: COUNT }, () => make(true));
     addEventListener("resize", resize); tick();
-    return { catchAt, setStyle, partyMode, burst };
+    return { catchAt, setStyle, partyMode, burst, goldenStorm };
   })();
 
   // Clicking empty space catches :3s (not when clicking buttons, cards, etc.)
@@ -272,7 +292,7 @@
     if (e.target.closest("button, a, input, .card, .sound, iframe, .panel, .player-bar, .frame-wrap")) return;
     const p = particles.catchAt(e.clientX, e.clientY);
     if (!p) return;
-    save.caught++;
+    save.caught++; save.ascCaught++;
     if (p.golden) { save.golden++; blip(700, 0.25, "triangle", 0.12); addTreats(10, e.clientX, e.clientY); floatText("GOLDEN!", e.clientX, e.clientY - 22, "gold"); }
     else { blip(500 + Math.random() * 300, 0.08); addTreats(1, e.clientX, e.clientY); }
   });
@@ -402,12 +422,16 @@
         el.querySelector(".ach-desc").textContent = a.desc;
         g.appendChild(el);
       });
+    } else if (panelTab === "asc") {
+      renderAscend(body);
     } else if (panelTab === "stats") {
       const rows = [
         ["🐟 Treats right now", save.treats], ["⭐ Total XP", save.xp], ["📈 Level", levelFor(save.xp)],
         [":3s caught", save.caught], ["🌟 Golden :3s caught", save.golden], ["🐈‍⬛ Maxwell pets", save.maxwellClicks],
         ["🎮 Different games/proxies opened", save.opened.length], ["⏱️ Time playing", Math.floor(save.playSeconds / 60) + " min"],
-        ["📅 Login streak", save.streak + " days"], ["🛍️ Shop items bought", save.bought]
+        ["📅 Login streak", save.streak + " days"], ["🛍️ Shop items bought", save.bought],
+        ["✨ Ascension", TIERS[save.asc].name + " Maxwell"], ["♾️ Rebirths", save.rebirths + " (+" + (save.rebirths * 25) + "% treats)"],
+        ["🚨 Admin Abuses seen", save.abuses]
       ];
       const t = document.createElement("div"); t.className = "stats";
       rows.forEach(([k, v]) => { const r = document.createElement("div"); r.innerHTML = "<span></span><b></b>"; r.querySelector("span").textContent = k; r.querySelector("b").textContent = v; t.appendChild(r); });
@@ -428,6 +452,8 @@
         <li><b>Unlock achievements.</b> Each one gives +20 🐟.</li>
         <li><b>Secrets.</b> There are hidden things to find. Old-school gamers might know a certain code... and cats like it when you type their favorite word.</li>
         <li>Spend treats in the <b>Shop</b> on new falling particles, cursors, colors, and extras.</li>
+        <li><b>Ascend.</b> Reach Level 10 with every main achievement to evolve your Maxwell into a new color. Each ascension makes levels harder. The last one is <b>Inverted Maxwell</b>, then you can <b>Rebirth</b> for a permanent +25% treat bonus.</li>
+        <li><b>Admin Abuse!</b> When the owner starts one, everyone on the site gets bonus treats and special drops.</li>
         <li>Progress is saved in this browser.</li>
       </ul>`;
     }
@@ -438,8 +464,216 @@
   document.querySelectorAll(".ptab").forEach((b) => b.onclick = () => { panelTab = b.dataset.p; renderPanel(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("panel").classList.add("hidden"); });
 
+  // ---------- Ascension ----------
+  const TIERS = [
+    { name: "Classic",   color: "#ffffff" }, { name: "Crimson",   color: "#ff5a6e" },
+    { name: "Sunset",    color: "#ff9a3c" }, { name: "Golden",    color: "#ffd84a" },
+    { name: "Emerald",   color: "#3ee08f" }, { name: "Ocean",     color: "#4fb3ff" },
+    { name: "Galaxy",    color: "#b77bff" }, { name: "Bubblegum", color: "#ff7ad1" },
+    { name: "Rainbow",   color: "#ff6bd6" }, { name: "Inverted",  color: "#e8e9ee" }
+  ];
+  const LAST = TIERS.length - 1;
+  const tierImg = (i) => `images/maxwell-tiers/maxwell-${i}.png`;
+  const needCaught = () => 50 * (save.asc + 1) * (1 + save.rebirths);
+  const mainAch = () => ACH.filter((a) => !a.secret && !a.bonus);
+
+  function ascendChecks() {
+    const lvOk = levelFor(save.xp) >= 10;
+    const missing = mainAch().filter((a) => !save.ach.includes(a.id));
+    const catchOk = save.ascCaught >= needCaught();
+    return { lvOk, missing, catchOk, ready: lvOk && missing.length === 0 && catchOk };
+  }
+
+  function applyMaxwell() {
+    const src = tierImg(save.asc);
+    document.querySelectorAll(".logo-img, .panel-maxwell, .credits-maxwell").forEach((img) => (img.src = src));
+    maxwellImg.src = src;
+    let fav = document.querySelector('link[rel="icon"]');
+    if (fav) fav.href = src;
+    document.body.classList.toggle("tier-rainbow", save.asc === 8);
+    document.body.dataset.tier = save.asc;
+    const badge = $("rebirthBadge");
+    if (badge) badge.textContent = save.rebirths ? "♾️" + save.rebirths : "";
+  }
+
+  function renderAscend(body) {
+    const c = ascendChecks();
+    const cur = TIERS[save.asc], next = TIERS[save.asc + 1];
+    const wrap = document.createElement("div");
+    wrap.className = "asc-wrap";
+    wrap.innerHTML = `
+      <div class="asc-row">
+        <div class="asc-card"><img alt=""><b></b><span>Current</span></div>
+        <div class="asc-arrow">➜</div>
+        <div class="asc-card next"><img alt=""><b></b><span></span></div>
+      </div>
+      <ul class="asc-reqs"></ul>
+      <button class="btn asc-btn"></button>
+      <div class="asc-track"></div>`;
+    const cards = wrap.querySelectorAll(".asc-card");
+    cards[0].querySelector("img").src = tierImg(save.asc);
+    cards[0].querySelector("b").textContent = cur.name + " Maxwell";
+    const reqs = wrap.querySelector(".asc-reqs");
+    const addReq = (ok, text) => { const li = document.createElement("li"); li.className = ok ? "ok" : ""; li.textContent = (ok ? "✅ " : "⬜ ") + text; reqs.appendChild(li); };
+    addReq(c.lvOk, `Reach Level 10 (you're Level ${levelFor(save.xp)})`);
+    addReq(c.catchOk, `Catch ${needCaught()} :3s this ascension (${Math.min(save.ascCaught, needCaught())}/${needCaught()})`);
+    addReq(c.missing.length === 0, c.missing.length ? `Unlock every main achievement (${c.missing.length} left: ${c.missing.slice(0, 4).map((a) => a.name).join(", ")}${c.missing.length > 4 ? "..." : ""})` : "Unlock every main achievement");
+    const btn = wrap.querySelector(".asc-btn");
+    if (save.asc < LAST) {
+      cards[1].querySelector("img").src = tierImg(save.asc + 1);
+      cards[1].querySelector("b").textContent = next.name + " Maxwell";
+      cards[1].querySelector("span").textContent = "Next";
+      if (!c.ready) cards[1].classList.add("locked");
+      btn.textContent = c.ready ? `✨ ASCEND into ${next.name} Maxwell ✨` : "Not ready yet";
+      btn.disabled = !c.ready;
+      btn.onclick = () => ascend();
+    } else {
+      cards[1].querySelector("img").src = tierImg(0);
+      cards[1].querySelector("b").textContent = "Rebirth";
+      cards[1].querySelector("span").textContent = `Rebirth #${save.rebirths + 1} · +25% treats forever`;
+      if (!c.ready) cards[1].classList.add("locked");
+      btn.textContent = c.ready ? "♾️ REBIRTH ♾️" : "Not ready yet";
+      btn.disabled = !c.ready;
+      btn.onclick = () => rebirth();
+    }
+    const track = wrap.querySelector(".asc-track");
+    TIERS.forEach((t, i) => {
+      const d = document.createElement("div");
+      d.className = "asc-pip" + (i < save.asc ? " done" : i === save.asc ? " now" : "");
+      d.title = t.name;
+      const im = document.createElement("img"); im.src = tierImg(i); im.alt = t.name;
+      d.appendChild(im); track.appendChild(d);
+    });
+    if (save.rebirths) {
+      const p = document.createElement("p"); p.className = "panel-note";
+      p.textContent = `♾️ Rebirths: ${save.rebirths} · permanent treat bonus +${save.rebirths * 25}%`;
+      wrap.appendChild(p);
+    }
+    body.appendChild(wrap);
+  }
+
+  function ascend() {
+    if (!ascendChecks().ready || save.asc >= LAST) return;
+    const from = save.asc, to = save.asc + 1;
+    $("panel").classList.add("hidden");
+    playEvolution(tierImg(from), tierImg(to), TIERS[to].color, `Congratulations! Your ${TIERS[from].name} Maxwell ascended into ${TIERS[to].name} Maxwell!`, () => {
+      save.asc = to; save.xp = 0; save.ascCaught = 0;
+      persist(); applyMaxwell(); checkAch(); updateHud();
+    });
+  }
+
+  function rebirth() {
+    if (!ascendChecks().ready || save.asc < LAST) return;
+    $("panel").classList.add("hidden");
+    playEvolution(tierImg(LAST), tierImg(0), "#ffd84a", `REBIRTH! Your Maxwell was reborn. Permanent bonus: +${(save.rebirths + 1) * 25}% treats!`, () => {
+      save.rebirths++; save.asc = 0; save.xp = 0; save.treats = 0; save.ascCaught = 0;
+      save.ach = save.ach.filter((id) => ACH.find((a) => a.id === id && (a.bonus || a.secret)));
+      save.caught = 0; save.golden = 0; save.maxwellClicks = 0; save.opened = []; save.playSeconds = 0; save.bought = 0;
+      persist(); applyMaxwell(); checkAch(); updateHud();
+    });
+  }
+
+  // Pokémon GO-style evolution animation
+  function playEvolution(fromSrc, toSrc, glow, message, done) {
+    const ov = document.createElement("div");
+    ov.className = "evo";
+    ov.style.setProperty("--glow", glow);
+    ov.innerHTML = `
+      <div class="evo-rays"></div>
+      <div class="evo-stage">
+        <div class="evo-ring"></div><div class="evo-ring r2"></div>
+        <img class="evo-img" alt="">
+      </div>
+      <div class="evo-sparks"></div>
+      <div class="evo-flash"></div>
+      <div class="evo-text"></div>
+      <button class="btn evo-ok">OK</button>`;
+    document.body.appendChild(ov);
+    const img = ov.querySelector(".evo-img"), text = ov.querySelector(".evo-text");
+    img.src = fromSrc;
+    text.textContent = "What? Your Maxwell is ascending!";
+    requestAnimationFrame(() => ov.classList.add("show"));
+
+    // rising sparkles
+    const sparks = ov.querySelector(".evo-sparks");
+    const sparkTimer = setInterval(() => {
+      const s = document.createElement("i");
+      s.style.left = 30 + Math.random() * 40 + "%";
+      s.style.animationDuration = 1 + Math.random() * 1.2 + "s";
+      sparks.appendChild(s);
+      setTimeout(() => s.remove(), 2400);
+    }, 70);
+
+    // chime that climbs higher
+    let note = 0;
+    const chime = () => { blip(330 * Math.pow(1.06, note), 0.18, "sine", 0.07); note++; };
+
+    setTimeout(() => img.classList.add("silhouette"), 1300);
+    // flip between old and new forms, faster and faster
+    let flips = 0, delay = 520, showingNew = false;
+    function flip() {
+      showingNew = !showingNew;
+      img.src = showingNew ? toSrc : fromSrc;
+      img.classList.toggle("big", showingNew);
+      chime();
+      flips++;
+      delay = Math.max(55, delay * 0.82);
+      if (flips < 22) setTimeout(flip, delay);
+      else finish();
+    }
+    setTimeout(flip, 2200);
+
+    function finish() {
+      clearInterval(sparkTimer);
+      ov.classList.add("flash");
+      boomSound(0.12);
+      setTimeout(() => {
+        img.src = toSrc;
+        img.classList.remove("silhouette", "big");
+        ov.classList.add("revealed");
+        text.textContent = message;
+        meow();
+        for (let i = 0; i < 40; i++) {
+          const s = document.createElement("i");
+          s.className = "burst";
+          const a = Math.random() * Math.PI * 2, d = 120 + Math.random() * 220;
+          s.style.setProperty("--dx", Math.cos(a) * d + "px");
+          s.style.setProperty("--dy", Math.sin(a) * d + "px");
+          sparks.appendChild(s);
+        }
+        done();
+      }, 450);
+    }
+    ov.querySelector(".evo-ok").onclick = () => { ov.classList.remove("show"); setTimeout(() => ov.remove(), 400); };
+  }
+
+  // ---------- YouTube channel ----------
+  const YT = "https://www.youtube.com/channel/UCXcZ2HP_B3NLLbvnd3QT75A";
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a.yt-link");
+    if (!a) return;
+    save.yt++;
+    if (save.yt === 1) addTreats(50);
+    checkAch(); persist();
+  });
+  setInterval(() => {
+    if (document.hidden) return;
+    toast("▶️", "Subscribe to Pikachu Roblox Gamer!", "Click the red YouTube button at the top to check out the channel.");
+  }, 6 * 60 * 1000);
+
+  // ---------- For the owner / admin code ----------
+  window.MG = {
+    addTreats, toast, floatText, meow, boomSound, particles, unlock, checkAch, updateHud, persist,
+    get save() { return save; },
+    setEventMult(m) { eventMult = m; },
+    sawAbuse() { save.abuses++; checkAch(); persist(); },
+    maxLevel() { save.xp = Math.max(save.xp, xpForLevel(10)); checkAch(); updateHud(); persist(); },
+    give(n) { save.treats += n; save.xp += n; checkAch(); updateHud(); persist(); }
+  };
+
   // ---------- Start ----------
   applyLooks();
+  applyMaxwell();
   updateHud();
   dailyBonus();
   checkAch();

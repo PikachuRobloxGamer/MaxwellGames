@@ -21,14 +21,32 @@
     </nav>
     <input type="search" id="search" placeholder="Search games..." autocomplete="off">
     <button id="profileBtn" class="profile-btn" title="Your treats, level, shop &amp; achievements">
-      <span class="pb-treats">🐟 <b id="treatCount">0</b></span>
+      <span class="pb-treats">🐟 <b id="treatCount">0</b> <span id="rebirthBadge" class="rebirth-badge"></span></span>
       <span class="pb-level">Lv <b id="levelNum">1</b></span>
       <span class="pb-bar"><span id="xpFill"></span></span>
     </button>
+    <a class="yt-btn yt-link" href="https://www.youtube.com/channel/UCXcZ2HP_B3NLLbvnd3QT75A" target="_blank" rel="noopener noreferrer" title="Pikachu Roblox Gamer on YouTube">
+      <span class="yt-logo">▶</span> Subscribe
+    </a>
+    <button id="lockBtn" class="lock-btn" title="Owner login" aria-label="Owner login">🔒</button>
+      <!-- Admin Abuse banner (everyone sees this) -->
+  <div id="abuseBar" class="abuse-bar hidden" role="status">
+    <span class="abuse-siren">🚨</span>
+    <span class="abuse-text"><b>ADMIN ABUSE</b> by Pikachu Roblox Gamer! <span id="abuseMult">2x</span> treats · <span id="abuseTime">1:00</span></span>
+    <button id="abuseSound" class="btn abuse-sound">🔇 Turn on OIIA</button>
+    <span class="abuse-siren">🚨</span>
+  </div>
   </header>
+
+  <div id="announce" class="announce hidden"></div>
 
   <!-- Library view -->
   <main id="libraryView">
+    <a class="yt-banner yt-link" href="https://www.youtube.com/channel/UCXcZ2HP_B3NLLbvnd3QT75A" target="_blank" rel="noopener noreferrer">
+      <span class="yt-banner-logo">▶</span>
+      <span class="yt-banner-text"><b>Pikachu Roblox Gamer</b> on YouTube. Subscribe for videos! <small>(+50 🐟 the first time you visit)</small></span>
+      <span class="yt-banner-btn">SUBSCRIBE</span>
+    </a>
     <nav id="categories" class="categories"></nav>
     <p id="status" class="status">Loading...</p>
     <section id="grid" class="grid"></section>
@@ -39,6 +57,7 @@
     <nav id="soundCats" class="categories"></nav>
     <p id="soundStatus" class="status">Loading sounds...</p>
     <section id="soundGrid" class="sound-grid"></section>
+    <a class="yt-inline yt-link" href="https://www.youtube.com/channel/UCXcZ2HP_B3NLLbvnd3QT75A" target="_blank" rel="noopener noreferrer">▶ Like the sounds? Subscribe to <b>Pikachu Roblox Gamer</b>!</a>
     <p class="sound-credit">Sounds powered by <a href="https://www.myinstants.com" target="_blank" rel="noopener noreferrer">Myinstants.com</a></p>
   </main>
 
@@ -56,13 +75,15 @@
       <iframe id="gameFrame" title="Game" allow="fullscreen; autoplay; gamepad; pointer-lock" allowfullscreen></iframe>
     </div>
     <p id="playerDesc" class="player-desc"></p>
+    <a class="yt-inline yt-link" href="https://www.youtube.com/channel/UCXcZ2HP_B3NLLbvnd3QT75A" target="_blank" rel="noopener noreferrer">▶ Having fun? Subscribe to <b>Pikachu Roblox Gamer</b> on YouTube!</a>
   </main>
 
   <footer class="footer">
     <div class="credits">
       <img src="maxwell.png" alt="Maxwell the cat" class="credits-maxwell">
       <h2 class="credits-title">MAXWELLGAMES</h2>
-      <p class="credits-by">MADE BY ZAIDEN H.</p>
+      <a class="credits-by yt-link" href="https://www.youtube.com/channel/UCXcZ2HP_B3NLLbvnd3QT75A" target="_blank" rel="noopener noreferrer">POWERED BY PIKACHU ROBLOX GAMER</a>
+      <a class="yt-banner-btn credits-sub yt-link" href="https://www.youtube.com/channel/UCXcZ2HP_B3NLLbvnd3QT75A" target="_blank" rel="noopener noreferrer">▶ SUBSCRIBE ON YOUTUBE</a>
     </div>
   </footer>
 
@@ -73,6 +94,7 @@
         <img src="maxwell.png" alt="" class="panel-maxwell">
         <div>
           <h2>Your Maxwell Profile</h2>
+          <a class="panel-yt yt-link" href="https://www.youtube.com/channel/UCXcZ2HP_B3NLLbvnd3QT75A" target="_blank" rel="noopener noreferrer">▶ Pikachu Roblox Gamer on YouTube</a>
           <p class="panel-sub">Lv <b id="pLevel">1</b> · <b id="pTreats">0</b> 🐟 treats · <span id="pXp"></span></p>
         </div>
         <button id="panelClose" class="btn panel-x" aria-label="Close">✕</button>
@@ -80,6 +102,7 @@
       <nav class="panel-tabs">
         <button class="ptab active" data-p="shop">🛒 Shop</button>
         <button class="ptab" data-p="ach">🏆 Achievements</button>
+        <button class="ptab" data-p="asc">✨ Ascend</button>
         <button class="ptab" data-p="stats">📊 Stats</button>
         <button class="ptab" data-p="help">❓ How to earn</button>
       </nav>
@@ -89,7 +112,66 @@
 
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
+  <!-- Owner login -->
+  <div id="lockModal" class="panel hidden" role="dialog" aria-label="Owner login">
+    <div class="panel-box lock-box">
+      <div class="lock-big">🔒</div>
+      <h2>Owner Login</h2>
+      <p class="panel-sub">Only the owner of MaxwellGames knows the code.</p>
+      <form id="lockForm">
+        <input type="password" id="lockInput" placeholder="Enter owner code" autocomplete="off">
+        <button class="btn" type="submit">Unlock</button>
+      </form>
+      <p id="lockMsg" class="lock-msg"></p>
+      <button class="btn" id="lockCancel" type="button">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Owner admin panel -->
+  <div id="adminModal" class="panel hidden" role="dialog" aria-label="Admin panel">
+    <div class="panel-box admin-box">
+      <div class="panel-head">
+        <div class="lock-big">👑</div>
+        <div>
+          <h2>Owner Admin Panel</h2>
+          <p class="panel-sub">Live status: <b id="liveStatus">connecting...</b></p>
+        </div>
+        <button id="adminClose" class="btn panel-x" aria-label="Close">✕</button>
+      </div>
+      <h3>🚨 Admin Abuse (everyone on the site sees it)</h3>
+      <div class="admin-row">
+        <select id="abuseDur">
+          <option value="30">30 seconds</option>
+          <option value="60" selected>1 minute</option>
+          <option value="120">2 minutes</option>
+          <option value="300">5 minutes</option>
+        </select>
+        <select id="abuseMultSel">
+          <option value="2">2x treats</option>
+          <option value="3">3x treats</option>
+          <option value="5">5x treats</option>
+        </select>
+        <button class="btn admin-go" id="abuseStart">🚨 START ADMIN ABUSE</button>
+        <button class="btn" id="abuseStop">🛑 End it</button>
+      </div>
+      <h3>⚡ Abuse powers <small id="powerHint">(start an Admin Abuse to use these)</small></h3>
+      <div id="powerGrid" class="power-grid"></div>
+      <h3>📢 Announcement</h3>
+      <form id="announceForm" class="admin-row">
+        <input id="announceText" maxlength="100" placeholder="Type a message for everyone (100 letters max)">
+        <button class="btn" type="submit">Send</button>
+      </form>
+      <h3>🛠️ Owner tools (just for you)</h3>
+      <div class="admin-row">
+        <button class="btn" id="giveMe">+1000 🐟 for me</button>
+        <button class="btn" id="maxMe">Jump me to Level 10</button>
+        <button class="btn" id="logoutBtn">🔒 Lock owner mode</button>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
   <script src="features.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>
