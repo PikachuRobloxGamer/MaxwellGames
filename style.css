@@ -563,3 +563,48 @@ body.wobble main .card, body.wobble main .sound, body.wobble .topbar > * { anima
 @keyframes swoopUp { to { transform: translateY(-120vh) scale(0.4) rotate(20deg); } }
 @keyframes fadeOut { to { opacity: 0; } }
 @keyframes freezeOut { 0%,70% { background: rgba(8,6,16,0.96); } 100% { background: rgba(8,6,16,0); backdrop-filter: blur(0); } }
+
+/* ===== Jukebox + combo + new powers ===== */
+.jukebox-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #2c3142; background: var(--panel); font-size: 1.1rem; display: grid; place-items: center; flex-shrink: 0; }
+.jukebox-btn:hover { border-color: var(--accent); }
+.jukebox-btn.on { border-color: var(--accent-2); box-shadow: 0 0 12px var(--accent-2); animation: jbSpin 3s linear infinite; }
+@keyframes jbSpin { to { transform: rotate(360deg); } }
+
+.combo-hud { position: fixed; top: 84px; left: 50%; transform: translateX(-50%); z-index: 82; pointer-events: none;
+  padding: 8px 18px; border-radius: 999px; background: rgba(10,10,20,0.85); border: 2px solid #ffd84a; color: #ffd84a;
+  font-weight: 900; font-size: 1.1rem; opacity: 0; transition: opacity 0.2s; }
+.combo-hud.show { opacity: 1; }
+.combo-hud.pop { animation: comboPop 0.25s ease-out; }
+@keyframes comboPop { 0% { transform: translateX(-50%) scale(1.3); } 100% { transform: translateX(-50%) scale(1); } }
+
+.snowflake { position: fixed; top: -20px; z-index: 77; color: #fff; pointer-events: none; animation: snowFall linear forwards; text-shadow: 0 0 6px #fff; }
+@keyframes snowFall { to { transform: translateY(110vh) rotate(360deg); } }
+.fw { position: fixed; width: 6px; height: 6px; border-radius: 50%; z-index: 86; pointer-events: none; animation: fwOut 1.1s ease-out forwards; box-shadow: 0 0 8px currentColor; }
+@keyframes fwOut { to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+.matrix-cv { position: fixed; inset: 0; z-index: 74; pointer-events: none; transition: opacity 0.6s; }
+.rainbow-road { position: fixed; inset: 0; z-index: 75; pointer-events: none;
+  background: linear-gradient(90deg, #ff0040, #ff8a00, #ffe600, #3ee08f, #00b8ff, #7a5cff, #ff5fd2);
+  background-size: 400% 100%; opacity: 0.55; mix-blend-mode: screen; animation: rbRoad 2.6s ease-in-out forwards; }
+@keyframes rbRoad { 0% { transform: translateX(-100%); } 50% { transform: translateX(0); opacity: 0.55; } 100% { transform: translateX(100%); opacity: 0; } }
+html.strobe { animation: strobe 0.12s steps(2) infinite; }
+@keyframes strobe { 50% { filter: invert(1) hue-rotate(180deg); } }
+
+/* ===== Play tab: daily challenge + Whack-a-Maxwell ===== */
+.play-wrap { display: grid; gap: 14px; }
+.daily-card, .whack-card { background: var(--panel); border: 1px solid #2c3142; border-radius: 14px; padding: 16px; text-align: center; }
+.daily-card h3, .whack-card h3 { margin-bottom: 6px; }
+.daily-bar { height: 12px; border-radius: 99px; background: #2c3142; overflow: hidden; margin-top: 10px; }
+.daily-bar span { display: block; height: 100%; background: linear-gradient(90deg, #ffd84a, #3ee08f); transition: width 0.3s; }
+.whack-cat { width: 72px; height: auto; margin-bottom: 4px; }
+
+.whack { position: fixed; inset: 0; z-index: 110; display: grid; place-items: center; background: rgba(6,8,16,0.9); padding: 16px; }
+.whack-box { width: 100%; max-width: 440px; background: var(--bg); border: 1px solid #2c3142; border-radius: 16px; padding: 18px; text-align: center; }
+.whack-top { display: flex; justify-content: space-between; align-items: center; font-weight: 700; margin-bottom: 14px; gap: 8px; }
+.whack-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.hole { aspect-ratio: 1; background: #10131c; border-radius: 14px; overflow: hidden; position: relative; border: 2px solid #22283a; }
+.hole::after { content: ""; position: absolute; left: 10%; right: 10%; bottom: 0; height: 22%; background: #0a0c12; border-radius: 50% 50% 0 0; }
+.hole img { position: absolute; left: 10%; width: 80%; bottom: -100%; transition: bottom 0.12s ease-out; cursor: pointer; }
+.hole.up img { bottom: 8%; }
+.whack-hint { color: var(--muted); font-size: 0.85rem; margin: 12px 0; }
+.whack-final { font-size: 1.1rem; margin: 10px 0; }
+.whack-box h2 { font-size: 1.6rem; margin-bottom: 6px; }

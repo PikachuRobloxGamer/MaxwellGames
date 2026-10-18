@@ -12,7 +12,9 @@
     opened: [], tabs: [], owned: ["p-3", "c-cat", "t-purple"],
     equip: { particle: "p-3", cursor: "c-cat", theme: "t-purple", skin: "sk-auto" },
     ach: [], lastDaily: "", streak: 0, playSeconds: 0, bought: 0,
-    asc: 0, rebirths: 0, ascCaught: 0, yt: 0, abuses: 0
+    asc: 0, rebirths: 0, ascCaught: 0, yt: 0, abuses: 0,
+    comboBest: 0, jukebox: 0, bestWhack: 0, whackPlays: 0,
+    daily: { date: "", goal: 0, base: 0, claimed: false }
   };
   let save;
   try { save = Object.assign({}, DEFAULT, JSON.parse(localStorage.getItem(SAVE_KEY) || "{}")); }
@@ -75,6 +77,11 @@
     { id: "t-gold",   type: "theme",    name: "Golden Maxwell", price: 200, icon: "🟡", color: "#f5b82e" },
     { id: "x-spin",   type: "extra",    name: "Spinning Logo",  price: 100, icon: "💫" },
     { id: "x-trail",  type: "extra",    name: "Sparkle Trail",  price: 180, icon: "✨" },
+    { id: "p-spark",  type: "particle", name: "Rainbow Sparkle",price: 120, icon: "🌈" },
+    { id: "p-snow",   type: "particle", name: "Snowfall",       price: 90,  icon: "❄️" },
+    { id: "t-midnight",type: "theme",   name: "Midnight",       price: 40,  icon: "🌌", color: "#5b6cff" },
+    { id: "t-lava",   type: "theme",    name: "Lava",           price: 50,  icon: "🌋", color: "#ff5324" },
+    { id: "t-mint",   type: "theme",    name: "Mint",           price: 40,  icon: "🌿", color: "#19d39b" },
     // ----- Owner / GamesOn786 exclusives -----
     { id: "o-crown",  type: "particle", name: "Crown Rain",     role: "owner", icon: "👑" },
     { id: "o-cursor", type: "cursor",   name: "Owner Cursor",   role: "owner", icon: "👑" },
@@ -174,6 +181,12 @@
     { id: "gamer2",  icon: "🕹️", name: "No Life (jk)",      desc: "Play games for 1 hour total",     test: () => save.playSeconds >= 3600 },
     { id: "streak3", icon: "📅", name: "Regular",           desc: "Get a 3 day login streak",        test: () => save.streak >= 3 },
     { id: "night",   icon: "🌙", name: "Night Owl",         desc: "Visit between midnight and 5am (bonus)", bonus: true, test: () => new Date().getHours() < 5 },
+    { id: "combo10", icon: "🔥", name: "Combo Master",       desc: "Get a 10x catch combo",           test: () => save.comboBest >= 10 },
+    { id: "combo20", icon: "⚡", name: "Unstoppable",        desc: "Get a 20x catch combo",           test: () => save.comboBest >= 20 },
+    { id: "dj",      icon: "🎵", name: "DJ Maxwell",         desc: "Play the Maxwell theme (bonus)",  bonus: true, test: () => save.jukebox >= 1 },
+    { id: "whack",   icon: "🎯", name: "Whacker",            desc: "Score 15+ in Whack-a-Maxwell",    test: () => save.bestWhack >= 15 },
+    { id: "whack30", icon: "🔨", name: "Whack Pro",          desc: "Score 30+ in Whack-a-Maxwell",    test: () => save.bestWhack >= 30 },
+    { id: "daily",   icon: "📆", name: "Daily Grinder",      desc: "Finish a daily challenge (bonus)", bonus: true, test: () => save.daily && save.daily.claimed },
     { id: "yt",      icon: "▶️", name: "Subscriber",        desc: "Visit a MaxwellGames YouTube channel (bonus)", bonus: true, test: () => save.yt >= 1 },
     { id: "abuse",   icon: "🚨", name: "Witness",           desc: "Be on the site during an Admin Abuse (bonus)", bonus: true, test: () => save.abuses >= 1 },
     { id: "asc1",    icon: "✨", name: "Ascended",          desc: "Ascend your Maxwell (bonus)",      bonus: true, test: () => save.asc >= 1 || save.rebirths >= 1 },
@@ -246,7 +259,7 @@
     const COUNT = 45;
     const STYLES = {
       "p-3": [":3"], "p-fish": ["🐟"], "p-heart": ["❤️", "💖", "💜"], "p-star": ["⭐", "✨", "🌟"],
-      "p-paw": ["🐾"], "p-maxwell": ["MAXWELL"], "o-crown": ["👑", "💎", "MAXWELL"], "p-ghost": ["👻", "⭐", "✨"], "p-mix": [":3", "🐟", "❤️", "⭐", "🐾", "MAXWELL", "😺"]
+      "p-paw": ["🐾"], "p-maxwell": ["MAXWELL"], "o-crown": ["👑", "💎", "MAXWELL"], "p-ghost": ["👻", "⭐", "✨"], "p-spark": ["🌈", "✨", "⭐", "💫"], "p-snow": ["❄️", "❄", "*"], "p-mix": [":3", "🐟", "❤️", "⭐", "🐾", "MAXWELL", "😺"]
     };
     let w, h, parts = [], style = "p-3", party = 0;
 
@@ -328,9 +341,36 @@
     const p = particles.catchAt(e.clientX, e.clientY);
     if (!p) return;
     save.caught++; save.ascCaught++;
-    if (p.golden) { save.golden++; blip(700, 0.25, "triangle", 0.12); addTreats(10, e.clientX, e.clientY); floatText("GOLDEN!", e.clientX, e.clientY - 22, "gold"); }
-    else { blip(500 + Math.random() * 300, 0.08); addTreats(1, e.clientX, e.clientY); }
+    bumpCombo(e.clientX, e.clientY);
+    checkDaily();
+    const comboBonus = comboMult();
+    if (p.golden) { save.golden++; blip(700, 0.25, "triangle", 0.12); addTreats(10 * comboBonus, e.clientX, e.clientY); floatText("GOLDEN!", e.clientX, e.clientY - 22, "gold"); }
+    else { blip(500 + Math.random() * 300 + combo * 20, 0.08); addTreats(1 * comboBonus, e.clientX, e.clientY); }
   });
+
+  // ---------- Combo: catch :3s quickly for a multiplier ----------
+  let combo = 0, comboTimer = null;
+  const comboMult = () => (combo >= 20 ? 5 : combo >= 10 ? 3 : combo >= 5 ? 2 : 1);
+  function bumpCombo(x, y) {
+    combo++;
+    if (combo > save.comboBest) save.comboBest = combo;
+    const m = comboMult();
+    if (m > 1 && combo >= 5) floatText(`COMBO x${m}!`, x, y - 40, "gold");
+    const hud = $("comboHud");
+    if (hud) {
+      hud.textContent = combo > 1 ? `🔥 Combo ${combo}  (x${m} treats)` : "";
+      hud.classList.toggle("show", combo > 1);
+      hud.classList.remove("pop"); void hud.offsetWidth; hud.classList.add("pop");
+    }
+    clearTimeout(comboTimer);
+    comboTimer = setTimeout(resetCombo, 2500);
+    checkAch();
+  }
+  function resetCombo() {
+    combo = 0;
+    const hud = $("comboHud");
+    if (hud) hud.classList.remove("show");
+  }
 
   // ---------- Pet Maxwell (the logo) ----------
   const logoImg = document.querySelector(".logo-img");
@@ -377,6 +417,64 @@
     if (save.playSeconds % 60 === 0) { addTreats(2); toast("🎮", "+2 🐟", "Treats for playing!"); }
     else { checkAch(); persist(); }
   }, 10000);
+
+  // ---------- Daily challenge ----------
+  function todayStr() { return new Date().toDateString(); }
+  function initDaily() {
+    if (save.daily.date !== todayStr()) {
+      const goals = [20, 25, 30, 35];
+      save.daily = { date: todayStr(), goal: goals[Math.floor(Math.random() * goals.length)], base: save.caught, claimed: false };
+      persist();
+    }
+  }
+  function dailyProgress() { return Math.min(save.caught - save.daily.base, save.daily.goal); }
+  function checkDaily() {
+    if (!save.daily.claimed && save.daily.date === todayStr() && dailyProgress() >= save.daily.goal) {
+      save.daily.claimed = true;
+      toast("🎯", "Daily Challenge done!", `+40 🐟 for catching ${save.daily.goal} :3s today!`);
+      addTreats(40);
+    }
+  }
+
+  // ---------- Whack-a-Maxwell mini-game ----------
+  function startWhack() {
+    $("panel").classList.add("hidden");
+    save.whackPlays++;
+    const ov = document.createElement("div");
+    ov.className = "whack";
+    ov.innerHTML = `
+      <div class="whack-box">
+        <div class="whack-top"><span>🎯 Whack-a-Maxwell</span><span>Score: <b id="whackScore">0</b></span><span>⏱️ <b id="whackTime">20</b>s</span></div>
+        <div class="whack-grid" id="whackGrid"></div>
+        <p class="whack-hint">Click the Maxwells as they pop up! Each one = +2 🐟</p>
+        <button class="btn" id="whackQuit">Quit</button>
+      </div>`;
+    document.body.appendChild(ov);
+    const grid = ov.querySelector("#whackGrid");
+    const holes = [];
+    for (let i = 0; i < 9; i++) { const d = document.createElement("div"); d.className = "hole"; const img = document.createElement("img"); img.src = maxwellImg.src; img.alt = "Maxwell"; d.appendChild(img); grid.appendChild(d); holes.push(d); }
+    let score = 0, time = 20, popT, timeT;
+    holes.forEach((h) => h.querySelector("img").onclick = () => {
+      if (!h.classList.contains("up")) return;
+      h.classList.remove("up"); score++; ov.querySelector("#whackScore").textContent = score;
+      addTreats(2); meow(); blip(600, 0.06);
+    });
+    function pop() {
+      const free = holes.filter((h) => !h.classList.contains("up"));
+      if (free.length) { const h = free[Math.floor(Math.random() * free.length)]; h.classList.add("up"); setTimeout(() => h.classList.remove("up"), 650 + Math.random() * 450); }
+      popT = setTimeout(pop, 450 + Math.random() * 400);
+    }
+    function tick() { time--; ov.querySelector("#whackTime").textContent = time; if (time <= 0) end(); }
+    function end() {
+      clearTimeout(popT); clearInterval(timeT);
+      if (score > save.bestWhack) save.bestWhack = score;
+      checkAch(); persist();
+      ov.querySelector(".whack-box").innerHTML = `<h2>⏰ Time!</h2><p class="whack-final">You whacked <b>${score}</b> Maxwells for <b>${score * 2} 🐟</b>!</p><p class="whack-hint">Best: ${save.bestWhack}</p><button class="btn" id="whackClose">Done</button>`;
+      ov.querySelector("#whackClose").onclick = () => ov.remove();
+    }
+    ov.querySelector("#whackQuit").onclick = () => { clearTimeout(popT); clearInterval(timeT); ov.remove(); };
+    pop(); timeT = setInterval(tick, 1000);
+  }
 
   // ---------- Daily bonus ----------
   function dailyBonus() {
@@ -470,6 +568,24 @@
       });
     } else if (panelTab === "asc") {
       renderAscend(body);
+    } else if (panelTab === "play") {
+      initDaily();
+      const d = document.createElement("div"); d.className = "play-wrap";
+      const prog = dailyProgress(), goal = save.daily.goal;
+      d.innerHTML = `
+        <div class="daily-card">
+          <h3>🎯 Daily Challenge</h3>
+          <p>Catch <b>${goal}</b> :3s today — ${save.daily.claimed ? "✅ Done! (+40 🐟)" : `${prog} / ${goal}`}</p>
+          <div class="daily-bar"><span style="width:${Math.round(prog / goal * 100)}%"></span></div>
+        </div>
+        <div class="whack-card">
+          <img src="${maxwellImg.src}" alt="" class="whack-cat">
+          <h3>🎯 Whack-a-Maxwell</h3>
+          <p>Maxwells pop up — click them fast for treats! Best: <b>${save.bestWhack}</b></p>
+          <button class="btn asc-btn" id="playWhack">▶ Play (20s)</button>
+        </div>`;
+      body.appendChild(d);
+      $("playWhack").onclick = startWhack;
     } else if (panelTab === "stats") {
       const rows = [
         ["🐟 Treats right now", save.treats], ["⭐ Total XP", save.xp], ["📈 Level", levelFor(save.xp)],
@@ -477,7 +593,8 @@
         ["🎮 Different games/proxies opened", save.opened.length], ["⏱️ Time playing", Math.floor(save.playSeconds / 60) + " min"],
         ["📅 Login streak", save.streak + " days"], ["🛍️ Shop items bought", save.bought],
         ["✨ Ascension", TIERS[save.asc].name + " Maxwell"], ["♾️ Rebirths", save.rebirths + " (+" + (save.rebirths * 25) + "% treats)"],
-        ["🚨 Admin Abuses seen", save.abuses]
+        ["🚨 Admin Abuses seen", save.abuses],
+        ["🔥 Best combo", save.comboBest + "x"], ["🎯 Whack-a-Maxwell best", save.bestWhack]
       ];
       const t = document.createElement("div"); t.className = "stats";
       rows.forEach(([k, v]) => { const r = document.createElement("div"); r.innerHTML = "<span></span><b></b>"; r.querySelector("span").textContent = k; r.querySelector("b").textContent = v; t.appendChild(r); });
@@ -745,6 +862,7 @@
       if (!$("panel").classList.contains("hidden")) renderPanel();
     },
     unlockAllAch() { ACH.forEach((a) => { if (!save.ach.includes(a.id)) save.ach.push(a.id); }); persist(); updateHud(); },
+    markJukebox() { if (!save.jukebox) { save.jukebox = 1; addTreats(5); } checkAch(); persist(); },
     setAsc(n) { save.asc = Math.max(0, Math.min(LAST, n)); save.xp = 0; persist(); applyMaxwell(); updateHud(); },
     evolve(from, to, msg) { playEvolution(tierImg(from), tierImg(to), TIERS[to].color, msg, () => {}); },
     skinList() {
@@ -771,6 +889,7 @@
   applyMaxwell();
   updateHud();
   dailyBonus();
+  initDaily();
   checkAch();
   persist();
 })();

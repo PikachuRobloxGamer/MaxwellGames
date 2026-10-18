@@ -23,6 +23,7 @@
   <!-- Background -->
   <div class="bg-tint" aria-hidden="true"></div>
   <canvas id="particles" aria-hidden="true"></canvas>
+  <div id="comboHud" class="combo-hud" aria-hidden="true"></div>
 
   <header class="topbar">
     <a href="#" class="logo" id="homeLink"><img src="maxwell.png" alt="Maxwell the cat" class="logo-img">MaxwellGames</a>
@@ -44,12 +45,13 @@
     <a class="yt-btn go yt-link" href="https://www.youtube.com/@GamesOn-786" target="_blank" rel="noopener noreferrer" title="Games On (GamesOn786) on YouTube">
       <span class="yt-logo">▶</span> <span class="yt-txt">Games On</span>
     </a>
+    <button id="jukeboxBtn" class="jukebox-btn" title="Play the Maxwell the Cat Theme">🎶</button>
     <button id="lockBtn" class="lock-btn" title="Owner login" aria-label="Owner login">🔒</button>
       <!-- Admin Abuse banner (everyone sees this) -->
   <div id="abuseBar" class="abuse-bar hidden" role="status">
     <span class="abuse-siren">🚨</span>
     <span class="abuse-text"><b>ADMIN ABUSE</b> by <span id="abuseBy">Pikachu Roblox Gamer</span>! <span id="abuseMult">2x</span> treats · <span id="abuseTime">1:00</span></span>
-    <button id="abuseSound" class="btn abuse-sound">🔇 Turn on OIIA</button>
+    <button id="abuseSound" class="btn abuse-sound">🔊 Music on</button>
     <span class="abuse-siren">🚨</span>
   </div>
   </header>
@@ -133,6 +135,7 @@
         <button class="ptab active" data-p="shop">🛒 Shop</button>
         <button class="ptab" data-p="ach">🏆 Achievements</button>
         <button class="ptab" data-p="asc">✨ Ascend</button>
+        <button class="ptab" data-p="play">🎯 Play</button>
         <button class="ptab" data-p="stats">📊 Stats</button>
         <button class="ptab" data-p="help">❓ How to earn</button>
       </nav>

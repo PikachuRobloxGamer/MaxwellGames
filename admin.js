@@ -14,7 +14,6 @@
   };
   const TOPIC = "maxwellgames-prg-c3fba596c229d851";
   const NTFY = "https://ntfy.sh/" + TOPIC;
-  const OIIA_URL = "https://www.myinstants.com/media/sounds/oiia-oiia-sound.mp3";
   const ROLE_KEY = "maxwellgames-owner";
   const CLIENT_ID = Math.random().toString(36).slice(2, 10);
 
@@ -185,22 +184,44 @@
   }
 
   // ---------- Admin Abuse ----------
-  const oiia = new Audio(OIIA_URL);
-  oiia.loop = true; oiia.volume = 0.5;
-  let soundOn = true, abuseEnd = 0, abuseTimer = null, abuseMult = 2, abuseBy = "owner";
+  let abuseEnd = 0, abuseTimer = null, abuseMult = 2, abuseBy = "owner";
   const abuseActive = () => nowSec() < abuseEnd;
 
-  function playOiia() {
-    if (!soundOn) return;
-    const p = oiia.play();
-    if (p && p.catch) p.catch(() => { $("abuseSound").textContent = "🔇 Tap for OIIA"; });
+  // ---- Maxwell the Cat Theme music (official YouTube embed) ----
+  const MUSIC_ID = "YRvOePz2OqQ", MUSIC_START = 149;
+  let ytPlayer = null, ytReady = false, jukeboxOn = false, musicMuted = false;
+  (function initMusic() {
+    const d = document.createElement("div"); d.id = "ytmusic";
+    d.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;";
+    document.body.appendChild(d);
+    const prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      if (prev) try { prev(); } catch (e) {}
+      ytPlayer = new YT.Player("ytmusic", {
+        videoId: MUSIC_ID,
+        playerVars: { autoplay: 0, start: MUSIC_START, controls: 0, disablekb: 1, playsinline: 1, fs: 0 },
+        events: {
+          onReady: () => { ytReady = true; refreshMusic(); },
+          onStateChange: (e) => { if (e.data === YT.PlayerState.ENDED) { try { ytPlayer.seekTo(MUSIC_START); ytPlayer.playVideo(); } catch (x) {} } }
+        }
+      });
+    };
+    loadScript("https://www.youtube.com/iframe_api").catch(() => {});
+  })();
+  function musicShouldPlay() { return !musicMuted && (jukeboxOn || abuseActive()); }
+  function refreshMusic() {
+    if (ytReady && ytPlayer) {
+      try { if (musicShouldPlay()) { ytPlayer.unMute(); ytPlayer.setVolume(45); ytPlayer.playVideo(); } else { ytPlayer.pauseVideo(); } } catch (e) {}
+    }
+    const jb = $("jukeboxBtn");
+    if (jb) { jb.classList.toggle("on", jukeboxOn); jb.textContent = jukeboxOn ? "🎵" : "🎶"; jb.title = jukeboxOn ? "Stop the Maxwell theme" : "Play the Maxwell the Cat Theme"; }
+    const ab = $("abuseSound");
+    if (ab) ab.textContent = musicMuted ? "🔇 Music off" : "🔊 Music on";
   }
-  oiia.addEventListener("playing", () => { $("abuseSound").textContent = "🔊 Mute OIIA"; });
-  $("abuseSound").onclick = () => {
-    if (!oiia.paused) { soundOn = false; oiia.pause(); $("abuseSound").textContent = "🔇 Turn on OIIA"; }
-    else { soundOn = true; playOiia(); }
-  };
-  document.addEventListener("pointerdown", () => { if (abuseActive() && soundOn && oiia.paused) playOiia(); });
+  const jbBtn = $("jukeboxBtn");
+  if (jbBtn) jbBtn.onclick = () => { jukeboxOn = !jukeboxOn; musicMuted = false; if (jukeboxOn) MG.markJukebox(); refreshMusic(); };
+  $("abuseSound").onclick = () => { musicMuted = !musicMuted; refreshMusic(); };
+  document.addEventListener("pointerdown", () => { if (musicShouldPlay()) refreshMusic(); }, { passive: true });
 
   function startAbuse(endsAt, mult, by) {
     const fresh = !abuseActive();
@@ -211,7 +232,7 @@
     $("abuseBar").className = "abuse-bar by-" + abuseBy;
     document.documentElement.classList.add("party", "abuse");
     MG.particles.partyMode(99999);
-    playOiia();
+    refreshMusic();
     if (fresh) {
       MG.particles.burst(60);
       MG.toast("🚨", `ADMIN ABUSE by ${ROLES[abuseBy].name}!`, `${mult}x treats! +10 🐟 just for being here.`);
@@ -234,7 +255,7 @@
     MG.particles.partyMode(0);
     $("abuseBar").classList.add("hidden");
     document.documentElement.classList.remove("party", "abuse");
-    oiia.pause(); oiia.currentTime = 0;
+    refreshMusic();
     MG.toast("🛑", "Admin Abuse is over", "Thanks for coming!");
     updatePowers();
   }
@@ -261,6 +282,11 @@
     { t: "flip",     icon: "🙃", name: "Upside Down",      info: "Flip for 6s" },
     { t: "bighead",  icon: "🎈", name: "Wobble Mode",      info: "Everything wobbles 8s" },
     { t: "meow",     icon: "🙀", name: "MEOW Blast",       info: "Meow meow meow" },
+    { t: "snow",     icon: "❄️", name: "Snow Storm",       info: "Let it snow" },
+    { t: "fireworks",icon: "🎆", name: "Fireworks",        info: "Boom boom pow" },
+    { t: "matrix",   icon: "💻", name: "Matrix Mode",      info: "Green code rain 12s" },
+    { t: "rainbow",  icon: "🌈", name: "Rainbow Road",     info: "Rainbow sweeps the screen" },
+    { t: "strobe",   icon: "🔆", name: "Strobe Party",     info: "Flashing lights 6s" },
     { t: "poke",     icon: "👻", name: "Pokémon Rain",     info: "Falling Pokémon: +30 🐟 each", role: "sami" },
     { t: "freezeall",icon: "🧊", name: "Freeze Everyone",  info: "Maxwell locks every screen" }
   ];
@@ -326,7 +352,63 @@
       case "meow": MG.meow(); setTimeout(MG.meow, 250); setTimeout(MG.meow, 500); MG.floatText("MEOW!!!", W / 2, H / 2, "big"); break;
       case "maxwells": for (let i = 0; i < 12; i++) setTimeout(() => clickable(maxwellSrc(), 70, 5, "🐈‍⬛ +5"), i * 250); break;
       case "poke": pokeRain(); break;
+      case "snow": snow(); break;
+      case "fireworks": fireworks(); break;
+      case "matrix": matrixRain(); break;
+      case "rainbow": rainbowRoad(); break;
+      case "strobe": document.documentElement.classList.add("strobe"); setTimeout(() => document.documentElement.classList.remove("strobe"), 6000); break;
     }
+  }
+
+  // ---- new visual powers ----
+  function snow() {
+    MG.toast("❄️", "SNOW STORM!", "");
+    for (let i = 0; i < 90; i++) {
+      const s = document.createElement("div"); s.className = "snowflake"; s.textContent = "❄";
+      s.style.left = Math.random() * 100 + "vw";
+      s.style.fontSize = 8 + Math.random() * 18 + "px";
+      s.style.animationDuration = 4 + Math.random() * 5 + "s";
+      s.style.animationDelay = Math.random() * 2 + "s";
+      document.body.appendChild(s); setTimeout(() => s.remove(), 11000);
+    }
+  }
+  function fireworks() {
+    MG.toast("🎆", "FIREWORKS!", "");
+    const colors = ["#ff5fa2", "#ffd84a", "#3ee08f", "#4fb3ff", "#b77bff", "#ff7a00", "#fff"];
+    let shots = 0;
+    const iv = setInterval(() => {
+      const cx = innerWidth * (0.15 + Math.random() * 0.7), cy = innerHeight * (0.15 + Math.random() * 0.5);
+      const col = colors[Math.floor(Math.random() * colors.length)];
+      MG.boomSound(0.06);
+      for (let i = 0; i < 26; i++) {
+        const s = document.createElement("i"); s.className = "fw";
+        const ang = (Math.PI * 2 * i) / 26, dist = 80 + Math.random() * 90;
+        s.style.left = cx + "px"; s.style.top = cy + "px"; s.style.background = col;
+        s.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+        s.style.setProperty("--dy", Math.sin(ang) * dist + "px");
+        document.body.appendChild(s); setTimeout(() => s.remove(), 1200);
+      }
+      if (++shots >= 6) clearInterval(iv);
+    }, 550);
+  }
+  function matrixRain() {
+    MG.toast("💻", "MATRIX MODE", "");
+    const c = document.createElement("canvas"); c.className = "matrix-cv";
+    const ctx = c.getContext("2d"); c.width = innerWidth; c.height = innerHeight;
+    document.body.appendChild(c);
+    const cols = Math.floor(c.width / 16), yv = Array(cols).fill(0);
+    const glyph = "01:3ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜ";
+    const iv = setInterval(() => {
+      ctx.fillStyle = "rgba(0,0,0,0.08)"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.fillStyle = "#3ee08f"; ctx.font = "15px monospace";
+      yv.forEach((y, i) => { ctx.fillText(glyph[Math.floor(Math.random() * glyph.length)], i * 16, y * 16); yv[i] = y * 16 > c.height && Math.random() > 0.975 ? 0 : y + 1; });
+    }, 55);
+    setTimeout(() => { clearInterval(iv); c.style.opacity = 0; setTimeout(() => c.remove(), 600); }, 12000);
+  }
+  function rainbowRoad() {
+    MG.toast("🌈", "RAINBOW ROAD!", "");
+    const r = document.createElement("div"); r.className = "rainbow-road";
+    document.body.appendChild(r); setTimeout(() => r.remove(), 2600);
   }
   function restartClass(el, cls, ms) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), ms); }
   function maxwellSrc() { const l = document.querySelector(".logo-img"); return l ? l.src : "maxwell.png"; }
@@ -465,7 +547,6 @@
     o.querySelector(".freeze-cat").src = maxwellSrc();
     o.querySelector(".freeze-bubble").textContent = text || FREEZE_MSG;
     document.body.appendChild(o);
-    oiia.pause();
     let n = 0;
     o._say = setInterval(() => { if (n++ % 2 === 0) MG.meow(); }, 1400);
     o.addEventListener("click", () => hideFreeze());
@@ -589,7 +670,7 @@
       setTimeout(() => L.remove(), 600);
       MG.meow();
       if (role) welcome(false);
-      if (abuseActive()) playOiia();
+      refreshMusic();
     }
     $("loaderGo").onclick = close;
     L.addEventListener("click", (e) => { if (e.target === L) close(); });
