@@ -124,21 +124,26 @@
   }
 
   async function connectFirebase(FB) {
+    if (!FB.databaseURL) { setStatus("Firebase setup problem: your config has no \"databaseURL\". Add it from the Realtime Database page.", false); throw new Error("no databaseURL"); }
     const V = "10.12.5";
     await loadScript(`https://www.gstatic.com/firebasejs/${V}/firebase-app-compat.js`);
     await loadScript(`https://www.gstatic.com/firebasejs/${V}/firebase-database-compat.js`);
+    setStatus("connecting to Firebase...", false);
     firebase.initializeApp(FB);
     const db = firebase.database();
+    let everConnected = false, blocked = false;
     db.ref(".info/serverTimeOffset").on("value", (s) => { serverOffset = (s.val() || 0) / 1000; });
-    db.ref(".info/connected").on("value", (s) => setStatus(s.val() ? "connected ✅ (Firebase — everyone online sees your powers)" : "connecting (Firebase)...", !!s.val()));
+    db.ref(".info/connected").on("value", (s) => { if (s.val()) { everConnected = true; if (!blocked) setStatus("connected ✅ (Firebase — everyone online sees your powers)", true); } else if (!blocked) setStatus("connecting to Firebase...", false); });
     const msgs = db.ref("mg/msgs");
     msgs.limitToLast(50).on("child_added", (snap) => {
       const m = snap.val(); if (!m || m.k !== "mg1" || seen.has(m.id)) return;
       seen.add(m.id);
       const t = m.ts || (m.at ? m.at * 1000 : Date.now());
       handle(m, Math.max(0, nowSec() - t / 1000));
-    });
-    publishFn = (msg) => { const m = Object.assign({}, msg, { ts: firebase.database.ServerValue.TIMESTAMP }); return msgs.push(m).catch(warnFail); };
+    }, (err) => { blocked = true; setStatus("Firebase connected, but your database RULES are blocking it. Open Realtime Database → Rules and set read and write to true.", false); });
+    publishFn = (msg) => { const m = Object.assign({}, msg, { ts: firebase.database.ServerValue.TIMESTAMP }); return msgs.push(m).catch(() => { setStatus("Firebase can't save messages — check your database Rules allow write.", false); warnFail(); }); };
+    // If nothing connected after a while, tell them the likely fixes.
+    setTimeout(() => { if (!everConnected && !blocked) setStatus("Firebase isn't connecting. Check: (1) databaseURL is exactly right, (2) the Realtime Database was created, (3) rules allow read/write.", false); }, 9000);
     // owner tidies old messages now and then so the database stays small
     if (isOwner()) setInterval(() => { msgs.limitToLast(400).once("value", (s) => { const keys = Object.keys(s.val() || {}); if (keys.length > 300) msgs.limitToLast(300).once("value", (keep) => { const keepSet = new Set(Object.keys(keep.val() || {})); keys.forEach((k) => { if (!keepSet.has(k)) msgs.child(k).remove(); }); }); }); }, 120000);
   }
