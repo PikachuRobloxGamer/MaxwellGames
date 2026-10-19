@@ -23,6 +23,7 @@
     ach: [], lastDaily: "", streak: 0, playSeconds: 0, bought: 0,
     asc: 0, rebirths: 0, ascCaught: 0, yt: 0, abuses: 0,
     comboBest: 0, jukebox: 0, bestWhack: 0, whackPlays: 0,
+    arcadeBest: {}, arcadePlays: 0, spins: 0, lastSpin: "", slotPlays: 0,
     daily: { date: "", goal: 0, base: 0, claimed: false }
   };
   let save;
@@ -201,6 +202,16 @@
     { id: "asc1",    icon: "✨", name: "Ascended",          desc: "Ascend your Maxwell (bonus)",      bonus: true, test: () => save.asc >= 1 || save.rebirths >= 1 },
     { id: "inv",     icon: "🔄", name: "Inverted",          desc: "Reach Inverted Maxwell (bonus)",   bonus: true, test: () => save.asc >= 9 || save.rebirths >= 1 },
     { id: "reborn",  icon: "♾️", name: "Reborn",            desc: "Rebirth for the first time (bonus)", bonus: true, test: () => save.rebirths >= 1 },
+    { id: "arcade1", icon: "🕹️", name: "Arcade Opened",      desc: "Play any Arcade minigame (bonus)", bonus: true, test: () => save.arcadePlays >= 1 },
+    { id: "arcade10",icon: "👾", name: "Arcade Regular",     desc: "Play 10 Arcade rounds (bonus)",    bonus: true, test: () => save.arcadePlays >= 10 },
+    { id: "arcade50",icon: "🏟️", name: "Arcade Addict",      desc: "Play 50 Arcade rounds (bonus)",    bonus: true, test: () => save.arcadePlays >= 50 },
+    { id: "flyer",   icon: "🐦", name: "Maxwell Flyer",      desc: "Score 10+ in Maxwell Flyer (bonus)", bonus: true, test: () => (save.arcadeBest.flyer || 0) >= 10 },
+    { id: "snake",   icon: "🐍", name: "Snake Charmer",      desc: "Score 15+ in Maxwell Snake (bonus)", bonus: true, test: () => (save.arcadeBest.snake || 0) >= 15 },
+    { id: "merge",   icon: "🔢", name: "512 Club",           desc: "Reach a 512 tile in Merge (bonus)", bonus: true, test: () => (save.arcadeBest.merge || 0) >= 512 },
+    { id: "simon",   icon: "🎹", name: "Good Memory",        desc: "Reach round 8 in Simon Meows (bonus)", bonus: true, test: () => (save.arcadeBest.simon || 0) >= 8 },
+    { id: "reaction",icon: "⚡", name: "Quick Paws",         desc: "React in under 250ms (bonus)",     bonus: true, test: () => (save.arcadeBest.reaction || 0) >= 1 },
+    { id: "spin",    icon: "🎡", name: "Lucky Spin",         desc: "Spin the daily wheel (bonus)",     bonus: true, test: () => save.spins >= 1 },
+    { id: "jackpot", icon: "🎰", name: "Jackpot!",           desc: "Hit a slot-machine jackpot (bonus)", bonus: true, test: () => save.ach.includes("jackpot") },
     { id: "konami",  icon: "🕹️", name: "Secret Code",       desc: "??? (an old-school cheat code)",  secret: true, test: () => save.ach.includes("konami") },
     { id: "meow",    icon: "🙀", name: "Typed it",          desc: "??? (type a cat word anywhere)",   secret: true, test: () => save.ach.includes("meow") }
   ];
@@ -346,7 +357,7 @@
 
   // Clicking empty space catches :3s (not when clicking buttons, cards, etc.)
   document.addEventListener("click", (e) => {
-    if (e.target.closest("button, a, input, .card, .sound, iframe, .panel, .player-bar, .frame-wrap")) return;
+    if (e.target.closest("button, a, input, .card, .sound, iframe, .panel, .player-bar, .frame-wrap, .arcade, .evo, .whack, canvas")) return;
     const p = particles.catchAt(e.clientX, e.clientY);
     if (!p) return;
     save.caught++; save.ascCaught++;
@@ -617,7 +628,12 @@
         ["📅 Login streak", save.streak + " days"], ["🛍️ Shop items bought", save.bought],
         ["✨ Ascension", TIERS[save.asc].name + " Maxwell"], ["♾️ Rebirths", save.rebirths + " (+" + (save.rebirths * 25) + "% treats)"],
         ["🚨 Admin Abuses seen", save.abuses],
-        ["🔥 Best combo", save.comboBest + "x"], ["🎯 Whack-a-Maxwell best", save.bestWhack]
+        ["🔥 Best combo", save.comboBest + "x"], ["🎯 Whack-a-Maxwell best", save.bestWhack],
+        ["🕹️ Arcade rounds played", save.arcadePlays || 0],
+        ["🐦 Flyer best", (save.arcadeBest && save.arcadeBest.flyer) || 0],
+        ["🐍 Snake best", (save.arcadeBest && save.arcadeBest.snake) || 0],
+        ["🔢 Merge best tile", (save.arcadeBest && save.arcadeBest.merge) || 0],
+        ["🎡 Wheel spins", save.spins || 0]
       ];
       const t = document.createElement("div"); t.className = "stats";
       rows.forEach(([k, v]) => { const r = document.createElement("div"); r.innerHTML = "<span></span><b></b>"; r.querySelector("span").textContent = k; r.querySelector("b").textContent = v; t.appendChild(r); });
@@ -886,6 +902,22 @@
     },
     unlockAllAch() { ACH.forEach((a) => { if (!save.ach.includes(a.id)) save.ach.push(a.id); }); persist(); updateHud(); },
     markJukebox() { if (!save.jukebox) { save.jukebox = 1; addTreats(5); } checkAch(); persist(); },
+    // ---- Arcade hooks ----
+    arcadeBest(game) { return (save.arcadeBest && save.arcadeBest[game]) || 0; },
+    arcadePlayed() { save.arcadePlays = (save.arcadePlays || 0) + 1; checkAch(); persist(); },
+    arcadeScore(game, score) {
+      if (!save.arcadeBest) save.arcadeBest = {};
+      const best = save.arcadeBest[game] || 0;
+      const isBest = score > best;
+      if (isBest) save.arcadeBest[game] = score;
+      checkAch(); updateHud(); persist();
+      return { best: save.arcadeBest[game], isBest };
+    },
+    flag(id) { if (!save.ach.includes(id)) { save.ach.push(id); persist(); } checkAch(); },
+    spend(n) { if (save.treats < n) return false; save.treats -= n; updateHud(); persist(); return true; },
+    didSpin() { save.spins = (save.spins || 0) + 1; save.lastSpin = new Date().toDateString(); checkAch(); persist(); },
+    canSpinToday() { return save.lastSpin !== new Date().toDateString(); },
+    slotPlayed() { save.slotPlays = (save.slotPlays || 0) + 1; persist(); },
     setAsc(n) { save.asc = Math.max(0, Math.min(LAST, n)); save.xp = 0; persist(); applyMaxwell(); updateHud(); },
     evolve(from, to, msg) { playEvolution(tierImg(from), tierImg(to), TIERS[to].color, msg, () => {}); },
     skinList() {
