@@ -733,31 +733,41 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
   .simon-wrap { grid-template-columns: repeat(2, 92px); grid-auto-rows: 92px; }
 }
 
-/* Satisfying Balls */
-.sball-panel { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 8px; }
-.sball-promptrow { display: flex; gap: 8px; }
-.sball-input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--accent); background: var(--bg); color: var(--text); font-size: 0.9rem; }
-.sball-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.sball-chip { font-size: 0.72rem; padding: 5px 9px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.18); background: var(--panel-hover); color: var(--muted); cursor: pointer; }
+/* ===== Satisfying Balls: AI chatbot ===== */
+.sball-chat { width: 100%; max-width: 480px; display: flex; flex-direction: column; height: min(66vh, 560px); background: #0e1020; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; }
+.sball-chat-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: linear-gradient(135deg, rgba(108,92,231,0.4), rgba(0,206,201,0.3)); border-bottom: 1px solid rgba(255,255,255,0.08); }
+.sball-ai-dot { width: 10px; height: 10px; border-radius: 50%; background: #3ee08f; box-shadow: 0 0 10px #3ee08f; }
+.sball-chat-head b { font-size: 1rem; } .sball-chat-head small { color: var(--muted); margin-left: auto; font-size: 0.72rem; }
+.sball-msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.sball-msg { max-width: 82%; padding: 10px 13px; border-radius: 14px; font-size: 0.9rem; line-height: 1.35; animation: sbmsg .2s ease; }
+@keyframes sbmsg { from { opacity: 0; transform: translateY(6px); } }
+.sball-msg.ai { background: #20233a; align-self: flex-start; border-bottom-left-radius: 4px; }
+.sball-msg.me { background: var(--accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+.sball-typing span { display: inline-block; width: 7px; height: 7px; margin: 0 1px; border-radius: 50%; background: var(--muted); animation: sbtype 1s infinite; }
+.sball-typing span:nth-child(2) { animation-delay: .15s; } .sball-typing span:nth-child(3) { animation-delay: .3s; }
+@keyframes sbtype { 0%,60%,100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-4px); } }
+.sball-suggest { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 8px; }
+.sball-chip { font-size: 0.74rem; padding: 6px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.18); background: #191c30; color: var(--muted); cursor: pointer; text-align: left; }
 .sball-chip:hover { color: var(--text); border-color: var(--accent); }
-.sball-read { font-size: 0.82rem; color: #3ee08f; text-align: center; min-height: 18px; margin: 2px 0; }
-.sball-stage { display: flex; justify-content: center; position: relative; }
-.sball-canvas { background: #0a0c18; border-radius: 14px; border: 2px solid rgba(255,255,255,0.1); max-height: 60vh; }
-.sball-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
-.sball-rec { background: #e8303a; color: #fff; font-weight: 800; }
-.sball-rec:disabled { opacity: 0.7; }
-.sball-fs { background: var(--accent); color: #fff; font-weight: 800; }
-.sball-recnote { font-size: 0.8rem; color: var(--muted); }
+.sball-inputbar { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid rgba(255,255,255,0.08); background: #0b0d1a; }
+.sball-input { flex: 1; padding: 11px 14px; border-radius: 22px; border: 2px solid var(--accent); background: var(--bg); color: var(--text); font-size: 0.9rem; }
+.sball-send { border-radius: 22px; padding: 0 18px; font-weight: 800; background: var(--accent); color: #fff; }
 
-/* Fullscreen Short mode */
-.sball-fs-bar { display: none; }
-.sball-stage:fullscreen, .sball-stage:-webkit-full-screen, .sball-stage.fake-full {
-  background: #000; width: 100vw; height: 100vh; align-items: center; justify-content: center;
-}
-.sball-stage:fullscreen .sball-canvas, .sball-stage:-webkit-full-screen .sball-canvas, .sball-stage.fake-full .sball-canvas {
-  height: 100vh; width: auto; max-height: 100vh; max-width: 100vw; border: none; border-radius: 0;
-}
-.sball-stage.fake-full { position: fixed; inset: 0; z-index: 5000; }
-.sball-stage:fullscreen .sball-fs-bar, .sball-stage:-webkit-full-screen .sball-fs-bar, .sball-stage.fake-full .sball-fs-bar {
-  display: flex; position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); gap: 12px; z-index: 5001;
-}
+/* ===== Fullscreen experience ===== */
+.sball-fs { position: fixed; inset: 0; z-index: 6000; background: #000; display: none; }
+.sball-fs.on { display: block; }
+.sball-view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.sball-loader { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; background: radial-gradient(circle at center, #1a1030, #05060f); z-index: 2; transition: opacity .5s; }
+.sball-loader.gone { opacity: 0; pointer-events: none; }
+.sball-3d { perspective: 700px; }
+.sball-3d img { width: 150px; height: 150px; object-fit: contain; filter: drop-shadow(0 0 30px rgba(108,92,231,0.9)); animation: sball-spin 1.4s linear infinite; }
+@keyframes sball-spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+.sball-loader h2 { margin: 0; font-size: 1.3rem; text-align: center; }
+.sball-loader .sball-sub { color: var(--muted); margin: -12px 0 0; font-size: 0.85rem; text-align: center; max-width: 80%; }
+.sball-prog { width: min(260px, 70vw); height: 8px; border-radius: 6px; background: rgba(255,255,255,0.12); overflow: hidden; }
+.sball-prog span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .2s linear; }
+.sball-fs-bar { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 3; }
+.sball-fs-bar .btn { backdrop-filter: blur(6px); background: rgba(20,22,40,0.7); border: 1px solid rgba(255,255,255,0.2); }
+.sball-rec { background: #e8303a !important; color: #fff; font-weight: 800; }
+.sball-rec:disabled { opacity: 0.7; }
+.sball-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,12,24,0.9); border: 1px solid var(--accent); padding: 10px 16px; border-radius: 10px; z-index: 4; font-size: 0.9rem; }
