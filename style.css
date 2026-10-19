@@ -771,3 +771,26 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .sball-rec { background: #e8303a !important; color: #fff; font-weight: 800; }
 .sball-rec:disabled { opacity: 0.7; }
 .sball-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,12,24,0.9); border: 1px solid var(--accent); padding: 10px 16px; border-radius: 10px; z-index: 4; font-size: 0.9rem; }
+
+/* ===== Arcade revamp: news, categories, NEW badge ===== */
+.ar-news { background: linear-gradient(135deg, rgba(255,95,162,0.25), rgba(108,92,231,0.25)); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 10px 14px; font-size: 0.85rem; margin-bottom: 14px; line-height: 1.4; }
+.ar-news b { color: #ffd84a; }
+.ar-cat { margin: 16px 0 8px; font-size: 1rem; opacity: 0.95; }
+.ar-cat:first-of-type { margin-top: 4px; }
+.ar-tile { position: relative; }
+.ar-tile.is-new { border-color: rgba(255,95,162,0.5); }
+.ar-ribbon { position: absolute; top: 6px; right: 6px; background: #ff5fa2; color: #fff; font-size: 0.6rem; font-weight: 900; padding: 2px 6px; border-radius: 10px; letter-spacing: 0.5px; }
+
+/* ===== New game styles ===== */
+.odd-wrap { display: grid; gap: 6px; width: min(300px, 80vw); aspect-ratio: 1; }
+.odd-cell { border: none; border-radius: 8px; cursor: pointer; width: 100%; height: 100%; min-height: 20px; }
+.odd-cell:active { transform: scale(0.94); }
+
+.mine-grid { display: grid; gap: 3px; width: min(320px, 86vw); }
+.mine-cell { aspect-ratio: 1; border: none; border-radius: 4px; background: #2a3450; color: #fff; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.mine-cell:hover { background: #343f60; }
+.mine-cell.open { background: #141a2c; cursor: default; }
+.mine-cell.flag { background: #3a2a00; }
+.mine-cell.boom { background: #e8303a; }
+.mine-cell[data-n="1"]{color:#6ab7ff}.mine-cell[data-n="2"]{color:#3ee08f}.mine-cell[data-n="3"]{color:#ff7a7a}
+.mine-cell[data-n="4"]{color:#b77bff}.mine-cell[data-n="5"]{color:#ffb14a}.mine-cell[data-n="6"]{color:#00cec9}

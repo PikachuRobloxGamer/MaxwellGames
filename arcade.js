@@ -52,6 +52,18 @@
     showMenu();
   }
 
+  function catOf(g) {
+    if (g.isNew) return "new";
+    if (g.key === "sball") return "create";
+    if (g.key === "wheel" || g.key === "slots") return "lucky";
+    return "classic";
+  }
+  const CAT_META = [
+    ["new", "✨ New Games"],
+    ["classic", "🎮 Arcade Classics"],
+    ["lucky", "🍀 Lucky Games"],
+    ["create", "🎬 Create"]
+  ];
   function showMenu() {
     cleanup();
     document.getElementById("arBack").classList.add("hidden");
@@ -59,18 +71,26 @@
     const body = document.getElementById("arBody");
     body.className = "arcade-body menu";
     body.innerHTML = "";
-    const grid = document.createElement("div"); grid.className = "ar-grid";
-    GAMES.forEach((g) => {
-      const best = window.MG.arcadeBest(g.key);
-      const tile = document.createElement("button"); tile.className = "ar-tile";
-      tile.innerHTML = `<span class="ar-ic"></span><span class="ar-name"></span><span class="ar-best"></span>`;
-      tile.querySelector(".ar-ic").textContent = g.icon;
-      tile.querySelector(".ar-name").textContent = g.name;
-      tile.querySelector(".ar-best").textContent = g.special ? g.tag : (g.bestLabel ? g.bestLabel(best) : (best ? "Best: " + best : "New!"));
-      tile.onclick = () => launch(g);
-      grid.appendChild(tile);
+    const newCount = GAMES.filter((g) => g.isNew).length;
+    const news = document.createElement("div"); news.className = "ar-news";
+    news.innerHTML = `<b>🎉 BIGGEST UPDATE EVER!</b> ${newCount} new games added — Breakout, Blocks, Doodle Jump, Tower Stack, Meow Tiles, Aim Trainer & more. ${GAMES.length} games total!`;
+    body.appendChild(news);
+    CAT_META.forEach(([cat, label]) => {
+      const list = GAMES.filter((g) => catOf(g) === cat);
+      if (!list.length) return;
+      const h = document.createElement("h3"); h.className = "ar-cat"; h.textContent = label; body.appendChild(h);
+      const grid = document.createElement("div"); grid.className = "ar-grid"; body.appendChild(grid);
+      list.forEach((g) => {
+        const best = window.MG.arcadeBest(g.key);
+        const tile = document.createElement("button"); tile.className = "ar-tile" + (g.isNew ? " is-new" : "");
+        tile.innerHTML = `<span class="ar-ic"></span><span class="ar-name"></span><span class="ar-best"></span>` + (g.isNew ? `<span class="ar-ribbon">NEW</span>` : "");
+        tile.querySelector(".ar-ic").textContent = g.icon;
+        tile.querySelector(".ar-name").textContent = g.name;
+        tile.querySelector(".ar-best").textContent = g.special ? g.tag : (g.bestLabel ? g.bestLabel(best) : (best ? "Best: " + best : "Play!"));
+        tile.onclick = () => launch(g);
+        grid.appendChild(tile);
+      });
     });
-    body.appendChild(grid);
     refreshTreats();
   }
 
@@ -128,6 +148,262 @@
   // GAMES
   // ============================================================
   const GAMES = [
+
+    // ==================== NEW GAMES ====================
+
+    // ---------- Maxwell Breakout ----------
+    {
+      key: "breakout", name: "Maxwell Breakout", icon: "🧱", isNew: true, reward: (s) => s,
+      play(host, api) {
+        const W = 360, H = 460; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "Move the paddle with your <b>mouse</b>. Break every brick!");
+        let px = W / 2, bx = W / 2, by = H - 70, vx = 3, vy = -3.6, score = 0, lives = 3, over = false, raf;
+        const PW = 72, PH = 12, BR = 7, cols = 8, rows = 5, bw = W / cols, bh = 20;
+        const bricks = [];
+        for (let r = 0; r < rows; r++) for (let cc = 0; cc < cols; cc++) bricks.push({ x: cc * bw, y: 44 + r * bh, w: bw - 4, h: bh - 4, alive: true, hue: (r * 42) % 360 });
+        function loop() {
+          x.fillStyle = "#0d1428"; x.fillRect(0, 0, W, H);
+          if (!over) {
+            bx += vx; by += vy;
+            if (bx < BR || bx > W - BR) { vx *= -1; bx = Math.max(BR, Math.min(W - BR, bx)); }
+            if (by < BR) vy = Math.abs(vy);
+            if (by > H - 50 - PH && by < H - 42 && bx > px - PW / 2 && bx < px + PW / 2 && vy > 0) { vy = -Math.abs(vy); vx += (bx - px) / PW * 3.2; api.tone(520, 0.04); }
+            if (by > H + 10) { lives--; api.tone(200, 0.1, "sawtooth"); if (lives <= 0) return end(false); bx = W / 2; by = H - 70; vx = 3 * (Math.random() < 0.5 ? 1 : -1); vy = -3.6; }
+            for (const bk of bricks) { if (!bk.alive) continue; if (bx > bk.x && bx < bk.x + bk.w && by > bk.y && by < bk.y + bk.h) { bk.alive = false; vy *= -1; score++; api.tone(600 + score * 4, 0.04); break; } }
+            if (bricks.every((b) => !b.alive)) return end(true);
+          }
+          bricks.forEach((bk) => { if (bk.alive) { x.fillStyle = "hsl(" + bk.hue + " 80% 55%)"; x.fillRect(bk.x, bk.y, bk.w, bk.h); } });
+          x.fillStyle = "#3ee08f"; x.fillRect(px - PW / 2, H - 50, PW, PH);
+          x.fillStyle = "#fff"; x.beginPath(); x.arc(bx, by, BR, 0, 7); x.fill();
+          x.font = "bold 14px system-ui"; x.textAlign = "left"; x.fillText("Score " + score, 8, 20); x.textAlign = "right"; x.fillText("❤️".repeat(Math.max(0, lives)), W - 8, 22);
+          raf = requestAnimationFrame(loop);
+        }
+        function end(win) { if (over) return; over = true; cancelAnimationFrame(raf); api.boom(); api.finish(score, { title: win ? "Cleared! 🎉" : "Game Over", line: "Broke <b>" + score + "</b> bricks" }); }
+        const mv = (e) => { const r = c.getBoundingClientRect(); px = Math.max(PW / 2, Math.min(W - PW / 2, (e.clientX - r.left) * (W / r.width))); };
+        c.addEventListener("pointermove", mv);
+        api.onClean(() => { cancelAnimationFrame(raf); c.removeEventListener("pointermove", mv); });
+        loop();
+      }
+    },
+
+    // ---------- Maxwell Blocks (Tetris) ----------
+    {
+      key: "tetris", name: "Maxwell Blocks", icon: "🟦", isNew: true, reward: (s) => s,
+      play(host, api) {
+        const COLS = 10, ROWS = 16, SZ = 20, W = COLS * SZ, H = ROWS * SZ; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "<b>← →</b> move · <b>↑</b> rotate · <b>↓</b> faster · <b>Space</b> hard drop");
+        const COLORS = ["#00d2d2", "#3b5bff", "#ff9a3c", "#ffd84a", "#3ee08f", "#b77bff", "#ff5a6e"];
+        const SHAPES = [[[1, 1, 1, 1]], [[1, 1], [1, 1]], [[0, 1, 0], [1, 1, 1]], [[1, 0, 0], [1, 1, 1]], [[0, 0, 1], [1, 1, 1]], [[1, 1, 0], [0, 1, 1]], [[0, 1, 1], [1, 1, 0]]];
+        let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        let piece = null, px = 0, py = 0, score = 0, lines = 0, over = false, raf, drop = 0, speed = 40;
+        function collide(nx, ny, m) { for (let r = 0; r < m.length; r++) for (let cc = 0; cc < m[r].length; cc++) { if (m[r][cc]) { const gx = nx + cc, gy = ny + r; if (gx < 0 || gx >= COLS || gy >= ROWS) return true; if (gy >= 0 && grid[gy][gx]) return true; } } return false; }
+        function newPiece() { const t = Math.floor(Math.random() * SHAPES.length); piece = { m: SHAPES[t].map((r) => r.slice()), col: t + 1 }; px = Math.floor((COLS - piece.m[0].length) / 2); py = 0; if (collide(px, py, piece.m)) end(); }
+        function merge() { piece.m.forEach((row, r) => row.forEach((v, cc) => { if (v) { const gy = py + r; if (gy >= 0) grid[gy][px + cc] = piece.col; } })); }
+        function rotate() { const m = piece.m, nm = m[0].map((_, i) => m.map((r) => r[i]).reverse()); if (!collide(px, py, nm)) piece.m = nm; }
+        function clearLines() { let cl = 0; for (let r = ROWS - 1; r >= 0; r--) { if (grid[r].every((v) => v)) { grid.splice(r, 1); grid.unshift(Array(COLS).fill(0)); cl++; r++; } } if (cl) { lines += cl; score += [0, 10, 30, 60, 100][cl]; speed = Math.max(8, 40 - lines); api.tone(600 + cl * 100, 0.1); } }
+        function stepDown() { if (collide(px, py + 1, piece.m)) { merge(); clearLines(); newPiece(); } else py++; }
+        function loop() {
+          if (!over) { drop++; if (drop >= speed) { drop = 0; stepDown(); } }
+          x.fillStyle = "#0a0e1c"; x.fillRect(0, 0, W, H);
+          for (let r = 0; r < ROWS; r++) for (let cc = 0; cc < COLS; cc++) if (grid[r][cc]) { x.fillStyle = COLORS[grid[r][cc] - 1]; x.fillRect(cc * SZ + 1, r * SZ + 1, SZ - 2, SZ - 2); }
+          if (piece) piece.m.forEach((row, r) => row.forEach((v, cc) => { if (v) { x.fillStyle = COLORS[piece.col - 1]; x.fillRect((px + cc) * SZ + 1, (py + r) * SZ + 1, SZ - 2, SZ - 2); } }));
+          x.fillStyle = "rgba(255,255,255,0.85)"; x.font = "bold 13px system-ui"; x.textAlign = "left"; x.fillText("Lines " + lines, 4, 14);
+          raf = requestAnimationFrame(loop);
+        }
+        function end() { if (over) return; over = true; cancelAnimationFrame(raf); api.boom(); api.finish(score, { scoreForBest: score, title: "Game Over", line: "<b>" + lines + "</b> lines · " + score + " pts" }); }
+        const key = (e) => { if (over || !piece) return; if (e.key === "ArrowLeft") { if (!collide(px - 1, py, piece.m)) px--; e.preventDefault(); } else if (e.key === "ArrowRight") { if (!collide(px + 1, py, piece.m)) px++; e.preventDefault(); } else if (e.key === "ArrowDown") { stepDown(); e.preventDefault(); } else if (e.key === "ArrowUp") { rotate(); e.preventDefault(); } else if (e.code === "Space") { while (!collide(px, py + 1, piece.m)) py++; stepDown(); e.preventDefault(); } };
+        document.addEventListener("keydown", key);
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", key); });
+        newPiece(); loop();
+      }
+    },
+
+    // ---------- Maxwell Jump (Doodle Jump) ----------
+    {
+      key: "jump", name: "Maxwell Jump", icon: "⬆️", isNew: true, reward: (s) => Math.max(1, Math.floor(s / 5)),
+      play(host, api) {
+        const W = 320, H = 460; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "<b>← →</b> or move the mouse to steer. Bounce up the platforms!");
+        const cat = new Image(); cat.src = api.img;
+        let px = W / 2, py = H - 90, vy = -9, vx = 0, score = 0, over = false, raf, left = false, right = false, plats = [];
+        const G = 0.32, JUMP = -9.4, PW = 56, PH = 10, R = 16;
+        for (let i = 0; i < 8; i++) plats.push({ x: Math.random() * (W - PW), y: H - 40 - i * 55 });
+        function loop() {
+          x.fillStyle = "#0c1326"; x.fillRect(0, 0, W, H);
+          if (!over) {
+            if (left) vx = -4.4; else if (right) vx = 4.4; else vx *= 0.9;
+            px += vx; if (px < -R) px = W + R; if (px > W + R) px = -R;
+            vy += G; py += vy;
+            if (vy > 0) for (const p of plats) { if (px > p.x - R && px < p.x + PW + R && py + R > p.y && py + R < p.y + PH + vy + 2) { vy = JUMP; api.tone(600, 0.05); break; } }
+            if (py < H * 0.4) { const dy = H * 0.4 - py; py = H * 0.4; plats.forEach((p) => p.y += dy); score += dy; }
+            plats = plats.filter((p) => p.y < H + 20); while (plats.length < 8) { let top = Math.min.apply(null, plats.map((p) => p.y)); plats.push({ x: Math.random() * (W - PW), y: top - 55 }); }
+            if (py - R > H) return end();
+          }
+          plats.forEach((p) => { x.fillStyle = "#3ee08f"; x.fillRect(p.x, p.y, PW, PH); });
+          if (cat.complete) x.drawImage(cat, px - R, py - R, R * 2, R * 2);
+          x.fillStyle = "#fff"; x.font = "bold 16px system-ui"; x.textAlign = "left"; x.fillText(Math.floor(score / 10), 8, 22);
+          raf = requestAnimationFrame(loop);
+        }
+        function end() { if (over) return; over = true; cancelAnimationFrame(raf); api.boom(); api.finish(Math.floor(score / 10), { title: score / 10 >= 50 ? "Sky high!" : "Fell!", line: "Height: <b>" + Math.floor(score / 10) + "</b>" }); }
+        const kd = (e) => { if (e.key === "ArrowLeft") { left = true; e.preventDefault(); } if (e.key === "ArrowRight") { right = true; e.preventDefault(); } };
+        const ku = (e) => { if (e.key === "ArrowLeft") left = false; if (e.key === "ArrowRight") right = false; };
+        const mv = (e) => { const r = c.getBoundingClientRect(); const mx = (e.clientX - r.left) * (W / r.width); if (mx < px - 6) { left = true; right = false; } else if (mx > px + 6) { right = true; left = false; } else { left = right = false; } };
+        document.addEventListener("keydown", kd); document.addEventListener("keyup", ku); c.addEventListener("pointermove", mv);
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku); });
+        loop();
+      }
+    },
+
+    // ---------- Tower Stack ----------
+    {
+      key: "stack", name: "Tower Stack", icon: "🏗️", isNew: true, reward: (s) => s * 3,
+      play(host, api) {
+        const W = 320, H = 460; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "<b>Click / SPACE</b> to drop the block. Stack it high!");
+        const baseY = H - 30, bh = 24; let blocks = [{ x: W / 2 - 70, w: 140 }], cur = null, score = 0, over = false, raf, camY = 0;
+        function newBlock() { const top = blocks[blocks.length - 1]; cur = { x: 0, w: top.w, dir: 1, sp: 3 + score * 0.15 }; }
+        newBlock();
+        function drop() {
+          if (over || !cur) return;
+          const top = blocks[blocks.length - 1];
+          const left = Math.max(cur.x, top.x), right = Math.min(cur.x + cur.w, top.x + top.w), overlap = right - left;
+          if (overlap <= 0) return end();
+          blocks.push({ x: left, w: overlap }); score++; api.tone(380 + score * 12, 0.05); newBlock();
+        }
+        function end() { if (over) return; over = true; cancelAnimationFrame(raf); api.boom(); api.finish(score, { title: score >= 15 ? "Skyscraper! 🏙️" : "Toppled!", line: "Height: <b>" + score + "</b>" }); }
+        function loop() {
+          x.fillStyle = "#0b1020"; x.fillRect(0, 0, W, H);
+          if (!over && cur) { cur.x += cur.dir * cur.sp; if (cur.x < 0) { cur.x = 0; cur.dir = 1; } if (cur.x + cur.w > W) { cur.x = W - cur.w; cur.dir = -1; } }
+          const targetCam = Math.max(0, (blocks.length - 8) * bh); camY += (targetCam - camY) * 0.1;
+          blocks.forEach((b, i) => { const yy = baseY - i * bh + camY; if (yy > -bh && yy < H) { x.fillStyle = "hsl(" + ((i * 25) % 360) + " 70% 55%)"; x.fillRect(b.x, yy, b.w, bh - 2); } });
+          if (cur) { const yy = baseY - blocks.length * bh + camY; x.fillStyle = "#ffd84a"; x.fillRect(cur.x, yy, cur.w, bh - 2); }
+          x.fillStyle = "#fff"; x.font = "bold 20px system-ui"; x.textAlign = "center"; x.fillText(score, W / 2, 36);
+          raf = requestAnimationFrame(loop);
+        }
+        const key = (e) => { if (e.code === "Space") { e.preventDefault(); drop(); } };
+        document.addEventListener("keydown", key); c.addEventListener("pointerdown", drop);
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", key); });
+        loop();
+      }
+    },
+
+    // ---------- Meow Tiles (piano tiles) ----------
+    {
+      key: "tiles", name: "Meow Tiles", icon: "🎹", isNew: true, reward: (s) => s * 2,
+      play(host, api) {
+        const W = 320, H = 460, COLS = 4, cw = W / COLS; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "Tap the column when a tile reaches the bottom. Don't miss — or tap empty!");
+        const notes = [523, 587, 659, 784]; const TH = 92;
+        let tiles = [], score = 0, over = false, raf, spd = 2.6, spawnT = 0, lastCol = -1;
+        function spawn() { let col; do { col = Math.floor(Math.random() * COLS); } while (col === lastCol && Math.random() < 0.6); lastCol = col; tiles.push({ col, y: -TH, hit: false }); }
+        function loop() {
+          x.fillStyle = "#0e1020"; x.fillRect(0, 0, W, H);
+          for (let i = 1; i < COLS; i++) { x.strokeStyle = "rgba(255,255,255,0.08)"; x.beginPath(); x.moveTo(i * cw, 0); x.lineTo(i * cw, H); x.stroke(); }
+          x.strokeStyle = "rgba(255,255,255,0.25)"; x.beginPath(); x.moveTo(0, H - 6); x.lineTo(W, H - 6); x.stroke();
+          if (!over) {
+            spawnT++; spd = 2.6 + score * 0.05; if (spawnT > Math.max(36, 90 - score)) { spawnT = 0; spawn(); }
+            tiles.forEach((t) => t.y += spd);
+            for (const t of tiles) if (!t.hit && t.y > H) return end();
+            tiles = tiles.filter((t) => t.y < H + TH);
+          }
+          tiles.forEach((t) => { x.fillStyle = t.hit ? "rgba(62,224,143,0.3)" : "#273357"; x.fillRect(t.col * cw + 3, t.y, cw - 6, TH - 4); });
+          x.fillStyle = "#fff"; x.font = "bold 22px system-ui"; x.textAlign = "center"; x.fillText(score, W / 2, 40);
+          raf = requestAnimationFrame(loop);
+        }
+        function tap(col) {
+          if (over) return; let best = null;
+          tiles.forEach((t) => { if (t.col === col && !t.hit && t.y > H * 0.25) { if (!best || t.y > best.y) best = t; } });
+          if (best) { best.hit = true; score++; api.tone(notes[col], 0.08); setTimeout(() => { tiles = tiles.filter((t) => t !== best); }, 120); }
+          else { api.tone(160, 0.12, "sawtooth"); end(); }
+        }
+        function end() { if (over) return; over = true; cancelAnimationFrame(raf); api.boom(); api.finish(score, { title: score >= 25 ? "Concert pianist! 🎼" : "Missed!", line: "<b>" + score + "</b> tiles" }); }
+        const pd = (e) => { const r = c.getBoundingClientRect(); const mx = (e.clientX - r.left) * (W / r.width); tap(Math.floor(mx / cw)); };
+        c.addEventListener("pointerdown", pd);
+        const key = (e) => { const m = { a: 0, s: 1, d: 2, f: 3 }[e.key]; if (m != null) { e.preventDefault(); tap(m); } };
+        document.addEventListener("keydown", key);
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", key); });
+        loop();
+      }
+    },
+
+    // ---------- Aim Trainer ----------
+    {
+      key: "aim", name: "Aim Trainer", icon: "🎯", isNew: true, reward: (s) => s * 2,
+      play(host, api) {
+        const W = 360, H = 420; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "Pop the targets fast! 30 seconds on the clock.");
+        const cat = new Image(); cat.src = api.img;
+        let targets = [], score = 0, misses = 0, time = 30, over = false, raf, timer, spawnT = 0;
+        function spawn() { targets.push({ x: 30 + Math.random() * (W - 60), y: 44 + Math.random() * (H - 84), r: 17 + Math.random() * 11, life: 72 }); }
+        function loop() {
+          x.fillStyle = "#101a2e"; x.fillRect(0, 0, W, H);
+          if (!over) { spawnT++; if (spawnT > 24) { spawnT = 0; if (targets.length < 5) spawn(); } targets.forEach((t) => t.life--); targets = targets.filter((t) => { if (t.life <= 0) { misses++; return false; } return true; }); }
+          targets.forEach((t) => { x.fillStyle = "#e05a6e"; x.beginPath(); x.arc(t.x, t.y, t.r, 0, 7); x.fill(); x.fillStyle = "#fff"; x.beginPath(); x.arc(t.x, t.y, t.r * 0.62, 0, 7); x.fill(); if (cat.complete) x.drawImage(cat, t.x - t.r * 0.55, t.y - t.r * 0.55, t.r * 1.1, t.r * 1.1); });
+          x.fillStyle = "#fff"; x.font = "bold 16px system-ui"; x.textAlign = "left"; x.fillText("🎯 " + score, 8, 22); x.textAlign = "right"; x.fillText("⏱️ " + time + "s", W - 8, 22);
+          raf = requestAnimationFrame(loop);
+        }
+        const pd = (e) => { if (over) return; const r = c.getBoundingClientRect(); const mx = (e.clientX - r.left) * (W / r.width), my = (e.clientY - r.top) * (H / r.height); for (let i = targets.length - 1; i >= 0; i--) { const t = targets[i]; if (Math.hypot(t.x - mx, t.y - my) < t.r) { targets.splice(i, 1); score++; api.tone(720, 0.05); return; } } };
+        c.addEventListener("pointerdown", pd);
+        timer = setInterval(() => { time--; if (time <= 0) end(); }, 1000);
+        function end() { if (over) return; over = true; clearInterval(timer); cancelAnimationFrame(raf); api.boom(); api.finish(score, { title: score >= 25 ? "Sharpshooter! 🎯" : "Time!", line: "<b>" + score + "</b> hit · " + misses + " missed" }); }
+        api.onClean(() => { cancelAnimationFrame(raf); clearInterval(timer); });
+        loop();
+      }
+    },
+
+    // ---------- Odd One Out ----------
+    {
+      key: "oddone", name: "Odd One Out", icon: "🔍", isNew: true, reward: (s) => s * 3,
+      play(host, api) {
+        hintLine(host, "Tap the square that's a slightly different color. 30 seconds!");
+        const wrap = document.createElement("div"); wrap.className = "odd-wrap"; host.appendChild(wrap);
+        const timeEl = document.createElement("p"); timeEl.className = "ar-hint"; host.appendChild(timeEl);
+        let score = 0, time = 30, over = false, timer, n = 2;
+        function round() {
+          wrap.innerHTML = ""; n = Math.min(7, 2 + Math.floor(score / 3)); wrap.style.gridTemplateColumns = "repeat(" + n + ",1fr)";
+          const hue = Math.floor(Math.random() * 360), base = 50, diff = Math.max(5, 22 - score), odd = Math.floor(Math.random() * n * n);
+          for (let i = 0; i < n * n; i++) { const b = document.createElement("button"); b.className = "odd-cell"; b.style.background = "hsl(" + hue + " 70% " + (base + (i === odd ? diff : 0)) + "%)"; b.onclick = () => { if (over) return; if (i === odd) { score++; api.tone(720, 0.05); round(); } else { api.tone(180, 0.1, "sawtooth"); } }; wrap.appendChild(b); }
+        }
+        timeEl.textContent = "⏱️ 30s · Score 0"; round();
+        timer = setInterval(() => { time--; timeEl.textContent = "⏱️ " + time + "s · Score " + score; if (time <= 0) end(); }, 1000);
+        function end() { if (over) return; over = true; clearInterval(timer); api.boom(); api.finish(score, { title: score >= 15 ? "Eagle eyes! 🦅" : "Time!", line: "<b>" + score + "</b> found" }); }
+        api.onClean(() => clearInterval(timer));
+      }
+    },
+
+    // ---------- Maxwell Mines (minesweeper) ----------
+    {
+      key: "mines", name: "Maxwell Mines", icon: "💣", isNew: true, reward: (s) => Math.round(s / 2),
+      play(host, api) {
+        const N = 8, M = 10;
+        hintLine(host, "Reveal all safe tiles. Toggle 🚩 to mark mines. Don't tap a 💣!");
+        const flagBtn = document.createElement("button"); flagBtn.className = "btn"; flagBtn.textContent = "🚩 Flag: OFF";
+        let flagMode = false; flagBtn.onclick = () => { flagMode = !flagMode; flagBtn.textContent = "🚩 Flag: " + (flagMode ? "ON" : "OFF"); };
+        host.appendChild(flagBtn);
+        const bar = document.createElement("p"); bar.className = "ar-hint"; bar.textContent = "Safe: 0/" + (N * N - M); host.appendChild(bar);
+        const grid = document.createElement("div"); grid.className = "mine-grid"; grid.style.gridTemplateColumns = "repeat(" + N + ",1fr)"; host.appendChild(grid);
+        let cells = [], mines = new Set(), revealed = 0, over = false, placed = false;
+        const idx = (r, cc) => r * N + cc;
+        for (let i = 0; i < N * N; i++) { const b = document.createElement("button"); b.className = "mine-cell"; b.onclick = () => click(i); cells.push(b); grid.appendChild(b); }
+        function placeMines(safe) { while (mines.size < M) { const p = Math.floor(Math.random() * N * N); if (p !== safe) mines.add(p); } placed = true; }
+        function neighbors(i) { const r = Math.floor(i / N), cc = i % N, out = []; for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { if (!dr && !dc) continue; const nr = r + dr, nc = cc + dc; if (nr >= 0 && nr < N && nc >= 0 && nc < N) out.push(idx(nr, nc)); } return out; }
+        function count(i) { return neighbors(i).filter((n) => mines.has(n)).length; }
+        function reveal(i) { const b = cells[i]; if (b.classList.contains("open")) return; b.classList.add("open"); revealed++; const n = count(i); if (n > 0) { b.textContent = n; b.dataset.n = n; } else neighbors(i).forEach((nb) => { if (!cells[nb].classList.contains("open") && !mines.has(nb)) reveal(nb); }); }
+        function click(i) {
+          if (over) return; const b = cells[i];
+          if (flagMode) { if (!b.classList.contains("open")) { b.classList.toggle("flag"); b.textContent = b.classList.contains("flag") ? "🚩" : ""; } return; }
+          if (b.classList.contains("flag") || b.classList.contains("open")) return;
+          if (!placed) placeMines(i);
+          if (mines.has(i)) { b.textContent = "💣"; b.classList.add("boom"); return end(false); }
+          reveal(i); bar.textContent = "Safe: " + revealed + "/" + (N * N - M); api.tone(520, 0.04);
+          if (revealed === N * N - M) end(true);
+        }
+        function end(win) { if (over) return; over = true; if (!win) { mines.forEach((m) => { if (!cells[m].classList.contains("flag")) cells[m].textContent = "💣"; }); api.boom(); } api.finish(win ? 100 + revealed : revealed, { scoreForBest: win ? 100 + revealed : revealed, title: win ? "Swept! 🎉" : "Boom! 💥", line: win ? "You cleared the whole board!" : "Revealed <b>" + revealed + "</b> safe tiles" }); }
+        api.onClean(() => {});
+      }
+    },
+
+    // ==================== CLASSICS ====================
 
     // ---------- 1. Flyer (flappy) ----------
     {

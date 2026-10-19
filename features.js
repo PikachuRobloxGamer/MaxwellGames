@@ -213,6 +213,13 @@
     { id: "spin",    icon: "🎡", name: "Lucky Spin",         desc: "Spin the daily wheel (bonus)",     bonus: true, test: () => save.spins >= 1 },
     { id: "jackpot", icon: "🎰", name: "Jackpot!",           desc: "Hit a slot-machine jackpot (bonus)", bonus: true, test: () => save.ach.includes("jackpot") },
     { id: "sball",   icon: "🔮", name: "Content Creator",    desc: "Make a Satisfying Balls short (bonus)", bonus: true, test: () => save.ach.includes("sball") },
+    { id: "arcade100",icon:"🏆", name: "Arcade Legend",      desc: "Play 100 Arcade rounds (bonus)",    bonus: true, test: () => (save.arcadePlays || 0) >= 100 },
+    { id: "breakout",icon: "🧱", name: "Brick Breaker",      desc: "Break 20+ bricks in Breakout (bonus)", bonus: true, test: () => (save.arcadeBest.breakout || 0) >= 20 },
+    { id: "tetris",  icon: "🟦", name: "Line Clearer",       desc: "Score 50+ in Maxwell Blocks (bonus)", bonus: true, test: () => (save.arcadeBest.tetris || 0) >= 50 },
+    { id: "jumper",  icon: "⬆️", name: "High Jumper",        desc: "Reach height 50 in Maxwell Jump (bonus)", bonus: true, test: () => (save.arcadeBest.jump || 0) >= 50 },
+    { id: "stacker", icon: "🏗️", name: "Master Builder",     desc: "Stack 12+ in Tower Stack (bonus)", bonus: true, test: () => (save.arcadeBest.stack || 0) >= 12 },
+    { id: "sniper",  icon: "🎯", name: "Dead Aim",           desc: "Hit 25+ in Aim Trainer (bonus)",  bonus: true, test: () => (save.arcadeBest.aim || 0) >= 25 },
+    { id: "sweeper", icon: "💣", name: "Mine Sweeper",       desc: "Clear a Maxwell Mines board (bonus)", bonus: true, test: () => (save.arcadeBest.mines || 0) >= 100 },
     { id: "konami",  icon: "🕹️", name: "Secret Code",       desc: "??? (an old-school cheat code)",  secret: true, test: () => save.ach.includes("konami") },
     { id: "meow",    icon: "🙀", name: "Typed it",          desc: "??? (type a cat word anywhere)",   secret: true, test: () => save.ach.includes("meow") }
   ];
@@ -634,6 +641,11 @@
         ["🐦 Flyer best", (save.arcadeBest && save.arcadeBest.flyer) || 0],
         ["🐍 Snake best", (save.arcadeBest && save.arcadeBest.snake) || 0],
         ["🔢 Merge best tile", (save.arcadeBest && save.arcadeBest.merge) || 0],
+        ["🧱 Breakout best", (save.arcadeBest && save.arcadeBest.breakout) || 0],
+        ["🟦 Blocks best", (save.arcadeBest && save.arcadeBest.tetris) || 0],
+        ["⬆️ Jump best", (save.arcadeBest && save.arcadeBest.jump) || 0],
+        ["🏗️ Stack best", (save.arcadeBest && save.arcadeBest.stack) || 0],
+        ["🎯 Aim best", (save.arcadeBest && save.arcadeBest.aim) || 0],
         ["🎡 Wheel spins", save.spins || 0]
       ];
       const t = document.createElement("div"); t.className = "stats";
