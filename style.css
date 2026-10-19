@@ -615,4 +615,7 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .live-modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
 .live-mode-btn { flex: 1; min-width: 180px; font-weight: 700; }
 .live-mode-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 2px var(--accent) inset; }
+.admin-live-modes { margin: 8px 0 2px; }
+.admin-live-modes .live-mode-btn { min-width: 150px; font-size: 0.85rem; padding: 6px 10px; }
+.live-switch-hint { margin: 2px 0 0; font-size: 0.72rem; color: #9aa0b5; }
 .live-status-line { margin: 10px 0; font-size: 0.95rem; }

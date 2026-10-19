@@ -124,6 +124,14 @@
     setMode: setLiveMode,
     refresh: () => { const el = document.getElementById("liveStatus2"); if (el) { el.textContent = lastStatusText; el.style.color = lastStatusOk ? "#3ee08f" : "#ff7a7a"; } updateModeButtons(); }
   };
+  // Delegated handler so the switcher works everywhere it appears (admin panel + profile tab)
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".live-mode-btn");
+    if (btn && btn.dataset.mode) setLiveMode(btn.dataset.mode);
+  });
+  // Highlight the active mode as soon as the page is ready
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", updateModeButtons);
+  else updateModeButtons();
   let publishFn = null;
   let lastWarn = 0;
   function warnFail() {
