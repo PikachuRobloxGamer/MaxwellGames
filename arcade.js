@@ -969,14 +969,14 @@
 
         // ===== backgrounds (sized to the scene) =====
         function detectBg(p) {
-          if (/(matrix|falling code|green code|hacker)/.test(p)) return "matrix";
-          if (/(space|stars?|galaxy|cosmos|night sky|universe)/.test(p)) return "space";
-          if (/(synthwave|neon|retro grid|vaporwave|outrun|80s)/.test(p)) return "synthwave";
-          if (/(sunset|sunrise|warm gradient|orange sky)/.test(p)) return "sunset";
-          if (/(aurora|northern lights)/.test(p)) return "aurora";
-          if (/(fire|lava|flames?|volcano|magma)/.test(p)) return "fire";
-          if (/(ocean|underwater|sea|deep blue)/.test(p)) return "ocean";
-          if (/(disco|party)/.test(p)) return "disco";
+          if (/(matrix|falling code|green code|hacker|the matrix|binary)/.test(p)) return "matrix";
+          if (/(synthwave|neon|retro grid|vaporwave|outrun|80s|retrowave)/.test(p)) return "synthwave";
+          if (/(sunset|sunrise|warm gradient|orange sky|dusk)/.test(p)) return "sunset";
+          if (/(aurora|northern lights|polar)/.test(p)) return "aurora";
+          if (/(fire|lava|flames?|volcano|magma|hell|inferno)/.test(p)) return "fire";
+          if (/(ocean|underwater|sea|deep blue|water)/.test(p)) return "ocean";
+          if (/(disco|party|club|rave)/.test(p)) return "disco";
+          if (/(space|stars?|galaxy|cosmos|night sky|universe|nebula|cosmic)/.test(p)) return "space";
           return "dark";
         }
         const BG_NAMES = { matrix: "Matrix code", space: "Starfield", synthwave: "Synthwave grid", sunset: "Sunset", aurora: "Aurora", fire: "Lava", ocean: "Ocean", disco: "Disco", dark: "Deep space" };
@@ -1018,59 +1018,85 @@
           };
         }
 
-        // ===== parser =====
+        // ===== parser (reads the prompt as a sequence of mechanics) =====
+        const W2N = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
         function parse(pRaw) {
-          const p = (pRaw || "").toLowerCase();
-          const numM = p.match(/(\d{1,3})/);
-          const boxWords = /(box|square|rectangle|wall)/.test(p);
+          const p = (pRaw || "").toLowerCase().replace(/[’']/g, "");
+          function numBefore(word) { const m = p.match(new RegExp("(\\d+|one|two|three|four|five|six|seven|eight|nine|ten)\\s*" + word)); if (!m) return null; return /\d/.test(m[1]) ? parseInt(m[1], 10) : W2N[m[1]]; }
+          const bounceCount = numBefore("(?:times?|bounces?|hits?)");
+          let ballCount = numBefore("(?:[a-z]+\\s+){0,3}balls?"); // allows "100 rainbow balls"
+          if (ballCount == null && /\bballs\b/.test(p)) { const m = p.match(/(\d+|one|two|three|four|five|six|seven|eight|nine|ten)/); if (m) ballCount = /\d/.test(m[1]) ? parseInt(m[1], 10) : W2N[m[1]]; }
+          let changeTo = null;
+          if (/(stone|rock|statue|petrif|concrete|turns? to stone)/.test(p)) changeTo = "stone";
+          else if (/(freezes?|frozen|turns? to ice|ice block)/.test(p)) changeTo = "freeze";
+          else if (/(explodes?|explosion|blows? up|detonat)/.test(p)) changeTo = "explode";
+          else if (/(pops?|bursts?|disappears?|vanish|evaporat)/.test(p)) changeTo = "pop";
+          else if (/(splits? into|breaks? into|splits? apart|then splits?)/.test(p)) changeTo = "split";
+          else if (/(change colou?r|turns? (red|blue|green|gold|pink|purple|white|black|orange))/.test(p)) changeTo = "color";
+          const hole = /(hole|gap|opening|escape|get out|break out|way out)/.test(p);
+          const sequence = /(another ball|then another|next ball|a new ball|new ball comes|repeat|does the same|do the same|one by one|again and again|keeps? (coming|happening|going)|over and over)/.test(p);
+          const boxWords = /(box|square|rectangle)/.test(p) && !hole;
+          const wallsClose = /(walls? clos|closing in|caves? in|shrink.*(box|wall)|squeeze|tighten|crush)/.test(p);
           const cfg = {
-            container: boxWords ? "box" : "circle",
-            count: Math.max(1, Math.min(300, numM ? parseInt(numM[1], 10) : (/(many|lots|bunch|hundred|loads)/.test(p) ? 60 : 1))),
-            gravity: /(no gravity|zero ?g|float)/.test(p) ? 0 : (/(low gravity|moon|slow fall|floaty)/.test(p) ? 0.1 : (/(heavy|strong gravity|lots of gravity|more gravity)/.test(p) ? 0.7 : 0.4)),
-            grow: /(bigger|grows?|larger|expand|increase|huge|size up)/.test(p) ? 1.07 : 0,
-            shrink: /(smaller|shrinks?|tinier|size down)/.test(p) ? 0.94 : 0,
-            split: /(split|multiply|clones?|duplicate|divide|spawn|more balls each)/.test(p),
+            container: hole ? "hole" : (boxWords || wallsClose ? "box" : "circle"),
+            count: Math.max(1, Math.min(200, ballCount || (/(many|lots|bunch|hundred|loads|tons)/.test(p) ? 60 : 1))),
+            gravity: /(no gravity|zero ?g|float|weightless)/.test(p) ? 0 : (/(low gravity|moon|slow fall|floaty)/.test(p) ? 0.12 : (/(heavy|strong gravity|more gravity|falls fast)/.test(p) ? 0.7 : 0.4)),
+            grow: /(bigger|grows?|growing|larger|expand|increase|huge|size up)/.test(p) ? 1.07 : 0,
+            shrink: /(smaller|shrinks?|shrinking|tinier|size down)/.test(p) ? 0.94 : 0,
+            split: /(keeps? splitting|splits? every|splits? each|multiply|clones?|duplicate|more balls each)/.test(p),
             speedUp: /(speed ?up|faster|speeds up|accelerat|quicker)/.test(p) ? 1.03 : 0,
-            rainbow: /(rainbow|colou?rs?|changing colou?r|every colou?r|disco)/.test(p),
-            trail: !/no trail/.test(p),
-            wallsClose: /(walls? clos|closing in|shrink.*box|squeeze|tighten)/.test(p),
-            spin: /(spin|spinning|rotating|rotate)/.test(p),
+            rainbow: /(rainbow|changing colou?rs|every colou?r|disco colou?rs|cycles? colou?r)/.test(p),
+            trail: !/(no trail|without (a )?trail|trail-?less|no tail)/.test(p),
+            wallsClose: wallsClose,
+            spin: /(spin|spinning|rotating|rotate|rotates)/.test(p),
+            changeAfter: changeTo ? (bounceCount || 1) : 0,
+            changeTo: changeTo,
+            sequence: sequence,
+            escape: hole,
             bg: detectBg(p)
           };
-          if (cfg.wallsClose) cfg.container = "box";
-          // make sure it's ALWAYS satisfying even for a vague prompt
-          if (!cfg.grow && !cfg.shrink && !cfg.split && !cfg.speedUp) { cfg.grow = 1.06; cfg.speedUp = 1.015; }
+          if (cfg.escape) cfg.sequence = true;
+          if (cfg.container === "hole") cfg.spin = !/no spin|not spinning/.test(p);
+          if (cfg.bg === "dark" && !/(dark|black|night|void|plain|space)/.test(p)) cfg.bg = "space";
           return cfg;
         }
+        const CHANGE_TXT = { stone: "turns to stone", freeze: "freezes", explode: "explodes", pop: "pops", split: "splits apart", color: "changes color" };
         function summarize(cfg) {
-          const bits = [];
-          bits.push(cfg.count > 1 ? cfg.count + " balls" : "1 ball");
-          bits.push(cfg.container === "circle" ? "in a circle" : "in a box");
-          if (cfg.grow) bits.push("grows"); if (cfg.shrink) bits.push("shrinks");
-          if (cfg.split) bits.push("splits"); if (cfg.speedUp) bits.push("speeds up");
-          if (cfg.rainbow) bits.push("rainbow"); if (cfg.trail) bits.push("trail");
-          if (cfg.wallsClose) bits.push("walls close in"); if (cfg.spin) bits.push("spinning");
-          bits.push("🎨 " + (BG_NAMES[cfg.bg] || "Deep space"));
-          return bits.join(" · ");
+          const b = [];
+          if (cfg.count > 1 && !cfg.sequence) b.push(cfg.count + " balls");
+          b.push(cfg.container === "hole" ? "escape a circle with a hole" : cfg.container === "box" ? "in a box" : "in a circle");
+          if (cfg.changeAfter && cfg.changeTo) b.push("after " + cfg.changeAfter + " bounce" + (cfg.changeAfter > 1 ? "s" : "") + " → " + CHANGE_TXT[cfg.changeTo]);
+          if (cfg.sequence && !cfg.escape) b.push("then a new ball repeats");
+          if (cfg.escape) b.push("ball escapes the hole");
+          if (cfg.grow) b.push("grows"); if (cfg.shrink) b.push("shrinks");
+          if (cfg.speedUp) b.push("speeds up"); if (cfg.split) b.push("keeps splitting");
+          if (cfg.rainbow) b.push("rainbow"); if (cfg.wallsClose) b.push("walls close in");
+          b.push(cfg.trail ? "with trail" : "no trail");
+          if (cfg.spin && cfg.container !== "hole") b.push("spinning");
+          b.push("🎨 " + (BG_NAMES[cfg.bg] || "Starfield"));
+          return b.join(" · ");
         }
 
         // ===== physics =====
-        let balls = [], cfg = null, bgDraw = null, wall = 0, spinAng = 0, totalBounces = 0, running = false, raf = null;
+        let balls = [], cfg = null, bgDraw = null, wall = 0, spinAng = 0, gapCenter = 0, totalBounces = 0, stoneCount = 0, running = false, raf = null, flash = null;
         const RC = () => SW * 0.44;
         const cx = SW / 2, cy = SH * 0.46;
+        const GAP_HALF = 0.52; // half-width of the hole, radians
         const MINSPD = 5.5, MAXSPD = 24, REST = 1.012;
         function newBall(x0, y0, r0, hue, vx0, vy0) {
           const ang = Math.random() * Math.PI * 2;
-          return { x: x0, y: y0, vx: vx0 != null ? vx0 : Math.cos(ang) * 7, vy: vy0 != null ? vy0 : Math.sin(ang) * 7, r: r0, hue: hue != null ? hue : Math.floor(Math.random() * 360), bounces: 0 };
+          return { x: x0, y: y0, vx: vx0 != null ? vx0 : Math.cos(ang) * 7, vy: vy0 != null ? vy0 : Math.sin(ang) * 7 - 2, r: r0, hue: hue != null ? hue : Math.floor(Math.random() * 360), bounces: 0, state: "live" };
         }
-        function startR() { return cfg.container === "circle" ? (cfg.count > 15 ? 10 : 20) : (cfg.count > 15 ? 8 : 16); }
-        function buildBalls() {
-          bgDraw = makeBg(cfg.bg); wall = 0; spinAng = 0; totalBounces = 0; bxf.clearRect(0, 0, SW, SH); balls = [];
+        function startR() { return cfg.container === "box" ? (cfg.count > 15 ? 8 : 16) : (cfg.count > 15 ? 10 : 20); }
+        function freshBall() {
           const r0 = startR();
-          for (let i = 0; i < cfg.count; i++) {
-            if (cfg.container === "circle") { const a = Math.random() * Math.PI * 2, d = Math.random() * RC() * 0.4; balls.push(newBall(cx + Math.cos(a) * d, cy + Math.sin(a) * d, r0)); }
-            else balls.push(newBall(40 + Math.random() * (SW - 80), 60 + Math.random() * (SH * 0.4), r0));
-          }
+          if (cfg.container === "box") return newBall(40 + Math.random() * (SW - 80), 90, r0);
+          return newBall(cx + (Math.random() - 0.5) * RC() * 0.3, cy - RC() * 0.3, r0); // falls into the circle
+        }
+        function buildBalls() {
+          bgDraw = makeBg(cfg.bg); wall = 0; spinAng = 0; gapCenter = Math.random() * Math.PI * 2; totalBounces = 0; stoneCount = 0; flash = null; rings = []; bxf.clearRect(0, 0, SW, SH); balls = [];
+          const n = cfg.sequence ? 1 : cfg.count; // sequences run one ball at a time
+          for (let i = 0; i < n; i++) balls.push(freshBall());
         }
         function enforce(b) {
           let s = Math.hypot(b.vx, b.vy);
@@ -1078,64 +1104,108 @@
           if (s < MINSPD) { const k = MINSPD / s; b.vx *= k; b.vy *= k; }
           else if (s > MAXSPD) { const k = MAXSPD / s; b.vx *= k; b.vy *= k; }
         }
+        function setFlash(txt) { flash = { txt, ttl: 95 }; }
+        let rings = [];
+        function ring(x, y, hue) { rings.push({ x, y, r: 10, hue, a: 1 }); }
+        function applyChange(b) {
+          const ct = cfg.changeTo;
+          if (ct === "stone" || ct === "freeze") { b.state = "stone"; b.vx = 0; b.vy = 0; b.frozen = (ct === "freeze"); stoneCount++; ring(b.x, b.y, b.hue); psound(170, 0.3); setFlash(ct === "freeze" ? "FROZEN! ❄️" : "TURNED TO STONE! 🪨"); }
+          else if (ct === "pop") { b.state = "gone"; ring(b.x, b.y, b.hue); psound(320, 0.2); setFlash("POP! 💥"); }
+          else if (ct === "explode") { b.state = "gone"; for (let i = 0; i < 3; i++) ring(b.x, b.y, (b.hue + i * 40) % 360); psound(110, 0.4); boomLike(); setFlash("BOOM! 💥"); }
+          else if (ct === "split") { b.state = "gone"; for (let i = 0; i < 2; i++) balls.push(newBall(b.x, b.y, Math.max(6, b.r * 0.78), (b.hue + 120 * i) % 360)); setFlash("SPLIT!"); }
+          else if (ct === "color") { b.hue = Math.floor(Math.random() * 360); b.bounces = 0; setFlash("COLOR CHANGE!"); }
+        }
+        function boomLike() { try { window.MG.boomSound(0.12); } catch (e) {} }
         function bounce(b) {
           b.bounces++; totalBounces++;
           b.vx *= REST; b.vy *= REST;
           if (cfg.speedUp) { b.vx *= cfg.speedUp; b.vy *= cfg.speedUp; }
           enforce(b);
           psound(Math.max(140, Math.min(900, 900 - b.r * 7)));
-          const maxR = (cfg.container === "circle" ? RC() * 0.92 : Math.min(SW, SH) * 0.47);
+          const maxR = (cfg.container !== "box" ? RC() * 0.92 : Math.min(SW, SH) * 0.47);
           if (cfg.grow) { b.r *= cfg.grow; if (b.r >= maxR) { b.r = startR(); psound(160, 0.3); ring(b.x, b.y, b.hue); } }
           if (cfg.shrink) { b.r *= cfg.shrink; if (b.r < 4) b.r = startR(); }
           if (cfg.rainbow) b.hue = (b.hue + 32) % 360;
-          if (cfg.split && balls.length < 300) balls.push(newBall(b.x, b.y, Math.max(4, b.r * 0.82), (b.hue + 120) % 360, -b.vx + (Math.random() - 0.5) * 3, b.vy * 0.85));
+          if (cfg.split && balls.filter((x) => x.state === "live").length < 160) balls.push(newBall(b.x, b.y, Math.max(4, b.r * 0.82), (b.hue + 120) % 360, -b.vx + (Math.random() - 0.5) * 3, b.vy * 0.85));
+          if (cfg.changeTo && cfg.changeAfter && b.state === "live" && b.bounces >= cfg.changeAfter) applyChange(b);
         }
-        let rings = [];
-        function ring(x, y, hue) { rings.push({ x, y, r: 10, hue, a: 1 }); }
+        function angDiff(a, bb) { let d = Math.abs(a - bb) % (Math.PI * 2); return d > Math.PI ? Math.PI * 2 - d : d; }
         function step() {
           if (cfg.wallsClose) { const mw = Math.min(SW, SH) * 0.3; if (wall < mw) wall += 0.25; }
-          if (cfg.spin) spinAng += 0.012;
+          if (cfg.spin && cfg.container !== "hole") spinAng += 0.012;
+          if (cfg.container === "hole" && cfg.spin) gapCenter += 0.016;
+          const stones = balls.filter((b) => b.state === "stone");
           for (const b of balls) {
+            if (b.state === "stone") continue;
             b.vy += cfg.gravity; b.x += b.vx; b.y += b.vy;
-            if (cfg.container === "circle") {
-              const dx = b.x - cx, dy = b.y - cy, d = Math.hypot(dx, dy) || 0.001, lim = RC() - b.r;
-              if (d > lim) { const nx = dx / d, ny = dy / d, dot = b.vx * nx + b.vy * ny; b.vx -= 2 * dot * nx; b.vy -= 2 * dot * ny; b.x = cx + nx * lim; b.y = cy + ny * lim; bounce(b); }
-            } else {
+            if (b.state === "escaped") { if (b.y > SH + 120 || b.x < -120 || b.x > SW + 120) b.state = "gone"; continue; }
+            // container collision
+            if (cfg.container === "box") {
               const L = wall, R = SW - wall, T = wall, B = SH - wall;
               if (b.x - b.r < L) { b.x = L + b.r; b.vx = Math.abs(b.vx); bounce(b); }
               else if (b.x + b.r > R) { b.x = R - b.r; b.vx = -Math.abs(b.vx); bounce(b); }
               if (b.y - b.r < T) { b.y = T + b.r; b.vy = Math.abs(b.vy); bounce(b); }
               else if (b.y + b.r > B) { b.y = B - b.r; b.vy = -Math.abs(b.vy); bounce(b); }
+            } else {
+              const dx = b.x - cx, dy = b.y - cy, d = Math.hypot(dx, dy) || 0.001, lim = RC() - b.r;
+              if (d > lim) {
+                const ang = Math.atan2(dy, dx);
+                const inGap = cfg.container === "hole" && angDiff(ang, gapCenter) < GAP_HALF;
+                if (inGap) { if (d > RC() + b.r) { b.state = "escaped"; psound(760, 0.25); setFlash("ESCAPED! 🎉"); } }
+                else { const nx = dx / d, ny = dy / d, dot = b.vx * nx + b.vy * ny; b.vx -= 2 * dot * nx; b.vy -= 2 * dot * ny; b.x = cx + nx * lim; b.y = cy + ny * lim; bounce(b); }
+              }
             }
-            enforce(b);
+            // bounce off stone balls
+            for (const s of stones) { const dx = b.x - s.x, dy = b.y - s.y, d = Math.hypot(dx, dy) || 0.001, md = b.r + s.r; if (d < md) { const nx = dx / d, ny = dy / d, dot = b.vx * nx + b.vy * ny; if (dot < 0) { b.vx -= 2 * dot * nx; b.vy -= 2 * dot * ny; } b.x = s.x + nx * md; b.y = s.y + ny * md; bounce(b); } }
+            if (b.state === "live") enforce(b);
           }
+          balls = balls.filter((b) => b.state !== "gone");
+          // sequence: when the live ball is done, the next one comes in
+          if ((cfg.sequence) && balls.filter((b) => b.state === "live").length === 0 && stoneCount < 70) balls.push(freshBall());
           rings.forEach((r) => { r.r += 6; r.a -= 0.04; }); rings = rings.filter((r) => r.a > 0);
+          if (flash) { flash.ttl--; if (flash.ttl <= 0) flash = null; }
+          try { window.__sball = { bounces: totalBounces, stone: stoneCount, total: balls.length, live: balls.filter((b) => b.state === "live").length, escaped: balls.filter((b) => b.state === "escaped").length, container: cfg.container, bg: cfg.bg }; } catch (e) {}
         }
         function renderScene() {
           bgDraw(sx);
           if (cfg.trail) { bxf.fillStyle = "rgba(0,0,0,0.14)"; bxf.fillRect(0, 0, SW, SH); } else bxf.clearRect(0, 0, SW, SH);
           // container
-          if (cfg.container === "circle") {
+          if (cfg.container === "box") {
+            bxf.strokeStyle = "rgba(255,255,255,0.3)"; bxf.lineWidth = 6; bxf.strokeRect(wall + 3, wall + 3, SW - wall * 2 - 6, SH - wall * 2 - 6);
+          } else if (cfg.container === "hole") {
+            bxf.strokeStyle = "rgba(255,255,255,0.55)"; bxf.lineWidth = 9; bxf.lineCap = "round";
+            bxf.beginPath(); bxf.arc(cx, cy, RC(), gapCenter + GAP_HALF, gapCenter - GAP_HALF + Math.PI * 2); bxf.stroke(); bxf.lineCap = "butt";
+          } else {
             bxf.save(); bxf.translate(cx, cy); bxf.rotate(spinAng);
-            bxf.strokeStyle = "rgba(255,255,255,0.4)"; bxf.lineWidth = 8; bxf.beginPath(); bxf.arc(0, 0, RC(), 0, Math.PI * 2); bxf.stroke();
+            bxf.strokeStyle = "rgba(255,255,255,0.42)"; bxf.lineWidth = 8; bxf.beginPath(); bxf.arc(0, 0, RC(), 0, Math.PI * 2); bxf.stroke();
             if (cfg.spin) { bxf.strokeStyle = "rgba(0,0,0,0.9)"; bxf.lineWidth = 8; bxf.beginPath(); bxf.arc(0, 0, RC(), -0.45, 0.45); bxf.stroke(); }
             bxf.restore();
-          } else { bxf.strokeStyle = "rgba(255,255,255,0.3)"; bxf.lineWidth = 6; bxf.strokeRect(wall + 3, wall + 3, SW - wall * 2 - 6, SH - wall * 2 - 6); }
-          // rings
+          }
+          // rings (impact pulses)
           rings.forEach((r) => { bxf.strokeStyle = "hsla(" + r.hue + ",90%,65%," + r.a + ")"; bxf.lineWidth = 5; bxf.beginPath(); bxf.arc(r.x, r.y, r.r, 0, Math.PI * 2); bxf.stroke(); });
           // balls
           for (const b of balls) {
-            const g = bxf.createRadialGradient(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.1, b.x, b.y, b.r);
-            g.addColorStop(0, "hsl(" + b.hue + " 100% 78%)"); g.addColorStop(1, "hsl(" + b.hue + " 90% 48%)");
-            bxf.fillStyle = g; bxf.shadowColor = "hsl(" + b.hue + " 95% 60%)"; bxf.shadowBlur = 26;
-            bxf.beginPath(); bxf.arc(b.x, b.y, b.r, 0, Math.PI * 2); bxf.fill(); bxf.shadowBlur = 0;
+            if (b.state === "stone") {
+              bxf.fillStyle = b.frozen ? "#9fd8ff" : "#8a8f9e"; bxf.beginPath(); bxf.arc(b.x, b.y, b.r, 0, Math.PI * 2); bxf.fill();
+              bxf.strokeStyle = b.frozen ? "rgba(255,255,255,0.7)" : "rgba(40,44,54,0.8)"; bxf.lineWidth = 2;
+              bxf.beginPath(); bxf.moveTo(b.x - b.r * 0.5, b.y - b.r * 0.1); bxf.lineTo(b.x + b.r * 0.3, b.y - b.r * 0.4); bxf.moveTo(b.x - b.r * 0.1, b.y - b.r * 0.5); bxf.lineTo(b.x + b.r * 0.15, b.y + b.r * 0.45); bxf.stroke();
+            } else {
+              const g = bxf.createRadialGradient(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.1, b.x, b.y, b.r);
+              g.addColorStop(0, "hsl(" + b.hue + " 100% 78%)"); g.addColorStop(1, "hsl(" + b.hue + " 90% 48%)");
+              bxf.fillStyle = g; bxf.shadowColor = "hsl(" + b.hue + " 95% 60%)"; bxf.shadowBlur = 26;
+              bxf.beginPath(); bxf.arc(b.x, b.y, b.r, 0, Math.PI * 2); bxf.fill(); bxf.shadowBlur = 0;
+            }
           }
           sx.drawImage(sbuf, 0, 0);
           // HUD: big bounce counter
           sx.textAlign = "center"; sx.fillStyle = "rgba(255,255,255,0.95)"; sx.font = "900 62px system-ui, sans-serif";
           sx.fillText(totalBounces, SW / 2, 86);
           sx.font = "700 20px system-ui"; sx.fillStyle = "rgba(255,255,255,0.65)"; sx.fillText("BOUNCES", SW / 2, 112);
-          sx.fillStyle = "rgba(255,255,255,0.5)"; sx.font = "800 22px system-ui"; sx.fillText("MaxwellGames", SW / 2, SH - 26);
+          // flash message (STONE!, ESCAPED!, etc.)
+          if (flash) { sx.globalAlpha = Math.min(1, flash.ttl / 45); sx.fillStyle = "#fff"; sx.font = "900 44px system-ui"; sx.fillText(flash.txt, SW / 2, SH * 0.6); sx.globalAlpha = 1; }
+          // background label (so you can see it's working) + watermark
+          sx.textAlign = "left"; sx.fillStyle = "rgba(255,255,255,0.55)"; sx.font = "700 18px system-ui"; sx.fillText("🎨 " + (BG_NAMES[cfg.bg] || "Starfield"), 14, SH - 24);
+          sx.textAlign = "center"; sx.fillStyle = "rgba(255,255,255,0.5)"; sx.font = "800 22px system-ui"; sx.fillText("MaxwellGames", SW / 2, SH - 26);
         }
         function renderView() {
           const vw = view.width, vh = view.height; if (!vw || !vh) return;
