@@ -627,6 +627,287 @@
           }
         };
       }
+    },
+
+    // ---------- SPECIAL: Satisfying Balls (prompt → fullscreen physics short) ----------
+    {
+      key: "sball", name: "Satisfying Balls", icon: "🔮", special: true, tag: "AI prompt!",
+      play(host, api) {
+        const W = 324, H = 576; // 9:16
+        const panel = document.createElement("div"); panel.className = "sball-panel"; host.appendChild(panel);
+        panel.innerHTML = `
+          <p class="ar-hint">Describe your short — the balls AND the background. I'll build it, then hit <b>Fullscreen</b> or <b>Record</b> to make a YouTube Short!</p>
+          <div class="sball-promptrow">
+            <input id="sballPrompt" class="sball-input" placeholder="e.g. a ball that grows each bounce with matrix falling in the background">
+            <button class="btn asc-btn" id="sballGo">✨ Make it</button>
+          </div>
+          <div class="sball-chips" id="sballChips"></div>
+          <p class="sball-read" id="sballRead"></p>`;
+        const EXAMPLES = [
+          "a ball that gets bigger every bounce, matrix background",
+          "100 rainbow balls in space with stars",
+          "a ball bouncing inside a circle, synthwave background",
+          "balls that split, sunset background",
+          "a ball that speeds up with a trail, aurora background",
+          "walls closing in, fire background"
+        ];
+        const chips = panel.querySelector("#sballChips");
+        EXAMPLES.forEach((ex) => { const ch = document.createElement("button"); ch.className = "sball-chip"; ch.textContent = ex; ch.onclick = () => { input.value = ex; generate(); }; chips.appendChild(ch); });
+
+        const stage = document.createElement("div"); stage.className = "sball-stage"; host.appendChild(stage);
+        const c = canvas(stage, W, H, "sball-canvas"); const x = c.getContext("2d");
+        // offscreen buffer for the ball layer (lets trails persist over a live background)
+        const buf = document.createElement("canvas"); buf.width = W; buf.height = H; const bx = buf.getContext("2d");
+        // floating bar shown only in fullscreen
+        const fsBar = document.createElement("div"); fsBar.className = "sball-fs-bar";
+        fsBar.innerHTML = `<button class="btn sball-rec" id="sballFsRec">● Record 12s</button><button class="btn" id="sballFsExit">⛶ Exit</button>`;
+        stage.appendChild(fsBar);
+
+        const controls = document.createElement("div"); controls.className = "sball-controls"; host.appendChild(controls);
+        controls.innerHTML = `
+          <button class="btn" id="sballReplay">↻ Replay</button>
+          <button class="btn sball-fs" id="sballFull">⛶ Fullscreen</button>
+          <button class="btn sball-rec" id="sballRec">● Record 12s</button>
+          <span class="sball-recnote" id="sballRecNote"></span>`;
+        const input = panel.querySelector("#sballPrompt");
+        const read = panel.querySelector("#sballRead");
+        const recBtn = controls.querySelector("#sballRec");
+        const fsRecBtn = fsBar.querySelector("#sballFsRec");
+        const recNote = controls.querySelector("#sballRecNote");
+        controls.querySelector("#sballReplay").onclick = () => build(lastCfg);
+
+        // ----- fullscreen -----
+        function enterFull() {
+          const fn = stage.requestFullscreen || stage.webkitRequestFullscreen || stage.msRequestFullscreen;
+          if (fn) { try { fn.call(stage); } catch (e) {} }
+          else { stage.classList.add("fake-full"); } // fallback: CSS fullscreen
+        }
+        function exitFull() {
+          if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen || function(){}).call(document); }
+          stage.classList.remove("fake-full");
+        }
+        controls.querySelector("#sballFull").onclick = enterFull;
+        fsBar.querySelector("#sballFsExit").onclick = exitFull;
+
+        // audio (routed to speakers + a recording destination so the video has sound)
+        let recDest = null;
+        try { const a = actx(); if (a && a.createMediaStreamDestination) recDest = a.createMediaStreamDestination(); } catch (e) {}
+        function psound(freq) {
+          const a = actx(); if (!a) return;
+          const o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+          o.type = "sine"; o.frequency.setValueAtTime(freq, t); o.frequency.exponentialRampToValueAtTime(Math.max(60, freq * 0.6), t + 0.18);
+          g.gain.setValueAtTime(0.16, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+          o.connect(g); g.connect(a.destination); if (recDest) g.connect(recDest);
+          o.start(t); o.stop(t + 0.22);
+        }
+
+        // ----- backgrounds -----
+        function detectBg(p) {
+          if (/(matrix|falling code|green code|hacker|the matrix)/.test(p)) return "matrix";
+          if (/(space|stars?|galaxy|cosmos|night sky|universe|outer space)/.test(p)) return "space";
+          if (/(synthwave|neon|retro grid|vaporwave|outrun|80s grid)/.test(p)) return "synthwave";
+          if (/(sunset|sunrise|warm gradient|orange sky)/.test(p)) return "sunset";
+          if (/(aurora|northern lights)/.test(p)) return "aurora";
+          if (/(fire|lava|flames?|volcano|magma)/.test(p)) return "fire";
+          if (/(ocean|underwater|sea|deep blue)/.test(p)) return "ocean";
+          if (/(rainbow background|disco floor|party background)/.test(p)) return "disco";
+          return "dark";
+        }
+        const BG_NAMES = { matrix: "Matrix code", space: "Starfield", synthwave: "Synthwave grid", sunset: "Sunset", aurora: "Aurora", fire: "Lava", ocean: "Ocean", disco: "Disco", dark: "Dark" };
+        function makeBg(type) {
+          let stars = [], cols = [], t = 0;
+          if (type === "space") for (let i = 0; i < 110; i++) stars.push({ x: Math.random() * W, y: Math.random() * H, z: 0.4 + Math.random() * 2 });
+          if (type === "matrix") { const n = Math.ceil(W / 14); for (let i = 0; i < n; i++) cols.push({ x: i * 14, y: Math.random() * H, sp: 2 + Math.random() * 5 }); }
+          return function (ctx) {
+            t++;
+            if (type === "matrix") {
+              ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+              ctx.font = "14px monospace"; ctx.textAlign = "left";
+              for (const col of cols) {
+                col.y += col.sp; if (col.y > H + 40) col.y = -20;
+                for (let k = 0; k < 16; k++) {
+                  const yy = col.y - k * 14; if (yy < 0 || yy > H) continue;
+                  ctx.fillStyle = k === 0 ? "rgba(220,255,220,0.95)" : "rgba(0,255,90," + Math.max(0, 0.55 - k * 0.035) + ")";
+                  ctx.fillText(String.fromCharCode(0x30A0 + ((Math.random() * 96) | 0)), col.x, yy);
+                }
+              }
+            } else if (type === "space") {
+              ctx.fillStyle = "#05060f"; ctx.fillRect(0, 0, W, H);
+              for (const s of stars) { s.y += s.z * 0.5; if (s.y > H) { s.y = 0; s.x = Math.random() * W; } ctx.globalAlpha = Math.min(1, s.z / 2 + 0.3); ctx.fillStyle = "#fff"; ctx.fillRect(s.x, s.y, s.z, s.z); } ctx.globalAlpha = 1;
+            } else if (type === "synthwave") {
+              const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#1a0b2e"); g.addColorStop(0.5, "#3b0d52"); g.addColorStop(1, "#0b0618"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+              ctx.fillStyle = "#ff5fa2"; ctx.beginPath(); ctx.arc(W / 2, H * 0.4, 58, 0, Math.PI * 2); ctx.fill();
+              const hz = H * 0.6; ctx.strokeStyle = "rgba(0,255,230,0.4)"; ctx.lineWidth = 1;
+              for (let i = -8; i <= 8; i++) { ctx.beginPath(); ctx.moveTo(W / 2, hz); ctx.lineTo(W / 2 + i * 70, H); ctx.stroke(); }
+              for (let j = 0; j < 14; j++) { const yy = hz + ((t * 2 + j * 36) % (H - hz)); ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(W, yy); ctx.stroke(); }
+            } else if (type === "sunset") {
+              const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#ff9a3c"); g.addColorStop(0.5, "#ff5fa2"); g.addColorStop(1, "#5b2c8a"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+            } else if (type === "aurora") {
+              ctx.fillStyle = "#04101a"; ctx.fillRect(0, 0, W, H);
+              for (let i = 0; i < 3; i++) { const hue = (t * 0.6 + i * 80) % 360; const g = ctx.createLinearGradient(0, 0, W, 0); g.addColorStop(0, "hsla(" + hue + ",90%,60%,0)"); g.addColorStop(0.5, "hsla(" + hue + ",90%,60%,0.3)"); g.addColorStop(1, "hsla(" + ((hue + 70) % 360) + ",90%,60%,0)"); ctx.fillStyle = g; ctx.fillRect(0, 70 + i * 60 + Math.sin(t * 0.02 + i) * 24, W, 130); }
+            } else if (type === "fire") {
+              const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#2a0500"); g.addColorStop(0.6, "#b22207"); g.addColorStop(1, "#ff8a24"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+            } else if (type === "ocean") {
+              const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#0a3a5c"); g.addColorStop(1, "#021018"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+              ctx.strokeStyle = "rgba(120,200,255,0.12)"; for (let j = 0; j < 8; j++) { const yy = (t * 0.6 + j * 80) % H; ctx.beginPath(); ctx.moveTo(0, yy); for (let xx = 0; xx <= W; xx += 20) ctx.lineTo(xx, yy + Math.sin((xx + t) * 0.05) * 6); ctx.stroke(); }
+            } else if (type === "disco") {
+              const hue = (t * 3) % 360; ctx.fillStyle = "hsl(" + hue + " 70% 12%)"; ctx.fillRect(0, 0, W, H);
+              for (let i = 0; i < 6; i++) { ctx.fillStyle = "hsla(" + ((hue + i * 60) % 360) + ",90%,55%,0.12)"; ctx.fillRect((i * 70 + t) % W, 0, 36, H); }
+            } else { ctx.fillStyle = "#0a0c18"; ctx.fillRect(0, 0, W, H); }
+          };
+        }
+
+        // ----- prompt parser -----
+        function parse(p) {
+          p = (p || "").toLowerCase();
+          const numM = p.match(/(\d{1,3})/);
+          const circle = /(circle|ring|inside a|donut|hoop|orbit)/.test(p);
+          return {
+            container: circle ? "circle" : "box",
+            count: Math.max(1, Math.min(300, numM ? parseInt(numM[1], 10) : (/(many|lots|bunch|hundred|loads)/.test(p) ? 60 : 1))),
+            gravity: /(no gravity|zero ?g|float)/.test(p) ? 0 : (/(low gravity|moon|slow fall|floaty)/.test(p) ? 0.08 : (/(heavy|strong gravity|lots of gravity|more gravity)/.test(p) ? 0.55 : 0.26)),
+            grow: /(bigger|grows?|larger|expand|increase|huge each|size up)/.test(p) ? 1.09 : 0,
+            shrink: /(smaller|shrinks?|tinier|size down)/.test(p) ? 0.93 : 0,
+            split: /(split|multiply|clones?|duplicate|divide|more balls each|spawn)/.test(p),
+            speedUp: /(speed ?up|faster|speeds up|accelerat|quicker each)/.test(p) ? 1.07 : 0,
+            rainbow: /(rainbow|colou?rs?|changing colou?r|every colou?r|disco)/.test(p),
+            trail: /(trail|trails|motion blur|streak|tail)/.test(p),
+            wallsClose: /(walls? clos|closing in|shrink.*box|squeeze|smaller box|tighten)/.test(p),
+            spin: /(spin|spinning|rotating|rotate)/.test(p),
+            bg: detectBg(p)
+          };
+        }
+        function summarize(cfg) {
+          const bits = [];
+          bits.push(cfg.count > 1 ? cfg.count + " balls" : "1 ball");
+          bits.push(cfg.container === "circle" ? "inside a circle" : "in a box");
+          if (cfg.grow) bits.push("grows each bounce");
+          if (cfg.shrink) bits.push("shrinks each bounce");
+          if (cfg.split) bits.push("splits on bounce");
+          if (cfg.speedUp) bits.push("speeds up");
+          if (cfg.rainbow) bits.push("rainbow");
+          if (cfg.trail) bits.push("motion trail");
+          if (cfg.wallsClose) bits.push("walls close in");
+          if (cfg.spin) bits.push("spinning");
+          if (cfg.gravity === 0) bits.push("no gravity"); else if (cfg.gravity < 0.1) bits.push("low gravity"); else if (cfg.gravity > 0.4) bits.push("heavy gravity");
+          bits.push("🎨 " + (BG_NAMES[cfg.bg] || "Dark") + " background");
+          return "🤖 Made it: " + bits.join(" · ");
+        }
+
+        // ----- sim -----
+        let balls = [], cfg = null, lastCfg = null, raf = null, wall = 0, spinAng = 0, bgDraw = null;
+        const RC = () => W * 0.46;
+        const cx = W / 2, cy = H * 0.42;
+        function spawn(x0, y0, r0, hue) {
+          const ang = Math.random() * Math.PI * 2, sp = 3 + Math.random() * 2;
+          return { x: x0, y: y0, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 2, r: r0, hue: hue != null ? hue : Math.floor(Math.random() * 360), bounces: 0 };
+        }
+        function build(config) {
+          cfg = config; lastCfg = config; wall = 0; spinAng = 0; bgDraw = makeBg(cfg.bg);
+          bx.clearRect(0, 0, W, H); balls = [];
+          const startR = cfg.container === "circle" ? 14 : (cfg.count > 20 ? 7 : (cfg.grow ? 12 : 16));
+          for (let i = 0; i < cfg.count; i++) {
+            if (cfg.container === "circle") { const a = Math.random() * Math.PI * 2, d = Math.random() * RC() * 0.5; balls.push(spawn(cx + Math.cos(a) * d, cy + Math.sin(a) * d, startR)); }
+            else balls.push(spawn(30 + Math.random() * (W - 60), 40 + Math.random() * (H * 0.4), startR));
+          }
+          read.textContent = summarize(cfg);
+          if (!raf) loop();
+        }
+        function onBounce(b) {
+          b.bounces++;
+          psound(Math.max(120, Math.min(900, 880 - b.r * 9)));
+          const maxR = (cfg.container === "circle" ? RC() * 0.85 : Math.min(W, H) * 0.48);
+          if (cfg.grow) { b.r *= cfg.grow; if (b.r > maxR) b.r = cfg.container === "circle" ? maxR : 10; }
+          if (cfg.shrink) { b.r *= cfg.shrink; if (b.r < 3) b.r = 16; }
+          if (cfg.speedUp) { b.vx *= cfg.speedUp; b.vy *= cfg.speedUp; }
+          if (cfg.rainbow) b.hue = (b.hue + 36) % 360;
+          if (cfg.split && balls.length < 300) balls.push({ x: b.x, y: b.y, vx: -b.vx + (Math.random() - 0.5) * 2, vy: b.vy * 0.8, r: Math.max(4, b.r * 0.8), hue: (b.hue + 120) % 360, bounces: 0 });
+        }
+        function clampSpeed(b) { const m = 16, s = Math.hypot(b.vx, b.vy); if (s > m) { b.vx = b.vx / s * m; b.vy = b.vy / s * m; } }
+        function step() {
+          if (cfg.wallsClose) { const maxWall = Math.min(W, H) * 0.33; if (wall < maxWall) wall += 0.18; }
+          if (cfg.spin) spinAng += 0.01;
+          for (const b of balls) {
+            b.vy += cfg.gravity; b.x += b.vx; b.y += b.vy; clampSpeed(b);
+            if (cfg.container === "circle") {
+              const dx = b.x - cx, dy = b.y - cy, d = Math.hypot(dx, dy), lim = RC() - b.r;
+              if (d > lim) { const nx = dx / d, ny = dy / d, dot = b.vx * nx + b.vy * ny; b.vx -= 2 * dot * nx; b.vy -= 2 * dot * ny; b.x = cx + nx * lim; b.y = cy + ny * lim; onBounce(b); }
+            } else {
+              const L = wall, R = W - wall, T = wall, B = H - wall;
+              if (b.x - b.r < L) { b.x = L + b.r; b.vx = Math.abs(b.vx); onBounce(b); }
+              else if (b.x + b.r > R) { b.x = R - b.r; b.vx = -Math.abs(b.vx); onBounce(b); }
+              if (b.y - b.r < T) { b.y = T + b.r; b.vy = Math.abs(b.vy); onBounce(b); }
+              else if (b.y + b.r > B) { b.y = B - b.r; b.vy = -Math.abs(b.vy); onBounce(b); }
+            }
+          }
+        }
+        function draw() {
+          // 1) live background on the visible canvas
+          if (bgDraw) bgDraw(x); else { x.fillStyle = "#0a0c18"; x.fillRect(0, 0, W, H); }
+          // 2) ball layer on the buffer (trails persist here, bg stays live)
+          if (cfg.trail) { bx.fillStyle = "rgba(0,0,0,0.18)"; bx.fillRect(0, 0, W, H); } else bx.clearRect(0, 0, W, H);
+          if (cfg.container === "circle") {
+            bx.save(); bx.translate(cx, cy); bx.rotate(spinAng);
+            bx.strokeStyle = "rgba(255,255,255,0.35)"; bx.lineWidth = 6; bx.beginPath(); bx.arc(0, 0, RC(), 0, Math.PI * 2); bx.stroke();
+            if (cfg.spin) { bx.strokeStyle = "rgba(255,255,255,0.12)"; bx.beginPath(); bx.arc(0, 0, RC(), -0.4, 0.4); bx.stroke(); }
+            bx.restore();
+          } else { bx.strokeStyle = "rgba(255,255,255,0.22)"; bx.lineWidth = 4; bx.strokeRect(wall + 2, wall + 2, W - wall * 2 - 4, H - wall * 2 - 4); }
+          for (const b of balls) {
+            bx.beginPath(); bx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+            bx.fillStyle = "hsl(" + b.hue + " 90% 60%)"; bx.shadowColor = "hsl(" + b.hue + " 90% 60%)"; bx.shadowBlur = 16; bx.fill(); bx.shadowBlur = 0;
+            bx.fillStyle = "rgba(255,255,255,0.35)"; bx.beginPath(); bx.arc(b.x - b.r * 0.3, b.y - b.r * 0.3, Math.max(1, b.r * 0.22), 0, Math.PI * 2); bx.fill();
+          }
+          // 3) composite ball layer over background
+          x.drawImage(buf, 0, 0);
+          // 4) watermark
+          x.fillStyle = "rgba(255,255,255,0.5)"; x.font = "bold 15px system-ui"; x.textAlign = "center"; x.fillText("MaxwellGames", W / 2, H - 16);
+        }
+        function loop() { step(); draw(); raf = requestAnimationFrame(loop); }
+
+        function generate() {
+          try { const a = actx(); if (a && a.resume) a.resume(); } catch (e) {}
+          build(parse(input.value.trim() || "a ball that gets bigger every bounce, matrix background"));
+        }
+        panel.querySelector("#sballGo").onclick = generate;
+        input.addEventListener("keydown", (e) => { if (e.key === "Enter") generate(); });
+
+        // ----- recording -----
+        let recording = false, recIv = null;
+        function setRecBtns(dis, txt) { [recBtn, fsRecBtn].forEach((b) => { if (b) { b.disabled = dis; b.textContent = txt; } }); }
+        function startRec() {
+          if (recording) return;
+          try { const a = actx(); if (a && a.resume) a.resume(); } catch (e) {}
+          if (!window.MediaRecorder) { recNote.textContent = "Recording isn't supported in this browser."; return; }
+          let stream;
+          try { stream = c.captureStream(60); } catch (e) { recNote.textContent = "Recording isn't supported here."; return; }
+          if (recDest) { try { const tr = recDest.stream.getAudioTracks()[0]; if (tr) stream.addTrack(tr); } catch (e) {} }
+          const mime = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"].find((m) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || "";
+          let rec;
+          try { rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined); } catch (e) { recNote.textContent = "Recording isn't supported here."; return; }
+          const chunks = [];
+          rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+          rec.onstop = () => {
+            const blob = new Blob(chunks, { type: "video/webm" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a"); a.href = url; a.download = "satisfying-ball-" + Date.now() + ".webm";
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            recNote.textContent = "✅ Saved to your downloads! Upload it as a YouTube Short.";
+            window.MG.toast("🎬", "Short saved!", "Check your downloads folder.");
+            window.MG.flag("sball"); window.MG.arcadePlayed(); window.MG.addTreats(15); api.refreshTreats();
+            recording = false; setRecBtns(false, "● Record 12s");
+          };
+          build(lastCfg || parse(input.value));
+          rec.start(); recording = true; setRecBtns(true, "● Rec 12s"); recNote.textContent = "🔴 Recording…";
+          let left = 12;
+          recIv = setInterval(() => { left--; setRecBtns(true, "● Rec " + left + "s"); if (left <= 0) { clearInterval(recIv); try { rec.stop(); } catch (e) {} } }, 1000);
+          api.onClean(() => { clearInterval(recIv); try { if (rec.state !== "inactive") rec.stop(); } catch (e) {} });
+        }
+        recBtn.onclick = startRec; fsRecBtn.onclick = startRec;
+
+        api.onClean(() => { if (raf) cancelAnimationFrame(raf); raf = null; try { exitFull(); } catch (e) {} });
+        build(parse("a ball that gets bigger every bounce, matrix background"));
+      }
     }
   ];
 

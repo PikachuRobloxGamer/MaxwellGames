@@ -732,3 +732,32 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
   .merge-grid { grid-template-columns: repeat(4, 58px); grid-auto-rows: 58px; }
   .simon-wrap { grid-template-columns: repeat(2, 92px); grid-auto-rows: 92px; }
 }
+
+/* Satisfying Balls */
+.sball-panel { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 8px; }
+.sball-promptrow { display: flex; gap: 8px; }
+.sball-input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--accent); background: var(--bg); color: var(--text); font-size: 0.9rem; }
+.sball-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.sball-chip { font-size: 0.72rem; padding: 5px 9px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.18); background: var(--panel-hover); color: var(--muted); cursor: pointer; }
+.sball-chip:hover { color: var(--text); border-color: var(--accent); }
+.sball-read { font-size: 0.82rem; color: #3ee08f; text-align: center; min-height: 18px; margin: 2px 0; }
+.sball-stage { display: flex; justify-content: center; position: relative; }
+.sball-canvas { background: #0a0c18; border-radius: 14px; border: 2px solid rgba(255,255,255,0.1); max-height: 60vh; }
+.sball-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.sball-rec { background: #e8303a; color: #fff; font-weight: 800; }
+.sball-rec:disabled { opacity: 0.7; }
+.sball-fs { background: var(--accent); color: #fff; font-weight: 800; }
+.sball-recnote { font-size: 0.8rem; color: var(--muted); }
+
+/* Fullscreen Short mode */
+.sball-fs-bar { display: none; }
+.sball-stage:fullscreen, .sball-stage:-webkit-full-screen, .sball-stage.fake-full {
+  background: #000; width: 100vw; height: 100vh; align-items: center; justify-content: center;
+}
+.sball-stage:fullscreen .sball-canvas, .sball-stage:-webkit-full-screen .sball-canvas, .sball-stage.fake-full .sball-canvas {
+  height: 100vh; width: auto; max-height: 100vh; max-width: 100vw; border: none; border-radius: 0;
+}
+.sball-stage.fake-full { position: fixed; inset: 0; z-index: 5000; }
+.sball-stage:fullscreen .sball-fs-bar, .sball-stage:-webkit-full-screen .sball-fs-bar, .sball-stage.fake-full .sball-fs-bar {
+  display: flex; position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); gap: 12px; z-index: 5001;
+}

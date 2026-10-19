@@ -212,6 +212,7 @@
     { id: "reaction",icon: "⚡", name: "Quick Paws",         desc: "React in under 250ms (bonus)",     bonus: true, test: () => (save.arcadeBest.reaction || 0) >= 1 },
     { id: "spin",    icon: "🎡", name: "Lucky Spin",         desc: "Spin the daily wheel (bonus)",     bonus: true, test: () => save.spins >= 1 },
     { id: "jackpot", icon: "🎰", name: "Jackpot!",           desc: "Hit a slot-machine jackpot (bonus)", bonus: true, test: () => save.ach.includes("jackpot") },
+    { id: "sball",   icon: "🔮", name: "Content Creator",    desc: "Make a Satisfying Balls short (bonus)", bonus: true, test: () => save.ach.includes("sball") },
     { id: "konami",  icon: "🕹️", name: "Secret Code",       desc: "??? (an old-school cheat code)",  secret: true, test: () => save.ach.includes("konami") },
     { id: "meow",    icon: "🙀", name: "Typed it",          desc: "??? (type a cat word anywhere)",   secret: true, test: () => save.ach.includes("meow") }
   ];
