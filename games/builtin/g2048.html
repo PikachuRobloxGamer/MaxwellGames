@@ -1,0 +1,37 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell 2048</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🔢 Maxwell 2048</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Arrow keys / swipe to merge tiles. Reach 2048!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var SZ=74,c=cv(4*SZ+20,4*SZ+20),x=c.getContext('2d');
+var CO={2:'#3a3f55',4:'#4a5170',8:'#ff9a3c',16:'#ff7a3c',32:'#ff5a6e',64:'#e8303a',128:'#3ee08f',256:'#19d39b',512:'#4fb3ff',1024:'#b77bff',2048:'#ffd84a'};
+var g,score,over;
+function R(){g=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];score=0;over=false;add();add();sc(0);draw();}
+function add(){var e=[];g.forEach(function(v,i){if(!v)e.push(i);});if(!e.length)return;g[e[(Math.random()*e.length)|0]]=Math.random()<.9?2:4;}
+function slide(a){var f=a.filter(function(v){return v;});for(var i=0;i<f.length-1;i++){if(f[i]===f[i+1]){f[i]*=2;score+=f[i];f.splice(i+1,1);}}while(f.length<4)f.push(0);var mv=false;for(var j=0;j<4;j++)if(f[j]!==a[j])mv=true;return{a:f,mv:mv};}
+function move(d){if(over)return;var mv=false;for(var i=0;i<4;i++){var line=[];for(var j=0;j<4;j++)line.push(d==='L'||d==='R'?g[i*4+j]:g[j*4+i]);var rev=(d==='R'||d==='D');if(rev)line.reverse();var rr=slide(line);if(rev)rr.a.reverse();if(rr.mv)mv=true;for(var j2=0;j2<4;j2++){if(d==='L'||d==='R')g[i*4+j2]=rr.a[j2];else g[j2*4+i]=rr.a[j2];}}
+if(mv){add();sc(score);tone(440,0.04);draw();if(dead())end();}}
+function dead(){if(g.indexOf(0)>=0)return false;for(var r=0;r<4;r++)for(var cc=0;cc<4;cc++){var v=g[r*4+cc];if(cc<3&&v===g[r*4+cc+1])return false;if(r<3&&v===g[r*4+cc+4])return false;}return true;}
+function end(){over=true;draw();}
+function draw(){x.fillStyle='#0d1428';x.fillRect(0,0,c.width,c.height);for(var i=0;i<16;i++){var r=(i/4)|0,cc=i%4,v=g[i];x.fillStyle=v?CO[v]||'#ffd84a':'#1a2340';x.fillRect(10+cc*SZ,10+r*SZ,SZ-6,SZ-6);if(v){x.fillStyle=v>4?'#fff':'#e8e9ee';x.font='bold '+(v<128?26:v<1024?22:18)+'px system-ui';x.textAlign='center';x.textBaseline='middle';x.fillText(v,10+cc*SZ+(SZ-6)/2,10+r*SZ+(SZ-6)/2);}}
+if(over){x.fillStyle='rgba(0,0,0,.55)';x.fillRect(0,0,c.width,c.height);x.fillStyle='#fff';x.font='bold 24px system-ui';x.textAlign='center';x.fillText('Game Over',c.width/2,c.height/2);}}
+onkey(function(e){var m={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D',a:'L',d:'R',w:'U',s:'D'}[e.key];if(m){e.preventDefault();move(m);}});
+var sx2,sy2;c.addEventListener('touchstart',function(e){sx2=e.touches[0].clientX;sy2=e.touches[0].clientY;});
+c.addEventListener('touchend',function(e){if(sx2==null)return;var dx=e.changedTouches[0].clientX-sx2,dy=e.changedTouches[0].clientY-sy2;if(Math.abs(dx)>Math.abs(dy))move(dx>0?'R':'L');else move(dy>0?'D':'U');sx2=sy2=null;});
+R();
+</script></body></html>

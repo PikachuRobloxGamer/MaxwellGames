@@ -47,6 +47,118 @@
       "thumbnail": "images/lumin.png",
       "description": "",
       "iframe": "games/lumin/index.html"
+    },
+    {
+      "id": "builtin-snake",
+      "title": "Maxwell Snake",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/snake.svg",
+      "description": "",
+      "iframe": "games/builtin/snake.html"
+    },
+    {
+      "id": "builtin-tetris",
+      "title": "Maxwell Blocks",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/tetris.svg",
+      "description": "",
+      "iframe": "games/builtin/tetris.html"
+    },
+    {
+      "id": "builtin-flappy",
+      "title": "Flappy Maxwell",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/flappy.svg",
+      "description": "",
+      "iframe": "games/builtin/flappy.html"
+    },
+    {
+      "id": "builtin-breakout",
+      "title": "Breakout",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/breakout.svg",
+      "description": "",
+      "iframe": "games/builtin/breakout.html"
+    },
+    {
+      "id": "builtin-pong",
+      "title": "Maxwell Pong",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/pong.svg",
+      "description": "",
+      "iframe": "games/builtin/pong.html"
+    },
+    {
+      "id": "builtin-g2048",
+      "title": "Maxwell 2048",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/g2048.svg",
+      "description": "",
+      "iframe": "games/builtin/g2048.html"
+    },
+    {
+      "id": "builtin-memory",
+      "title": "Meow-mory",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/memory.svg",
+      "description": "",
+      "iframe": "games/builtin/memory.html"
+    },
+    {
+      "id": "builtin-minesweeper",
+      "title": "Maxwell Mines",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/minesweeper.svg",
+      "description": "",
+      "iframe": "games/builtin/minesweeper.html"
+    },
+    {
+      "id": "builtin-tictactoe",
+      "title": "Tic-Tac-Maxwell",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/tictactoe.svg",
+      "description": "",
+      "iframe": "games/builtin/tictactoe.html"
+    },
+    {
+      "id": "builtin-connect4",
+      "title": "Connect Four",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/connect4.svg",
+      "description": "",
+      "iframe": "games/builtin/connect4.html"
+    },
+    {
+      "id": "builtin-doodle",
+      "title": "Maxwell Jump",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/doodle.svg",
+      "description": "",
+      "iframe": "games/builtin/doodle.html"
+    },
+    {
+      "id": "builtin-shooter",
+      "title": "Maxwell Blaster",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/shooter.svg",
+      "description": "",
+      "iframe": "games/builtin/shooter.html"
+    },
+    {
+      "id": "builtin-simon",
+      "title": "Simon Meows",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/simon.svg",
+      "description": "",
+      "iframe": "games/builtin/simon.html"
+    },
+    {
+      "id": "builtin-colormatch",
+      "title": "Color Match",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/builtin/thumbs/colormatch.svg",
+      "description": "",
+      "iframe": "games/builtin/colormatch.html"
     }
   ]
 }

@@ -1,0 +1,39 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Blocks</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🟦 Maxwell Blocks</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>← → move · ↑ rotate · ↓ drop · Space hard-drop</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var COLS=10,ROWS=18,SZ=22,c=cv(COLS*SZ,ROWS*SZ),x=c.getContext('2d');
+var CO=['#00d2d2','#3b5bff','#ff9a3c','#ffd84a','#3ee08f','#b77bff','#ff5a6e'];
+var SH=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]]];
+var g,pc,px,py,score,lines,over,drop,speed;
+function R(){g=[];for(var r=0;r<ROWS;r++){g.push([]);for(var cc=0;cc<COLS;cc++)g[r].push(0);}score=0;lines=0;over=false;drop=0;speed=40;sc(0);np();}
+function col(nx,ny,m){for(var r=0;r<m.length;r++)for(var cc=0;cc<m[r].length;cc++)if(m[r][cc]){var gx=nx+cc,gy=ny+r;if(gx<0||gx>=COLS||gy>=ROWS)return true;if(gy>=0&&g[gy][gx])return true;}return false;}
+function np(){var t=(Math.random()*SH.length)|0;pc={m:SH[t].map(function(r){return r.slice();}),c:t+1};px=((COLS-pc.m[0].length)/2)|0;py=0;if(col(px,py,pc.m))over=true;}
+function merge(){pc.m.forEach(function(row,r){row.forEach(function(v,cc){if(v){var gy=py+r;if(gy>=0)g[gy][px+cc]=pc.c;}});});}
+function rot(){var m=pc.m,nm=m[0].map(function(_,i){return m.map(function(r){return r[i];}).reverse();});if(!col(px,py,nm))pc.m=nm;}
+function clr(){var cl=0;for(var r=ROWS-1;r>=0;r--){if(g[r].every(function(v){return v;})){g.splice(r,1);g.unshift([]);for(var k=0;k<COLS;k++)g[0].push(0);cl++;r++;}}if(cl){lines+=cl;score+=[0,10,30,60,100][cl];sc(score);speed=Math.max(8,40-lines);tone(600+cl*100,0.1);}}
+function down(){if(col(px,py+1,pc.m)){merge();clr();np();}else py++;}
+function loop(){if(!over){drop++;if(drop>=speed){drop=0;down();}}x.fillStyle='#0a0e1c';x.fillRect(0,0,c.width,c.height);
+for(var r=0;r<ROWS;r++)for(var cc=0;cc<COLS;cc++)if(g[r][cc]){x.fillStyle=CO[g[r][cc]-1];x.fillRect(cc*SZ+1,r*SZ+1,SZ-2,SZ-2);}
+if(pc)pc.m.forEach(function(row,r){row.forEach(function(v,cc){if(v){x.fillStyle=CO[pc.c-1];x.fillRect((px+cc)*SZ+1,(py+r)*SZ+1,SZ-2,SZ-2);}});});
+if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,c.width,c.height);x.fillStyle='#fff';x.font='bold 24px system-ui';x.textAlign='center';x.fillText('Game Over',c.width/2,c.height/2);x.font='14px system-ui';x.fillText('Press R / Restart',c.width/2,c.height/2+26);}
+requestAnimationFrame(loop);}
+onkey(function(e){if(over){if(e.key.toLowerCase()==='r')R();return;}if(!pc)return;if(e.key==='ArrowLeft'){if(!col(px-1,py,pc.m))px--;e.preventDefault();}else if(e.key==='ArrowRight'){if(!col(px+1,py,pc.m))px++;e.preventDefault();}else if(e.key==='ArrowDown'){down();e.preventDefault();}else if(e.key==='ArrowUp'){rot();e.preventDefault();}else if(e.code==='Space'){while(!col(px,py+1,pc.m))py++;down();e.preventDefault();}});
+R();requestAnimationFrame(loop);
+</script></body></html>

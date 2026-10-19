@@ -1,0 +1,27 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Color Match</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🎨 Color Match</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Tap the square that's a different shade. Go fast!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var wrap=document.createElement('div');wrap.style.cssText='display:grid;gap:6px;width:300px;height:300px';document.getElementById('stage').insertBefore(wrap,document.getElementById('stage').firstChild);
+var timeEl=document.createElement('p');timeEl.className='hint';document.getElementById('stage').appendChild(timeEl);
+var score=0,time=45,over=false;
+function round(){wrap.innerHTML='';var n=Math.min(7,2+((score/3)|0));wrap.style.gridTemplateColumns='repeat('+n+',1fr)';var hue=(Math.random()*360)|0,base=50,diff=Math.max(5,22-score),odd=(Math.random()*n*n)|0;
+for(var i=0;i<n*n;i++){(function(i){var b=document.createElement('button');b.style.cssText='border:none;border-radius:8px;cursor:pointer;background:hsl('+hue+' 70% '+(base+(i===odd?diff:0))+'%)';b.onclick=function(){if(over)return;if(i===odd){score++;sc(score);tone(720,0.05);round();}else{tone(180,0.1,'sawtooth');}};wrap.appendChild(b);})(i);}}
+sc(0);round();var iv=setInterval(function(){time--;timeEl.textContent='⏱️ '+time+'s';if(time<=0){over=true;clearInterval(iv);timeEl.textContent='Time! Final score: '+score;}},1000);
+</script></body></html>

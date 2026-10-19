@@ -1,0 +1,37 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Jump</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>⬆️ Maxwell Jump</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>← → or move the mouse to steer. Bounce up!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var W=320,H=460,c=cv(W,H),x=c.getContext('2d');
+var px,py,vy,vx,score,over,left,right,plats;var G=0.32,JP=-9.4,PW=56,PH=10,R=16;
+function Rr(){px=W/2;py=H-90;vy=-9;vx=0;score=0;over=false;left=false;right=false;plats=[];for(var i=0;i<8;i++)plats.push({x:Math.random()*(W-PW),y:H-40-i*55});sc(0);}
+function loop(){x.fillStyle='#0c1326';x.fillRect(0,0,W,H);
+if(!over){if(left)vx=-4.4;else if(right)vx=4.4;else vx*=0.9;px+=vx;if(px<-R)px=W+R;if(px>W+R)px=-R;vy+=G;py+=vy;
+if(vy>0)for(var i=0;i<plats.length;i++){var p=plats[i];if(px>p.x-R&&px<p.x+PW+R&&py+R>p.y&&py+R<p.y+PH+vy+2){vy=JP;tone(600,0.05);break;}}
+if(py<H*0.4){var dy=H*0.4-py;py=H*0.4;plats.forEach(function(p){p.y+=dy;});score+=dy;sc(Math.floor(score/10));}
+plats=plats.filter(function(p){return p.y<H+20;});while(plats.length<8){var top=Math.min.apply(null,plats.map(function(p){return p.y;}));plats.push({x:Math.random()*(W-PW),y:top-55});}
+if(py-R>H)over=true;}
+plats.forEach(function(p){x.fillStyle='#3ee08f';x.fillRect(p.x,p.y,PW,PH);});x.fillStyle='#ffd84a';x.beginPath();x.arc(px,py,R,0,7);x.fill();
+if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.font='bold 24px system-ui';x.textAlign='center';x.fillText('Fell!',W/2,H/2);x.font='14px system-ui';x.fillText('Press R',W/2,H/2+26);}
+requestAnimationFrame(loop);}
+onkey(function(e){if(e.key==='ArrowLeft'){left=true;e.preventDefault();}if(e.key==='ArrowRight'){right=true;e.preventDefault();}if(e.key.toLowerCase()==='r'&&over)Rr();});
+document.addEventListener('keyup',function(e){if(e.key==='ArrowLeft')left=false;if(e.key==='ArrowRight')right=false;});
+c.addEventListener('pointermove',function(e){var r=c.getBoundingClientRect();var mx=(e.clientX-r.left)*(W/r.width);if(mx<px-6){left=true;right=false;}else if(mx>px+6){right=true;left=false;}else{left=right=false;}});
+Rr();requestAnimationFrame(loop);
+</script></body></html>

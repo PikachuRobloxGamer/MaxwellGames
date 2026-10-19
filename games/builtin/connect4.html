@@ -1,0 +1,37 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Connect Four</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🔴 Connect Four</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Drop discs. Get 4 in a row to beat Maxwell!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var C=7,Rr=6,SZ=48,c=cv(C*SZ,Rr*SZ),x=c.getContext('2d');
+var b,turn,over;
+function R(){b=[];for(var i=0;i<C*Rr;i++)b.push(0);turn=1;over=false;sc('Your turn (red)');draw();}
+function idx(col,row){return row*C+col;}
+function drop(col,who){for(var r=Rr-1;r>=0;r--){if(!b[idx(col,r)]){b[idx(col,r)]=who;return r;}}return -1;}
+function wins(who){var dirs=[[1,0],[0,1],[1,1],[1,-1]];for(var r=0;r<Rr;r++)for(var cc=0;cc<C;cc++){for(var d=0;d<4;d++){var ok=true;for(var k=0;k<4;k++){var nr=r+dirs[d][1]*k,nc=cc+dirs[d][0]*k;if(nr<0||nr>=Rr||nc<0||nc>=C||b[idx(nc,nr)]!==who){ok=false;break;}}if(ok)return true;}}return false;}
+function full(){return b.every(function(v){return v;});}
+function ai(){var valid=[];for(var cc=0;cc<C;cc++)if(!b[idx(cc,0)])valid.push(cc);
+for(var i=0;i<valid.length;i++){var cc=valid[i];var r=drop(cc,2);if(wins(2)){draw();return;}b[idx(cc,r)]=0;}
+for(var i2=0;i2<valid.length;i2++){var cc2=valid[i2];var r2=drop(cc2,1);var bad=wins(1);b[idx(cc2,r2)]=0;if(bad){drop(cc2,2);draw();return;}}
+var p=valid[(Math.random()*valid.length)|0];drop(p,2);draw();}
+function click(e){if(over||turn!==1)return;var r=c.getBoundingClientRect();var col=((e.clientX-r.left)*(C*SZ/r.width)/SZ)|0;if(b[idx(col,0)])return;drop(col,1);tone(500,0.05);
+if(wins(1)){over=true;sc('You win! 🎉');draw();return;}if(full()){over=true;sc('Draw!');draw();return;}
+turn=2;draw();setTimeout(function(){ai();if(wins(2)){over=true;sc('Maxwell wins 😼');}else if(full()){over=true;sc('Draw!');}else{turn=1;sc('Your turn (red)');}draw();},350);}
+function draw(){x.fillStyle='#1b3a8f';x.fillRect(0,0,c.width,c.height);for(var r=0;r<Rr;r++)for(var cc=0;cc<C;cc++){var v=b[idx(cc,r)];x.fillStyle=v===1?'#ff5a6e':v===2?'#ffd84a':'#0d1428';x.beginPath();x.arc(cc*SZ+SZ/2,r*SZ+SZ/2,SZ/2-4,0,7);x.fill();}}
+c.addEventListener('pointerdown',click);R();
+</script></body></html>

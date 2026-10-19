@@ -1,0 +1,31 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Tic-Tac-Maxwell</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>⭕ Tic-Tac-Maxwell</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>You are 🐈. Beat Maxwell (👑)!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(3,84px);grid-auto-rows:84px;gap:8px';document.getElementById('stage').insertBefore(grid,document.getElementById('stage').firstChild);
+var b=['','','','','','','','',''],done=false,cells=[];
+for(var i=0;i<9;i++){(function(i){var d=document.createElement('button');d.style.cssText='font-size:2.4rem;border-radius:12px;background:#232736';d.onclick=function(){play(i);};grid.appendChild(d);cells.push(d);})(i);}
+var WIN=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function win(bd){for(var i=0;i<WIN.length;i++){var w=WIN[i];if(bd[w[0]]&&bd[w[0]]===bd[w[1]]&&bd[w[0]]===bd[w[2]])return bd[w[0]];}return bd.indexOf('')<0?'draw':null;}
+function rend(){cells.forEach(function(c,i){c.textContent=b[i]==='X'?'🐈':b[i]==='O'?'👑':'';});}
+function play(i){if(done||b[i])return;b[i]='X';tone(520,0.05);rend();var w=win(b);if(w)return end(w);var m=best(b,'O').i;if(m!=null){b[m]='O';tone(400,0.05);}rend();w=win(b);if(w)end(w);}
+function best(bd,who){var w=win(bd);if(w==='O')return{s:10};if(w==='X')return{s:-10};if(w==='draw')return{s:0};var mv=[];bd.forEach(function(v,i){if(!v){var nb2=bd.slice();nb2[i]=who;mv.push({i:i,s:best(nb2,who==='O'?'X':'O').s});}});return who==='O'?mv.reduce(function(a,m){return m.s>a.s?m:a;},{s:-99}):mv.reduce(function(a,m){return m.s<a.s?m:a;},{s:99});}
+function end(w){done=true;sc(w==='X'?'You win! 🎉':w==='draw'?'Draw!':'Maxwell wins 😼');}
+sc('Your move');rend();
+</script></body></html>

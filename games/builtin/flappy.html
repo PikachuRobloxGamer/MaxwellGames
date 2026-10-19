@@ -1,0 +1,39 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Flappy Maxwell</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🐦 Flappy Maxwell</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Space / click / tap to flap. Fly through the gaps!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var W=360,H=480,c=cv(W,H),x=c.getContext('2d');
+var y,vy,pipes,score,dead,started,frame;
+function R(){y=H/2;vy=0;pipes=[];score=0;dead=false;started=false;frame=0;sc(0);}
+function flap(){if(dead){R();return;}started=true;vy=-7;tone(640,0.05);}
+function loop(){x.fillStyle='#0f1630';x.fillRect(0,0,W,H);
+if(started&&!dead){vy+=0.45;y+=vy;frame++;if(frame%95===0)pipes.push({x:W,top:40+Math.random()*(H-300),p:false});
+pipes.forEach(function(pp){pp.x-=2.4;if(!pp.p&&pp.x+46<W/2-17){pp.p=true;score++;sc(score);tone(880,0.05);}});
+pipes=pipes.filter(function(pp){return pp.x>-60;});
+if(y>H-17||y<17)die();pipes.forEach(function(pp){if(W/2+17>pp.x&&W/2-17<pp.x+46){if(y-17<pp.top||y+17>pp.top+150)die();}});}
+x.fillStyle='#3ee08f';pipes.forEach(function(pp){x.fillRect(pp.x,0,46,pp.top);x.fillRect(pp.x,pp.top+150,46,H-pp.top-150);});
+x.fillStyle='#ffd84a';x.beginPath();x.arc(W/2,y,15,0,7);x.fill();
+x.fillStyle='#fff';x.font='bold 30px system-ui';x.textAlign='center';x.fillText(score,W/2,46);
+if(!started){x.font='bold 17px system-ui';x.fillText('Flap to start',W/2,H/2+70);}
+if(dead){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.font='bold 24px system-ui';x.fillText('Game Over',W/2,H/2);x.font='14px system-ui';x.fillText('Click to retry',W/2,H/2+26);}
+requestAnimationFrame(loop);}
+function die(){if(!dead){dead=true;tone(180,0.2,'sawtooth');}}
+onkey(function(e){if(e.code==='Space'){e.preventDefault();flap();}});c.onpointerdown=flap;
+R();requestAnimationFrame(loop);
+</script></body></html>

@@ -362,6 +362,12 @@
     { t: "rainbow",  icon: "🌈", name: "Rainbow Road",     info: "Rainbow sweeps the screen" },
     { t: "strobe",   icon: "🔆", name: "Strobe Party",     info: "Flashing lights 6s" },
     { t: "poke",     icon: "👻", name: "Pokémon Rain",     info: "Falling Pokémon: +30 🐟 each", role: "sami" },
+    { t: "megafish", icon: "🐠", name: "MEGA Fish Rain",   info: "+500 🐟 for everyone!" },
+    { t: "treatstorm",icon:"💸", name: "TREAT STORM",      info: "+1000 🐟 for everyone!!" },
+    { t: "goldrush", icon: "🏆", name: "GOLD RUSH",        info: "150 golden :3s!" },
+    { t: "ultraparty",icon:"🥳", name: "ULTRA PARTY",      info: "Disco + confetti + fireworks" },
+    { t: "megaquake",icon: "🌋", name: "MEGA Quake",       info: "Huge shake + explosion" },
+    { t: "catrain",  icon: "😹", name: "Cat Rain",         info: "Maxwell swarm + MEOW" },
     { t: "freezeall",icon: "🧊", name: "Freeze Everyone",  info: "Maxwell locks every screen" }
   ];
   function renderPowers() {
@@ -431,6 +437,12 @@
       case "matrix": matrixRain(); break;
       case "rainbow": rainbowRoad(); break;
       case "strobe": document.documentElement.classList.add("strobe"); setTimeout(() => document.documentElement.classList.remove("strobe"), 6000); break;
+      case "megafish": MG.particles.burst(90); MG.addTreats(500, W / 2, H / 3); MG.floatText("🐠 MEGA FISH 🐠", W / 2, H / 2, "big"); MG.toast("🐠", "MEGA Fish Rain!", `+500 🐟 from ${byName}`); break;
+      case "treatstorm": MG.particles.burst(120); MG.addTreats(1000, W / 2, H / 3); MG.floatText("💸 TREAT STORM 💸", W / 2, H / 2, "big"); MG.boomSound(0.12); MG.toast("💸", "TREAT STORM!", `+1000 🐟 from ${byName}!`); break;
+      case "goldrush": MG.particles.goldenStorm(150); MG.toast("🏆", "GOLD RUSH!", "150 golden :3s — go catch them!"); break;
+      case "ultraparty": document.documentElement.classList.add("disco"); setTimeout(() => document.documentElement.classList.remove("disco"), 15000); try { confetti(); } catch (e) {} try { fireworks(); } catch (e) {} MG.toast("🥳", "ULTRA PARTY!", `${byName} started a party!`); break;
+      case "megaquake": document.body.classList.add("quake"); setTimeout(() => document.body.classList.remove("quake"), 6000); try { bigBoom(); } catch (e) {} MG.toast("🌋", "MEGA Quake!", "Hold on tight!"); break;
+      case "catrain": for (let i = 0; i < 16; i++) setTimeout(() => clickable(maxwellSrc(), 70, 5, "🐈‍⬛ +5"), i * 200); MG.meow(); setTimeout(MG.meow, 300); MG.toast("😹", "Cat Rain!", "So many Maxwells!"); break;
     }
   }
 

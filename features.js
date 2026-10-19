@@ -220,6 +220,9 @@
     { id: "stacker", icon: "🏗️", name: "Master Builder",     desc: "Stack 12+ in Tower Stack (bonus)", bonus: true, test: () => (save.arcadeBest.stack || 0) >= 12 },
     { id: "sniper",  icon: "🎯", name: "Dead Aim",           desc: "Hit 25+ in Aim Trainer (bonus)",  bonus: true, test: () => (save.arcadeBest.aim || 0) >= 25 },
     { id: "sweeper", icon: "💣", name: "Mine Sweeper",       desc: "Clear a Maxwell Mines board (bonus)", bonus: true, test: () => (save.arcadeBest.mines || 0) >= 100 },
+    { id: "dodger",  icon: "🌀", name: "Untouchable",        desc: "Survive 150 in Maxwell Dodge (bonus)", bonus: true, test: () => (save.arcadeBest.dodge || 0) >= 150 },
+    { id: "popper",  icon: "🫧", name: "Pop Star",           desc: "Pop 25+ in Bubble Pop (bonus)",   bonus: true, test: () => (save.arcadeBest.bubble || 0) >= 25 },
+    { id: "originals",icon:"🐱", name: "Original Gamer",     desc: "Open a Maxwell Originals game (bonus)", bonus: true, test: () => (save.opened || []).some((id) => String(id).indexOf("builtin-") >= 0) },
     { id: "konami",  icon: "🕹️", name: "Secret Code",       desc: "??? (an old-school cheat code)",  secret: true, test: () => save.ach.includes("konami") },
     { id: "meow",    icon: "🙀", name: "Typed it",          desc: "??? (type a cat word anywhere)",   secret: true, test: () => save.ach.includes("meow") }
   ];

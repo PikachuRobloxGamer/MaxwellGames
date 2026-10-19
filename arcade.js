@@ -403,6 +403,61 @@
       }
     },
 
+    // ---------- Maxwell Dodge ----------
+    {
+      key: "dodge", name: "Maxwell Dodge", icon: "🌀", isNew: true, reward: (s) => Math.floor(s / 5),
+      play(host, api) {
+        const W = 340, H = 460; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "Move with <b>mouse</b> / <b>arrows</b>. Dodge the falling blocks as long as you can!");
+        const cat = new Image(); cat.src = api.img;
+        let px = W / 2, blocks = [], score = 0, over = false, raf, frame = 0, left = false, right = false;
+        function loop() {
+          x.fillStyle = "#0d1428"; x.fillRect(0, 0, W, H);
+          if (!over) {
+            if (left) px -= 6; if (right) px += 6; px = Math.max(16, Math.min(W - 16, px));
+            frame++; score += 0.2;
+            if (frame % Math.max(16, 40 - (score / 10 | 0)) === 0) blocks.push({ x: Math.random() * (W - 26), y: -26, w: 20 + Math.random() * 30, v: 3 + Math.random() * 2 + score * 0.01 });
+            blocks.forEach((b) => b.y += b.v); blocks = blocks.filter((b) => b.y < H + 30);
+            for (const b of blocks) { if (px + 14 > b.x && px - 14 < b.x + b.w && H - 40 < b.y + 20 && H - 20 > b.y) { over = true; api.boom(); } }
+          }
+          x.fillStyle = "#e05a6e"; blocks.forEach((b) => x.fillRect(b.x, b.y, b.w, 20));
+          if (cat.complete) x.drawImage(cat, px - 16, H - 42, 32, 32);
+          x.fillStyle = "#fff"; x.font = "bold 18px system-ui"; x.textAlign = "left"; x.fillText(Math.floor(score), 10, 24);
+          if (over) { cancelAnimationFrame(raf); api.finish(Math.floor(score), { title: score >= 150 ? "Untouchable!" : "Hit!", line: "You survived <b>" + Math.floor(score) + "</b>" }); return; }
+          raf = requestAnimationFrame(loop);
+        }
+        const mv = (e) => { const r = c.getBoundingClientRect(); px = (e.clientX - r.left) * (W / r.width); };
+        const kd = (e) => { if (e.key === "ArrowLeft") { left = true; e.preventDefault(); } if (e.key === "ArrowRight") { right = true; e.preventDefault(); } };
+        const ku = (e) => { if (e.key === "ArrowLeft") left = false; if (e.key === "ArrowRight") right = false; };
+        c.addEventListener("pointermove", mv); document.addEventListener("keydown", kd); document.addEventListener("keyup", ku);
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku); });
+        loop();
+      }
+    },
+
+    // ---------- Bubble Pop ----------
+    {
+      key: "bubble", name: "Bubble Pop", icon: "🫧", isNew: true, reward: (s) => s * 2,
+      play(host, api) {
+        const W = 340, H = 440; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "Pop the bubbles before they float off the top! 30 seconds.");
+        let bubbles = [], score = 0, missed = 0, time = 30, over = false, raf, frame = 0, timer;
+        function spawn() { bubbles.push({ x: 24 + Math.random() * (W - 48), y: H + 20, r: 16 + Math.random() * 16, v: 1 + Math.random() * 1.6, hue: (Math.random() * 360) | 0 }); }
+        function loop() {
+          x.fillStyle = "#081826"; x.fillRect(0, 0, W, H);
+          if (!over) { frame++; if (frame % 22 === 0) spawn(); bubbles.forEach((b) => b.y -= b.v); bubbles = bubbles.filter((b) => { if (b.y < -20) { missed++; return false; } return true; }); }
+          bubbles.forEach((b) => { x.fillStyle = "hsla(" + b.hue + ",80%,60%,0.5)"; x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); x.strokeStyle = "hsla(" + b.hue + ",90%,75%,0.9)"; x.lineWidth = 2; x.stroke(); x.fillStyle = "rgba(255,255,255,0.5)"; x.beginPath(); x.arc(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.22, 0, 7); x.fill(); });
+          x.fillStyle = "#fff"; x.font = "bold 16px system-ui"; x.textAlign = "left"; x.fillText("🫧 " + score, 10, 22); x.textAlign = "right"; x.fillText("⏱️ " + time + "s", W - 10, 22);
+          raf = requestAnimationFrame(loop);
+        }
+        const pd = (e) => { if (over) return; const r = c.getBoundingClientRect(); const mx = (e.clientX - r.left) * (W / r.width), my = (e.clientY - r.top) * (H / r.height); for (let i = bubbles.length - 1; i >= 0; i--) { if (Math.hypot(bubbles[i].x - mx, bubbles[i].y - my) < bubbles[i].r) { bubbles.splice(i, 1); score++; api.tone(500 + score * 5, 0.05); return; } } };
+        c.addEventListener("pointerdown", pd);
+        timer = setInterval(() => { time--; if (time <= 0) { over = true; clearInterval(timer); cancelAnimationFrame(raf); api.boom(); api.finish(score, { title: score >= 25 ? "Pop star! 🫧" : "Time!", line: "Popped <b>" + score + "</b> bubbles" }); } }, 1000);
+        api.onClean(() => { cancelAnimationFrame(raf); clearInterval(timer); });
+        loop();
+      }
+    },
+
     // ==================== CLASSICS ====================
 
     // ---------- 1. Flyer (flappy) ----------

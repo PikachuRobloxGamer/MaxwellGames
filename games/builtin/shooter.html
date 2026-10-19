@@ -1,0 +1,41 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Blaster</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🚀 Maxwell Blaster</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>← → move · Space to shoot the asteroids!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var W=400,H=460,c=cv(W,H),x=c.getContext('2d');
+var sx2,bullets,rocks,score,over,left,right,frame,lives;
+function R(){sx2=W/2;bullets=[];rocks=[];score=0;over=false;left=false;right=false;frame=0;lives=3;sc(0);}
+function loop(){x.fillStyle='#05060f';x.fillRect(0,0,W,H);for(var i=0;i<30;i++){x.fillStyle='rgba(255,255,255,0.3)';x.fillRect((i*53+frame)%W,(i*71)%H,2,2);}
+if(!over){frame++;if(left)sx2-=5;if(right)sx2+=5;sx2=Math.max(16,Math.min(W-16,sx2));
+if(frame%40===0)rocks.push({x:20+Math.random()*(W-40),y:-20,v:1.5+Math.random()*1.5+score*0.02,r:14+Math.random()*12});
+bullets.forEach(function(b){b.y-=7;});bullets=bullets.filter(function(b){return b.y>-10;});
+rocks.forEach(function(ro){ro.y+=ro.v;});
+rocks=rocks.filter(function(ro){for(var i=0;i<bullets.length;i++){if(Math.hypot(bullets[i].x-ro.x,bullets[i].y-ro.y)<ro.r){bullets.splice(i,1);score++;sc(score);tone(600,0.05);return false;}}
+if(ro.y>H+20){lives--;tone(200,0.1,'sawtooth');if(lives<=0)over=true;return false;}
+if(Math.abs(ro.x-sx2)<ro.r+10&&ro.y>H-40){lives=0;over=true;return false;}return true;});}
+x.fillStyle='#8a8f9e';rocks.forEach(function(ro){x.beginPath();x.arc(ro.x,ro.y,ro.r,0,7);x.fill();});
+x.fillStyle='#3ee08f';bullets.forEach(function(b){x.fillRect(b.x-2,b.y-8,4,8);});
+x.fillStyle='#6c5ce7';x.beginPath();x.moveTo(sx2,H-34);x.lineTo(sx2-14,H-10);x.lineTo(sx2+14,H-10);x.fill();
+x.fillStyle='#fff';x.font='bold 14px system-ui';x.textAlign='right';x.fillText('❤️'.repeat(Math.max(0,lives)),W-8,20);
+if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.font='bold 24px system-ui';x.textAlign='center';x.fillText('Game Over',W/2,H/2);x.font='14px system-ui';x.fillText('Press R',W/2,H/2+26);}
+requestAnimationFrame(loop);}
+onkey(function(e){if(e.key==='ArrowLeft'){left=true;e.preventDefault();}if(e.key==='ArrowRight'){right=true;e.preventDefault();}if(e.code==='Space'&&!over){e.preventDefault();bullets.push({x:sx2,y:H-34});tone(880,0.03);}if(e.key.toLowerCase()==='r'&&over)R();});
+document.addEventListener('keyup',function(e){if(e.key==='ArrowLeft')left=false;if(e.key==='ArrowRight')right=false;});
+R();requestAnimationFrame(loop);
+</script></body></html>

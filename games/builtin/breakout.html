@@ -1,0 +1,37 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Breakout</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🧱 Maxwell Breakout</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Move the paddle with your mouse. Break every brick!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var W=400,H=460,c=cv(W,H),x=c.getContext('2d');
+var px,bx,by,vx,vy,score,lives,over,win,bricks;
+function R(){px=W/2;bx=W/2;by=H-70;vx=3;vy=-3.6;score=0;lives=3;over=false;win=false;bricks=[];var cols=9,rows=5,bw=W/cols;for(var r=0;r<rows;r++)for(var cc=0;cc<cols;cc++)bricks.push({x:cc*bw,y:44+r*20,w:bw-4,h:16,a:true,h2:(r*42)%360});sc(0);}
+function loop(){x.fillStyle='#111627';x.fillRect(0,0,W,H);
+if(!over){bx+=vx;by+=vy;if(bx<7||bx>W-7){vx*=-1;bx=Math.max(7,Math.min(W-7,bx));}if(by<7)vy=Math.abs(vy);
+if(by>H-50-12&&by<H-42&&bx>px-36&&bx<px+36&&vy>0){vy=-Math.abs(vy);vx+=(bx-px)/72*3.2;tone(520,0.04);}
+if(by>H+10){lives--;tone(200,0.1,'sawtooth');if(lives<=0){over=true;}else{bx=W/2;by=H-70;vx=3;vy=-3.6;}}
+for(var i=0;i<bricks.length;i++){var bk=bricks[i];if(bk.a&&bx>bk.x&&bx<bk.x+bk.w&&by>bk.y&&by<bk.y+bk.h){bk.a=false;vy*=-1;score++;sc(score);tone(600+score*4,0.04);break;}}
+if(bricks.every(function(b){return !b.a;})){over=true;win=true;}}
+bricks.forEach(function(bk){if(bk.a){x.fillStyle='hsl('+bk.h2+' 80% 55%)';x.fillRect(bk.x,bk.y,bk.w,bk.h);}});
+x.fillStyle='#3ee08f';x.fillRect(px-36,H-50,72,12);x.fillStyle='#fff';x.beginPath();x.arc(bx,by,7,0,7);x.fill();
+x.font='bold 14px system-ui';x.textAlign='right';x.fillText('❤️'.repeat(Math.max(0,lives)),W-8,20);
+if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.font='bold 24px system-ui';x.textAlign='center';x.fillText(win?'You Win!':'Game Over',W/2,H/2);}
+requestAnimationFrame(loop);}
+c.addEventListener('pointermove',function(e){var r=c.getBoundingClientRect();px=Math.max(36,Math.min(W-36,(e.clientX-r.left)*(W/r.width)));});
+R();requestAnimationFrame(loop);
+</script></body></html>

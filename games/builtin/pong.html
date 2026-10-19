@@ -1,0 +1,37 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Pong</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🏓 Maxwell Pong</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Move your paddle with the mouse. First to 7 wins!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var W=440,H=300,c=cv(W,H),x=c.getContext('2d');
+var py,ay,bx,by,vx,vy,me,cpu,over;var PH=58,PW=9;
+function R(){py=H/2;ay=H/2;me=0;cpu=0;over=false;rb(Math.random()<.5?1:-1);sc('You 0 - 0 CPU');}
+function rb(d){bx=W/2;by=H/2;vx=3.4*d;vy=Math.random()*3-1.5;}
+function loop(){x.fillStyle='#0e1730';x.fillRect(0,0,W,H);x.strokeStyle='#2a3760';x.setLineDash([6,8]);x.beginPath();x.moveTo(W/2,0);x.lineTo(W/2,H);x.stroke();x.setLineDash([]);
+if(!over){bx+=vx;by+=vy;if(by<6||by>H-6)vy*=-1;ay+=Math.max(-3.4,Math.min(3.4,(by-ay)*0.09));
+if(bx<18+PW&&by>ay-PH/2&&by<ay+PH/2){vx=Math.abs(vx)*1.04;vy+=(by-ay)*0.04;tone(400,0.04);}
+if(bx>W-18-PW&&by>py-PH/2&&by<py+PH/2){vx=-Math.abs(vx)*1.04;vy+=(by-py)*0.04;tone(600,0.04);}
+if(bx<0){cpu++;sc('You '+me+' - '+cpu+' CPU');if(cpu>=7)over=true;else rb(1);}
+if(bx>W){me++;sc('You '+me+' - '+cpu+' CPU');tone(760,0.08);if(me>=7)over=true;else rb(-1);}}
+x.fillStyle='#e05a6e';x.fillRect(12,ay-PH/2,PW,PH);x.fillStyle='#3ee08f';x.fillRect(W-12-PW,py-PH/2,PW,PH);
+x.fillStyle='#fff';x.beginPath();x.arc(bx,by,6,0,7);x.fill();x.font='bold 24px system-ui';x.textAlign='center';x.fillText(cpu+'   '+me,W/2,30);
+if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.font='bold 24px system-ui';x.fillText(me>=7?'You Win!':'CPU Wins',W/2,H/2);}
+requestAnimationFrame(loop);}
+c.addEventListener('pointermove',function(e){var r=c.getBoundingClientRect();py=Math.max(PH/2,Math.min(H-PH/2,(e.clientY-r.top)*(H/r.height)));});
+R();requestAnimationFrame(loop);
+</script></body></html>

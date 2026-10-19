@@ -1,0 +1,31 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Meow-mory</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🃏 Meow-mory</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Flip cards to match all the pairs!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var EM=['😺','😹','😻','😼','🐈','🐾','🐟','👑'];
+var deck=EM.concat(EM).sort(function(){return Math.random()-0.5;});
+var grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(4,70px);gap:8px';document.getElementById('stage').insertBefore(grid,document.getElementById('stage').firstChild);
+var first=null,lock=false,moves=0,matched=0;
+deck.forEach(function(em){var b=document.createElement('button');b.style.cssText='width:70px;height:70px;font-size:1.8rem;border-radius:10px;background:#6c5ce7;border:none;cursor:pointer';b.textContent='?';
+b.onclick=function(){if(lock||b.dataset.open||b.dataset.done)return;b.textContent=em;b.dataset.open='1';b.style.background='#232736';tone(520,0.05);
+if(!first){first=b;return;}moves++;sc('Moves: '+moves);
+if(first.textContent===em){first.dataset.done=b.dataset.done='1';first.style.background=b.style.background='#3ee08f';matched+=2;first=null;tone(880,0.08);if(matched===deck.length)sc('Solved in '+moves+' moves!');}
+else{lock=true;var a=first,bb=b;setTimeout(function(){a.textContent=bb.textContent='?';a.removeAttribute('data-open');bb.removeAttribute('data-open');a.style.background=bb.style.background='#6c5ce7';first=null;lock=false;},700);}};grid.appendChild(b);});
+sc('Moves: 0');
+</script></body></html>

@@ -1,0 +1,34 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Snake</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🐍 Maxwell Snake</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Arrow keys / WASD to move. Eat the fish!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var c=cv(400,400),x=c.getContext('2d'),SZ=20,T=20;
+var snake,dir,nd,food,score,over,acc=0,last=0;
+function R(){snake=[{x:10,y:10}];dir={x:1,y:0};nd=dir;score=0;over=false;place();sc(0);}
+function place(){do{food={x:(Math.random()*T)|0,y:(Math.random()*T)|0};}while(snake.some(function(s){return s.x===food.x&&s.y===food.y;}));}
+function step(){dir=nd;var h={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+if(h.x<0||h.y<0||h.x>=T||h.y>=T||snake.some(function(s){return s.x===h.x&&s.y===h.y;})){over=true;tone(150,0.2,'sawtooth');return;}
+snake.unshift(h);if(h.x===food.x&&h.y===food.y){score++;sc(score);tone(700,0.05);place();}else snake.pop();}
+function draw(){x.fillStyle='#111627';x.fillRect(0,0,400,400);x.font='15px system-ui';x.textAlign='center';x.textBaseline='middle';x.fillText('🐟',food.x*SZ+10,food.y*SZ+10);
+snake.forEach(function(s,i){x.fillStyle=i===0?'#3ee08f':'#6c5ce7';x.fillRect(s.x*SZ+1,s.y*SZ+1,SZ-2,SZ-2);});
+if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,400,400);x.fillStyle='#fff';x.font='bold 26px system-ui';x.fillText('Game Over',200,185);x.font='15px system-ui';x.fillText('Press Space to restart',200,215);}}
+function loop(t){if(!last)last=t;acc+=t-last;last=t;if(acc>110&&!over){acc=0;step();}draw();requestAnimationFrame(loop);}
+onkey(function(e){var k=e.key.toLowerCase();var m={arrowup:[0,-1],w:[0,-1],arrowdown:[0,1],s:[0,1],arrowleft:[-1,0],a:[-1,0],arrowright:[1,0],d:[1,0]}[k];if(m){e.preventDefault();if(m[0]!==-dir.x||m[1]!==-dir.y)nd={x:m[0],y:m[1]};}if(k===' '&&over)R();});
+R();requestAnimationFrame(loop);
+</script></body></html>

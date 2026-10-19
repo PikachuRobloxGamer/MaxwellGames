@@ -1,0 +1,29 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Simon Meows</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0b0e18;color:#e8e9ee;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;max-height:100vh}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.ttl{font-weight:800;font-size:1.05rem}
+#score{font-weight:800;color:#3ee08f;min-width:60px}
+button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+button:hover{filter:brightness(1.12)}
+canvas{background:#111627;border-radius:12px;max-width:94vw;max-height:76vh;touch-action:none}
+.hint{color:#8b8fa3;font-size:.78rem;text-align:center;max-width:420px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head><body><div class=wrap><div class=bar><span class=ttl>🎹 Simon Meows</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Watch the pattern, then repeat it!</p></div></div><script>
+document.getElementById('restart').onclick=function(){location.reload();};
+function cv(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;document.getElementById('stage').insertBefore(c,document.getElementById('stage').firstChild);return c;}
+function sc(v){document.getElementById('score').textContent=(typeof v==='string'?v:'Score: '+v);}
+function onkey(fn){document.addEventListener('keydown',function(e){fn(e);});}
+var AC;function tone(f,d,ty,vol){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol||0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+
+var wrap=document.createElement('div');wrap.style.cssText='display:grid;grid-template-columns:repeat(2,120px);grid-auto-rows:120px;gap:12px';document.getElementById('stage').insertBefore(wrap,document.getElementById('stage').firstChild);
+var CO=['#ff5a6e','#3ee08f','#4fb3ff','#ffd84a'],F=[330,440,550,660],pads=[];
+for(var i=0;i<4;i++){(function(i){var p=document.createElement('button');p.style.cssText='border-radius:16px;opacity:.55;background:'+CO[i];p.onclick=function(){press(i);};wrap.appendChild(p);pads.push(p);})(i);}
+var seq=[],inp=[],round=0,showing=true;
+function flash(i,ms){pads[i].style.opacity='1';tone(F[i],0.25);setTimeout(function(){pads[i].style.opacity='.55';},ms||320);}
+function next(){round++;inp=[];showing=true;sc('Round '+round+' - watch');seq.push((Math.random()*4)|0);seq.forEach(function(v,k){setTimeout(function(){flash(v,350);},500+k*560);});setTimeout(function(){showing=false;sc('Round '+round+' - your turn');},500+seq.length*560+150);}
+function press(i){if(showing)return;flash(i,200);inp.push(i);var k=inp.length-1;if(inp[k]!==seq[k]){sc('Reached round '+round+'!');tone(150,0.3,'sawtooth');showing=true;return;}if(inp.length===seq.length){tone(880,0.1);setTimeout(next,650);}}
+setTimeout(next,600);
+</script></body></html>
