@@ -609,3 +609,10 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .whack-final { font-size: 1.1rem; margin: 10px 0; }
 .whack-box h2 { font-size: 1.6rem; margin-bottom: 6px; }
 .account-btn.logged { border-color: #3ee08f; box-shadow: 0 0 10px rgba(62,224,143,0.5); }
+
+/* ===== Live connection switcher (profile) ===== */
+.live-wrap h3 { margin-bottom: 4px; }
+.live-modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.live-mode-btn { flex: 1; min-width: 180px; font-weight: 700; }
+.live-mode-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 2px var(--accent) inset; }
+.live-status-line { margin: 10px 0; font-size: 0.95rem; }

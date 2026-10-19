@@ -577,6 +577,20 @@
       });
     } else if (panelTab === "asc") {
       renderAscend(body);
+    } else if (panelTab === "live") {
+      const d = document.createElement("div"); d.className = "live-wrap";
+      d.innerHTML = `
+        <h3>📡 Live Connection</h3>
+        <p class="panel-note">This is only for the live <b>Admin Abuse</b>. Pick where this device is — it remembers your choice:</p>
+        <div class="live-modes">
+          <button class="btn live-mode-btn" data-mode="ntfy">💻 Chromebook (ntfy.sh)</button>
+          <button class="btn live-mode-btn" data-mode="firebase">🏠 Home (Firebase)</button>
+        </div>
+        <p class="live-status-line">Status: <b id="liveStatus2">…</b></p>
+        <p class="panel-note">Switching reloads the page. Set your school Chromebook to <b>Chromebook</b> and your home computer to <b>Home</b>. Everything else on the site works no matter which one you pick.</p>`;
+      body.appendChild(d);
+      d.querySelectorAll(".live-mode-btn").forEach((b) => b.onclick = () => { if (window.MG_LIVE) window.MG_LIVE.setMode(b.dataset.mode); });
+      if (window.MG_LIVE) window.MG_LIVE.refresh();
     } else if (panelTab === "play") {
       initDaily();
       const d = document.createElement("div"); d.className = "play-wrap";

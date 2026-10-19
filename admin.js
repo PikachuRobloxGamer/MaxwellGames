@@ -104,7 +104,26 @@
   let serverOffset = 0;
   const seen = new Set();
   const nowSec = () => Date.now() / 1000 + serverOffset;
-  function setStatus(text, ok) { $("liveStatus").textContent = text; $("liveStatus").style.color = ok ? "#3ee08f" : "#ff7a7a"; }
+  let lastStatusText = "connecting…", lastStatusOk = false;
+  function setStatus(text, ok) {
+    lastStatusText = text; lastStatusOk = ok;
+    ["liveStatus", "liveStatus2"].forEach((id) => { const el = document.getElementById(id); if (el) { el.textContent = text; el.style.color = ok ? "#3ee08f" : "#ff7a7a"; } });
+  }
+  function getLiveMode() {
+    let m; try { m = localStorage.getItem("mg-live-mode"); } catch (e) {}
+    if (m === "firebase" || m === "ntfy") return m;
+    return (window.MG_FIREBASE_CONFIG && window.MG_FIREBASE_CONFIG.databaseURL) ? "firebase" : "ntfy";
+  }
+  function setLiveMode(m) { try { localStorage.setItem("mg-live-mode", m); } catch (e) {} location.reload(); }
+  function updateModeButtons() {
+    const m = getLiveMode();
+    document.querySelectorAll(".live-mode-btn").forEach((b) => b.classList.toggle("on", b.dataset.mode === m));
+  }
+  window.MG_LIVE = {
+    getMode: getLiveMode,
+    setMode: setLiveMode,
+    refresh: () => { const el = document.getElementById("liveStatus2"); if (el) { el.textContent = lastStatusText; el.style.color = lastStatusOk ? "#3ee08f" : "#ff7a7a"; } updateModeButtons(); }
+  };
   let publishFn = null;
   let lastWarn = 0;
   function warnFail() {
@@ -114,13 +133,72 @@
   }
   function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 
+  // Several live servers run together so at least one gets through.
+  const transports = [];
+  function refreshStatus() {
+    const on = transports.filter((t) => t.connected).map((t) => t.name);
+    if (on.length) setStatus("connected ✅ (" + on.join(" + ") + ") — everyone online sees your powers", true);
+    else setStatus("connecting to the live server… if this stays, your network blocks it. Firebase (in live-config.js) is the surest fix.", false);
+  }
   async function connect() {
+    const mode = getLiveMode();
     const FB = window.MG_FIREBASE_CONFIG;
-    if (FB && FB.databaseURL) {
-      try { await connectFirebase(FB); return; }
-      catch (e) { console.error(e); MG.toast("⚠️", "Firebase didn't load", "Falling back to ntfy.sh."); }
+    if (mode === "firebase") {
+      if (FB && FB.databaseURL) {
+        try { await connectFirebase(FB); return; }
+        catch (e) { console.error(e); setStatus("Home (Firebase) couldn't connect. If you're at school, switch to 💻 Chromebook (ntfy.sh).", false); return; }
+      }
+      setStatus("Home (Firebase) is selected but no Firebase config was found — upload live-config.js, or switch to 💻 Chromebook (ntfy.sh).", false);
+      return;
     }
-    connectNtfy();
+    // Chromebook (ntfy.sh) mode: free servers
+    publishFn = (msg) => { transports.forEach((t) => { try { t.publish(msg); } catch (e) {} }); if (!transports.some((t) => t.connected)) warnFail(); };
+    startNtfy();
+    startMqtt();
+  }
+
+  // Free public MQTT broker over WebSocket — no setup, different network path than ntfy.
+  function startMqtt() {
+    const t = { name: "server A", connected: false, publish: () => {} };
+    transports.push(t);
+    refreshStatus();
+    loadScript("https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js").then(() => {
+      if (!window.mqtt) { refreshStatus(); return; }
+      let client;
+      try { client = window.mqtt.connect("wss://broker.emqx.io:8084/mqtt", { clientId: "mg_" + CLIENT_ID + Math.random().toString(16).slice(2, 6), reconnectPeriod: 5000, connectTimeout: 9000, clean: true }); }
+      catch (e) { refreshStatus(); return; }
+      t.publish = (msg) => { try { client.publish(TOPIC, JSON.stringify(msg)); } catch (e) {} };
+      client.on("connect", () => { t.connected = true; try { client.subscribe(TOPIC); } catch (e) {} refreshStatus(); });
+      client.on("reconnect", refreshStatus);
+      client.on("close", () => { t.connected = false; refreshStatus(); });
+      client.on("offline", () => { t.connected = false; refreshStatus(); });
+      client.on("error", () => { t.connected = false; refreshStatus(); });
+      client.on("message", (topic, payload) => {
+        let msg; try { msg = JSON.parse(payload.toString()); } catch (e) { return; }
+        if (!msg || msg.k !== "mg1" || seen.has(msg.id)) return;
+        seen.add(msg.id); msg.at = Math.floor(nowSec()); handle(msg, 0);
+      });
+    }).catch(() => refreshStatus());
+  }
+
+  function startNtfy() {
+    const t = { name: "server B", connected: false, publish: (msg) => fetch(NTFY, { method: "POST", body: JSON.stringify(msg) }).catch(() => {}) };
+    transports.push(t);
+    refreshStatus();
+    if (!window.EventSource) return;
+    const es = new EventSource(NTFY + "/sse?since=10m");
+    es.addEventListener("open", (e) => { try { const d = JSON.parse(e.data); serverOffset = d.time - Date.now() / 1000; } catch (err) {} t.connected = true; refreshStatus(); });
+    es.onopen = () => { t.connected = true; refreshStatus(); };
+    es.onmessage = (e) => {
+      let d, msg;
+      try { d = JSON.parse(e.data); } catch (err) { return; }
+      if (d.event && d.event !== "message") return;
+      try { msg = JSON.parse(d.message); } catch (err) { return; }
+      if (!msg || msg.k !== "mg1" || seen.has(msg.id)) return;
+      seen.add(msg.id);
+      handle(msg, Math.max(0, nowSec() - (d.time || nowSec())));
+    };
+    es.onerror = () => { t.connected = false; refreshStatus(); };
   }
 
   async function connectFirebase(FB) {
@@ -148,24 +226,7 @@
     if (isOwner()) setInterval(() => { msgs.limitToLast(400).once("value", (s) => { const keys = Object.keys(s.val() || {}); if (keys.length > 300) msgs.limitToLast(300).once("value", (keep) => { const keepSet = new Set(Object.keys(keep.val() || {})); keys.forEach((k) => { if (!keepSet.has(k)) msgs.child(k).remove(); }); }); }); }, 120000);
   }
 
-  function connectNtfy() {
-    if (!window.EventSource) { setStatus("not supported in this browser", false); return; }
-    publishFn = (msg) => fetch(NTFY, { method: "POST", body: JSON.stringify(msg) }).catch(warnFail);
-    const es = new EventSource(NTFY + "/sse?since=10m");
-    const ok = () => setStatus("connected ✅ (ntfy.sh — everyone online sees your powers)", true);
-    es.addEventListener("open", (e) => { try { const d = JSON.parse(e.data); serverOffset = d.time - Date.now() / 1000; } catch (err) {} ok(); });
-    es.onopen = ok;
-    es.onmessage = (e) => {
-      let d, msg;
-      try { d = JSON.parse(e.data); } catch (err) { return; }
-      if (d.event && d.event !== "message") return;
-      try { msg = JSON.parse(d.message); } catch (err) { return; }
-      if (!msg || msg.k !== "mg1" || seen.has(msg.id)) return;
-      seen.add(msg.id);
-      handle(msg, Math.max(0, nowSec() - (d.time || nowSec())));
-    };
-    es.onerror = () => setStatus("not connected ❌ (rate-limited by spamming, or this network blocks ntfy.sh — wait a bit, or switch to Firebase)", false);
-  }
+
 
   // Cooldown so nobody can spam powers and break the live connection.
   const SPAMMY = new Set(["fish","jackpot","golden","golden2","giant","nyan","parade","tornado","maxwells","gift","xp","crowns","confetti","boom","quake","disco","spin","flip","bighead","meow","poke","freeze","give","announce"]);
