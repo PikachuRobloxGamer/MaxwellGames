@@ -241,6 +241,12 @@
     { id: "pilot",   icon: "🚁", name: "Ace Pilot",          desc: "Pass 25 walls in Maxwell Copter (bonus)", bonus: true, test: () => (save.arcadeBest.copter || 0) >= 25 },
     { id: "ninja",   icon: "🥷", name: "Fish Ninja",         desc: "Slice 25 fish in Fish Ninja (bonus)", bonus: true, test: () => (save.arcadeBest.ninja || 0) >= 25 },
     { id: "ranked",  icon: "🏆", name: "Ranked Up",          desc: "Submit a score to the Leaderboard (bonus)", bonus: true, test: () => save.ach.includes("ranked") },
+    { id: "petfirst",icon: "🥚", name: "First Pet",          desc: "Hatch your first pet (bonus)",     bonus: true, test: () => (save.pets || []).length >= 1 },
+    { id: "petcol",  icon: "🐾", name: "Pet Collector",      desc: "Collect 12 pets (bonus)",          bonus: true, test: () => (save.pets || []).length >= 12 },
+    { id: "petmaster",icon:"🌈", name: "Gotta Catch 'Em All",desc: "Collect all 24 pets (bonus)",      bonus: true, test: () => (save.pets || []).length >= 24 },
+    { id: "battle",  icon: "🌐", name: "Online Warrior",     desc: "Win a Rock Paper Meow battle (bonus)", bonus: true, test: () => save.ach.includes("battle") },
+    { id: "hunter",  icon: "🪙", name: "Treasure Hunter",    desc: "Collect all coins in Maxwell Hunt 3D (bonus)", bonus: true, test: () => (save.arcadeBest.hunt3d || 0) >= 10 },
+    { id: "starpilot",icon:"🌌", name: "Star Pilot",         desc: "Fly 200 in Star Tunnel 3D (bonus)", bonus: true, test: () => (save.arcadeBest.tunnel3d || 0) >= 200 },
     { id: "konami",  icon: "🕹️", name: "Secret Code",       desc: "??? (an old-school cheat code)",  secret: true, test: () => save.ach.includes("konami") },
     { id: "meow",    icon: "🙀", name: "Typed it",          desc: "??? (type a cat word anywhere)",   secret: true, test: () => save.ach.includes("meow") }
   ];
@@ -882,14 +888,17 @@
         ov.classList.add("revealed");
         text.textContent = message;
         meow();
-        for (let i = 0; i < 40; i++) {
+        boomSound(0.1); setTimeout(() => boomSound(0.08), 180);
+        for (let i = 0; i < 90; i++) {
           const s = document.createElement("i");
           s.className = "burst";
-          const a = Math.random() * Math.PI * 2, d = 120 + Math.random() * 220;
+          const a = Math.random() * Math.PI * 2, d = 120 + Math.random() * 300;
           s.style.setProperty("--dx", Math.cos(a) * d + "px");
           s.style.setProperty("--dy", Math.sin(a) * d + "px");
+          s.style.animationDuration = (0.7 + Math.random() * 0.8) + "s";
           sparks.appendChild(s);
         }
+        try { if (window.MG) { MG.particles.burst(40); MG.particles.goldenStorm(20); } } catch (e) {}
         done();
       }, 450);
     }

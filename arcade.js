@@ -351,6 +351,82 @@
       }
     },
 
+    // ---------- Maxwell Hunt 3D (raycaster coin hunt) ----------
+    {
+      key: "hunt3d", name: "Maxwell Hunt 3D", icon: "🪙", isNew: true, reward: (s) => s * 3,
+      play(host, api) {
+        const W = 380, H = 300; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "<b>3D!</b> ↑/↓/W/S move · ←/→/A/D turn. Grab all the 🪙 coins in 45s!");
+        const N = 6, S = 2 * N + 1;
+        const m = []; for (let y = 0; y < S; y++) { m.push([]); for (let xx = 0; xx < S; xx++) m[y].push(1); }
+        (function carve(cx, cy) { m[cy][cx] = 0; const ds = [[0, -1], [0, 1], [-1, 0], [1, 0]].sort(() => Math.random() - 0.5); for (const d of ds) { const nx = cx + d[0] * 2, ny = cy + d[1] * 2; if (nx > 0 && nx < S && ny > 0 && ny < S && m[ny][nx] === 1) { m[cy + d[1]][cx + d[0]] = 0; carve(nx, ny); } } })(1, 1);
+        const coins = []; const open = []; for (let y = 1; y < S; y++) for (let xx = 1; xx < S; xx++) if (!m[y][xx]) open.push([xx, y]);
+        open.sort(() => Math.random() - 0.5).slice(0, 10).forEach((o) => coins.push({ x: o[0] + 0.5, y: o[1] + 0.5, got: false }));
+        let px = 1.5, py = 1.5, ang = 0, score = 0, time = 45, over = false, raf, timer; const keys = {}; const FOV = 0.7;
+        function cell(cx, cy) { if (cx < 0 || cy < 0 || cx >= S || cy >= S) return 1; return m[cy | 0][cx | 0]; }
+        function loop() {
+          if (!over) {
+            const sp = 0.06, rot = 0.045;
+            if (keys["arrowleft"] || keys["a"]) ang -= rot; if (keys["arrowright"] || keys["d"]) ang += rot;
+            let mv = 0; if (keys["arrowup"] || keys["w"]) mv = 1; if (keys["arrowdown"] || keys["s"]) mv = -1;
+            if (mv) { const nx = px + Math.cos(ang) * sp * mv, ny = py + Math.sin(ang) * sp * mv; if (!cell(nx, py)) px = nx; if (!cell(px, ny)) py = ny; }
+            coins.forEach((co) => { if (!co.got && Math.hypot(co.x - px, co.y - py) < 0.5) { co.got = true; score++; api.tone(880, 0.06); } });
+            if (score >= coins.length) return end();
+          }
+          x.fillStyle = "#0a1020"; x.fillRect(0, 0, W, H / 2); x.fillStyle = "#161b2e"; x.fillRect(0, H / 2, W, H / 2);
+          const cols = 120, cw = W / cols; const zbuf = [];
+          for (let i = 0; i < cols; i++) { const ra = ang - FOV / 2 + (i / cols) * FOV, cos = Math.cos(ra), sin = Math.sin(ra); let dist = 0, hit = false, side = 0; while (dist < 20 && !hit) { dist += 0.02; const tx = px + cos * dist, ty = py + sin * dist; if (cell(tx, ty)) { hit = true; const fx = tx - Math.floor(tx), fy = ty - Math.floor(ty); side = Math.min(fx, 1 - fx) < Math.min(fy, 1 - fy) ? 0 : 1; } } const corr = dist * Math.cos(ra - ang); zbuf[i] = corr; const hgt = Math.min(H, H / corr), shade = Math.max(0, 1 - corr / 10) * (side ? 0.7 : 1); x.fillStyle = "rgba(" + (108 * shade | 0) + "," + (150 * shade | 0) + "," + (231 * shade | 0) + ",1)"; x.fillRect(i * cw, (H - hgt) / 2, cw + 1, hgt); }
+          // draw coins as billboards
+          coins.filter((co) => !co.got).map((co) => { const dx = co.x - px, dy = co.y - py; const d = Math.hypot(dx, dy); let a = Math.atan2(dy, dx) - ang; while (a < -Math.PI) a += 2 * Math.PI; while (a > Math.PI) a -= 2 * Math.PI; return { a, d, co }; }).filter((o) => Math.abs(o.a) < FOV / 2 && o.d > 0.3).sort((a, b) => b.d - a.d).forEach((o) => { const sxp = W / 2 + (o.a / (FOV / 2)) * (W / 2); const sz = Math.min(80, 22 / o.d); const col = (sxp / cw) | 0; if (col >= 0 && col < cols && o.d < zbuf[col] + 0.3) { x.font = "bold " + (sz * 1.6 | 0) + "px system-ui"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("🪙", sxp, H / 2 + 20); } });
+          x.fillStyle = "#fff"; x.font = "bold 15px system-ui"; x.textAlign = "left"; x.textBaseline = "alphabetic"; x.fillText("🪙 " + score + "/" + coins.length, 8, 20); x.textAlign = "right"; x.fillText("⏱️ " + time + "s", W - 8, 20);
+          raf = requestAnimationFrame(loop);
+        }
+        function end() { if (over) return; over = true; cancelAnimationFrame(raf); clearInterval(timer); api.boom(); api.finish(score, { title: score >= coins.length ? "All coins! 🪙" : "Time!", line: "Collected <b>" + score + "/" + coins.length + "</b> coins" }); }
+        const kd = (e) => { const k = e.key.toLowerCase(); if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(k)) { keys[k] = true; e.preventDefault(); } };
+        const ku = (e) => { keys[e.key.toLowerCase()] = false; };
+        document.addEventListener("keydown", kd); document.addEventListener("keyup", ku);
+        timer = setInterval(() => { time--; if (time <= 0) end(); }, 1000);
+        api.onClean(() => { cancelAnimationFrame(raf); clearInterval(timer); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku); });
+        loop();
+      }
+    },
+
+    // ---------- Star Tunnel 3D ----------
+    {
+      key: "tunnel3d", name: "Star Tunnel 3D", icon: "🌌", isNew: true, reward: (s) => Math.floor(s / 6),
+      play(host, api) {
+        const W = 380, H = 320; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "<b>3D!</b> Move with the <b>mouse</b> / arrows. Dodge the asteroids flying at you!");
+        const cx = W / 2, cy = H / 2; let shipX = 0, shipY = 0, obs = [], stars = [], score = 0, over = false, raf, frame = 0; const keys = {};
+        for (let i = 0; i < 70; i++) stars.push({ a: Math.random() * 7, d: Math.random(), sp: 0.004 + Math.random() * 0.01 });
+        function spawn() { const a = Math.random() * Math.PI * 2, r = 60 + Math.random() * 120; obs.push({ ox: Math.cos(a) * r, oy: Math.sin(a) * r, z: 0.02, hue: (Math.random() * 360) | 0 }); }
+        function loop() {
+          x.fillStyle = "#05060f"; x.fillRect(0, 0, W, H);
+          // starfield tunnel
+          stars.forEach((s) => { s.d += s.sp; if (s.d > 1) s.d = 0.02; const px = cx + Math.cos(s.a) * s.d * W, py = cy + Math.sin(s.a) * s.d * H; x.fillStyle = "rgba(255,255,255," + s.d + ")"; x.fillRect(px, py, 2, 2); });
+          if (!over) {
+            if (keys["arrowleft"]) shipX -= 7; if (keys["arrowright"]) shipX += 7; if (keys["arrowup"]) shipY -= 7; if (keys["arrowdown"]) shipY += 7;
+            shipX = Math.max(-W / 2 + 20, Math.min(W / 2 - 20, shipX)); shipY = Math.max(-H / 2 + 20, Math.min(H / 2 - 20, shipY));
+            frame++; score += 0.25; if (frame % Math.max(16, 40 - (score / 10 | 0)) === 0) spawn();
+            obs.forEach((o) => o.z += 0.014 + score * 0.00004);
+            obs = obs.filter((o) => { if (o.z > 1.15) return false; const sxp = cx + o.ox * o.z, syp = cy + o.oy * o.z; if (o.z > 0.9 && Math.hypot(sxp - (cx + shipX), syp - (cy + shipY)) < 22 + o.z * 14) { over = true; api.boom(); } return true; });
+          }
+          obs.sort((a, b) => a.z - b.z).forEach((o) => { const sxp = cx + o.ox * o.z, syp = cy + o.oy * o.z, r = 3 + o.z * 22; x.fillStyle = "hsl(" + o.hue + " 70% " + (30 + o.z * 35) + "%)"; x.beginPath(); x.arc(sxp, syp, r, 0, 7); x.fill(); });
+          // ship
+          x.fillStyle = "#3ee08f"; x.beginPath(); x.moveTo(cx + shipX, cy + shipY - 14); x.lineTo(cx + shipX - 12, cy + shipY + 12); x.lineTo(cx + shipX + 12, cy + shipY + 12); x.closePath(); x.fill();
+          x.fillStyle = "#fff"; x.font = "bold 16px system-ui"; x.textAlign = "right"; x.fillText(Math.floor(score), W - 8, 22);
+          if (over) { cancelAnimationFrame(raf); api.finish(Math.floor(score), { title: score >= 200 ? "Star Pilot! 🌌" : "Boom!", line: "Flew <b>" + Math.floor(score) + "</b>" }); return; }
+          raf = requestAnimationFrame(loop);
+        }
+        const mv = (e) => { const r = c.getBoundingClientRect(); shipX = (e.clientX - r.left) * (W / r.width) - cx; shipY = (e.clientY - r.top) * (H / r.height) - cy; };
+        const kd = (e) => { const k = e.key.toLowerCase(); if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) { keys[k] = true; e.preventDefault(); } };
+        const ku = (e) => { keys[e.key.toLowerCase()] = false; };
+        c.addEventListener("pointermove", mv); document.addEventListener("keydown", kd); document.addEventListener("keyup", ku);
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku); });
+        loop();
+      }
+    },
+
     // ---------- Maxwell Breakout ----------
     {
       key: "breakout", name: "Maxwell Breakout", icon: "🧱", isNew: true, reward: (s) => s,

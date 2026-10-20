@@ -368,6 +368,9 @@
     { t: "ultraparty",icon:"🥳", name: "ULTRA PARTY",      info: "Disco + confetti + fireworks" },
     { t: "megaquake",icon: "🌋", name: "MEGA Quake",       info: "Huge shake + explosion" },
     { t: "catrain",  icon: "😹", name: "Cat Rain",         info: "Maxwell swarm + MEOW" },
+    { t: "doublexp", icon: "⚡", name: "DOUBLE XP",        info: "+300 🐟 & XP for all" },
+    { t: "rainbowstorm",icon:"🌈",name:"Rainbow Storm",    info: "Rainbow road + 60 golden :3s" },
+    { t: "fireworksx",icon:"🎆", name: "MEGA Fireworks",   info: "Triple fireworks + boom" },
     { t: "freezeall",icon: "🧊", name: "Freeze Everyone",  info: "Maxwell locks every screen" }
   ];
   function renderPowers() {
@@ -443,6 +446,9 @@
       case "ultraparty": document.documentElement.classList.add("disco"); setTimeout(() => document.documentElement.classList.remove("disco"), 15000); try { confetti(); } catch (e) {} try { fireworks(); } catch (e) {} MG.toast("🥳", "ULTRA PARTY!", `${byName} started a party!`); break;
       case "megaquake": document.body.classList.add("quake"); setTimeout(() => document.body.classList.remove("quake"), 6000); try { bigBoom(); } catch (e) {} MG.toast("🌋", "MEGA Quake!", "Hold on tight!"); break;
       case "catrain": for (let i = 0; i < 16; i++) setTimeout(() => clickable(maxwellSrc(), 70, 5, "🐈‍⬛ +5"), i * 200); MG.meow(); setTimeout(MG.meow, 300); MG.toast("😹", "Cat Rain!", "So many Maxwells!"); break;
+      case "doublexp": MG.addTreats(300, W / 2, H / 3); MG.floatText("⚡ DOUBLE XP ⚡", W / 2, H / 2, "big"); MG.toast("⚡", "DOUBLE XP!", `+300 🐟 & XP from ${byName}`); break;
+      case "rainbowstorm": try { rainbowRoad(); } catch (e) {} MG.particles.goldenStorm(60); MG.toast("🌈", "Rainbow Storm!", "Catch the golden :3s!"); break;
+      case "fireworksx": try { fireworks(); setTimeout(fireworks, 600); setTimeout(fireworks, 1200); } catch (e) {} try { bigBoom(); } catch (e) {} MG.toast("🎆", "MEGA Fireworks!", `${byName} lit up the sky!`); break;
     }
   }
 

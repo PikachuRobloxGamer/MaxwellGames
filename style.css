@@ -867,3 +867,59 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .lb-rank{width:38px;font-weight:900;font-size:1.05rem}
 .lb-name{flex:1;font-weight:700}
 .lb-score{color:#ffd84a;font-weight:800;font-size:.9rem}
+
+/* ===== Pets ===== */
+.pets-tab{background:linear-gradient(135deg,#ff7ad1,#b77bff);color:#fff;font-weight:800}
+.pets-box{width:min(640px,96vw)}
+.pets-head{background:linear-gradient(135deg,#ff7ad1,#b77bff)}
+.pets-head h2{flex:1;text-align:center;margin:0}
+.pets-body{display:flex;flex-direction:column;gap:12px}
+.pets-eggs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.pets-eggs .btn{display:flex;flex-direction:column;align-items:center;font-size:1rem;padding:12px 20px}
+.pets-eggs .btn small{font-size:.72rem;opacity:.85;font-weight:600}
+.pets-golden{background:linear-gradient(135deg,#ffd84a,#ff9a3c)!important;color:#2a1800}
+.pets-prog{text-align:center;color:var(--muted);font-size:.86rem}
+.pets-prog b{color:#ffd84a}
+.pets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.pet-cell{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border-radius:12px;background:#161a2e;border:2px solid #222;opacity:.6}
+.pet-cell.got{opacity:1;border-color:var(--rc);box-shadow:0 0 12px -2px var(--rc)}
+.pet-emoji{font-size:2rem}
+.pet-name{font-size:.72rem;font-weight:700;text-align:center}
+.pet-rar{font-size:.62rem;color:var(--rc);font-weight:800}
+.egg-overlay{position:absolute;inset:0;background:rgba(5,6,14,.9);display:flex;align-items:center;justify-content:center;z-index:10;border-radius:18px}
+.egg-stage{text-align:center}
+.egg{font-size:6rem;transition:transform .12s}
+.egg-reveal{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.egg-rays{position:absolute;top:50%;left:50%;width:260px;height:260px;margin:-130px 0 0 -130px;border-radius:50%;background:conic-gradient(var(--rc),transparent 30%,var(--rc) 60%,transparent 90%,var(--rc));opacity:.3;pointer-events:none;animation:eggspin 6s linear infinite}
+.egg-reveal .btn{position:relative;z-index:2}
+@keyframes eggspin{to{transform:rotate(360deg)}}
+.egg-pet{font-size:5rem;filter:drop-shadow(0 0 20px var(--rc));z-index:1}
+.egg-pname{font-size:1.4rem;z-index:1}
+.egg-prar{color:var(--rc);font-weight:800;z-index:1}
+
+/* ===== Battle ===== */
+.battle-tab{background:linear-gradient(135deg,#00cec9,#2f8cff);color:#fff;font-weight:800}
+.battle-box{width:min(520px,96vw)}
+.battle-head{background:linear-gradient(135deg,#00cec9,#2f8cff)}
+.battle-head h2{flex:1;text-align:center;margin:0}
+.battle-body{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.battle-menu{display:flex;flex-direction:column;gap:10px;width:min(300px,80vw)}
+.battle-score{display:flex;gap:16px;align-items:center;font-size:1.1rem;font-weight:700}
+.bs-you b{color:#3ee08f}.bs-opp b{color:#ff5fa2}.bs-vs{color:var(--muted)}
+.battle-show{font-size:2.4rem;margin:6px 0}
+.battle-code{font-size:2.6rem;font-weight:900;letter-spacing:8px;color:#ffd84a;background:#0d1428;padding:10px 20px;border-radius:12px;margin:10px 0}
+.battle-wait{display:flex;flex-direction:column;align-items:center;gap:10px}
+
+/* ===== Suggestions link (promoted around the site) ===== */
+.suggest-btn{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#3ee08f,#19d39b);color:#05291a;font-weight:800;text-decoration:none;padding:8px 14px;border-radius:10px;font-size:.9rem;white-space:nowrap;transition:transform .12s,filter .12s;animation:suggest-pulse 2.2s ease-in-out infinite}
+.suggest-btn:hover{transform:translateY(-2px) scale(1.05);filter:brightness(1.1)}
+@keyframes suggest-pulse{0%,100%{box-shadow:0 0 0 0 rgba(62,224,143,.5)}50%{box-shadow:0 0 0 8px rgba(62,224,143,0)}}
+.suggest-banner{display:flex;align-items:center;gap:14px;text-decoration:none;color:#fff;background:linear-gradient(110deg,#19d39b,#3ee08f,#00cec9);background-size:200% 100%;animation:mg2-flow 6s ease infinite;border-radius:14px;padding:12px 18px;margin-top:10px;transition:transform .12s}
+.suggest-banner:hover{transform:translateY(-2px)}
+.suggest-banner-ic{font-size:2rem}
+.suggest-banner-text{flex:1;font-size:.95rem;color:#05291a;font-weight:600}
+.suggest-banner-text b{color:#063}
+.suggest-banner-btn{background:#05291a;color:#3ee08f;font-weight:900;padding:8px 16px;border-radius:22px;white-space:nowrap}
+.credits-suggest{display:inline-block;margin-top:14px;color:#3ee08f;font-weight:800;text-decoration:none;font-size:1.05rem;border:2px dashed #3ee08f;padding:10px 18px;border-radius:12px;transition:background .15s}
+.credits-suggest:hover{background:rgba(62,224,143,.12)}
+@media (max-width:560px){.suggest-banner-text{font-size:.82rem}.suggest-btn{font-size:.8rem;padding:6px 10px}}
