@@ -111,7 +111,18 @@
     { id: "sk-6", type: "skin", name: "Galaxy",    role: "owner", tier: 6 },
     { id: "sk-7", type: "skin", name: "Bubblegum", role: "owner", tier: 7 },
     { id: "sk-8", type: "skin", name: "Rainbow",   role: "owner", tier: 8 },
-    { id: "sk-9", type: "skin", name: "Inverted",  role: "owner", tier: 9 }
+    { id: "sk-9", type: "skin", name: "Inverted",  role: "owner", tier: 9 },
+    { id: "sk-10", type: "skin", name: "Shadow",   role: "owner", tier: 10 },
+    { id: "sk-11", type: "skin", name: "Toxic",    role: "owner", tier: 11 },
+    { id: "sk-12", type: "skin", name: "Cyber",    role: "owner", tier: 12 },
+    { id: "sk-13", type: "skin", name: "Magma",    role: "owner", tier: 13 },
+    { id: "sk-14", type: "skin", name: "Void",     role: "owner", tier: 14 },
+    { id: "sk-15", type: "skin", name: "Prism",    role: "owner", tier: 15 },
+    { id: "sk-charizard", type: "skin", name: "Charizard Maxwell", role: "sami", img: "images/maxwell-charizard.png", icon: "🔥" },
+    { id: "sk-pikachu",   type: "skin", name: "Pikachu Maxwell",   role: "sami", img: "images/maxwell-pikachu.png",   icon: "⚡" },
+    { id: "sk-mewtwo",    type: "skin", name: "Mewtwo Maxwell",    role: "sami", img: "images/maxwell-mewtwo.png",    icon: "🔮" },
+    { id: "sk-squirtle",  type: "skin", name: "Squirtle Maxwell",  role: "sami", img: "images/maxwell-squirtle.png",  icon: "💧" },
+    { id: "sk-bulbasaur", type: "skin", name: "Bulbasaur Maxwell", role: "sami", img: "images/maxwell-bulbasaur.png", icon: "🌿" }
   ];
   let role = null; // "owner", "sami", or null
   const canSee = (it) => !it.role || it.role === role || (role === "owner" && it.role === "sami");
@@ -223,6 +234,13 @@
     { id: "dodger",  icon: "🌀", name: "Untouchable",        desc: "Survive 150 in Maxwell Dodge (bonus)", bonus: true, test: () => (save.arcadeBest.dodge || 0) >= 150 },
     { id: "popper",  icon: "🫧", name: "Pop Star",           desc: "Pop 25+ in Bubble Pop (bonus)",   bonus: true, test: () => (save.arcadeBest.bubble || 0) >= 25 },
     { id: "originals",icon:"🐱", name: "Original Gamer",     desc: "Open a Maxwell Originals game (bonus)", bonus: true, test: () => (save.opened || []).some((id) => String(id).indexOf("builtin-") >= 0) },
+    { id: "maze3d",  icon: "🧊", name: "3D Explorer",        desc: "Escape Maxwell Maze 3D (bonus)",   bonus: true, test: () => (save.arcadeBest.maze3d || 0) >= 1 },
+    { id: "duel",    icon: "⚔️", name: "Duelist",            desc: "Win a Duel against a friend (bonus)", bonus: true, test: () => save.ach.includes("duel") },
+    { id: "ascmax",  icon: "🌟", name: "True Maximum",       desc: "Reach the final ascension (bonus)", bonus: true, test: () => save.asc >= 15 },
+    { id: "driver",  icon: "🏎️", name: "Speed King",         desc: "Drive 300m in Maxwell Road 3D (bonus)", bonus: true, test: () => (save.arcadeBest.road3d || 0) >= 300 },
+    { id: "pilot",   icon: "🚁", name: "Ace Pilot",          desc: "Pass 25 walls in Maxwell Copter (bonus)", bonus: true, test: () => (save.arcadeBest.copter || 0) >= 25 },
+    { id: "ninja",   icon: "🥷", name: "Fish Ninja",         desc: "Slice 25 fish in Fish Ninja (bonus)", bonus: true, test: () => (save.arcadeBest.ninja || 0) >= 25 },
+    { id: "ranked",  icon: "🏆", name: "Ranked Up",          desc: "Submit a score to the Leaderboard (bonus)", bonus: true, test: () => save.ach.includes("ranked") },
     { id: "konami",  icon: "🕹️", name: "Secret Code",       desc: "??? (an old-school cheat code)",  secret: true, test: () => save.ach.includes("konami") },
     { id: "meow",    icon: "🙀", name: "Typed it",          desc: "??? (type a cat word anywhere)",   secret: true, test: () => save.ach.includes("meow") }
   ];
@@ -688,7 +706,10 @@
     { name: "Sunset",    color: "#ff9a3c" }, { name: "Golden",    color: "#ffd84a" },
     { name: "Emerald",   color: "#3ee08f" }, { name: "Ocean",     color: "#4fb3ff" },
     { name: "Galaxy",    color: "#b77bff" }, { name: "Bubblegum", color: "#ff7ad1" },
-    { name: "Rainbow",   color: "#ff6bd6" }, { name: "Inverted",  color: "#e8e9ee" }
+    { name: "Rainbow",   color: "#ff6bd6" }, { name: "Inverted",  color: "#e8e9ee" },
+    { name: "Shadow",    color: "#4a4a55" }, { name: "Toxic",     color: "#8dff3a" },
+    { name: "Cyber",     color: "#21e6ff" }, { name: "Magma",     color: "#ff5324" },
+    { name: "Void",      color: "#7b3bff" }, { name: "Prism",     color: "#ff5fe0" }
   ];
   const LAST = TIERS.length - 1;
   const tierImg = (i) => `images/maxwell-tiers/maxwell-${i}.png`;
@@ -939,7 +960,14 @@
     skinList() {
       const list = TIERS.map((t, i) => ({ id: "sk-" + i, name: t.name + " Maxwell", color: t.color }));
       if (role === "owner") list.push({ id: "sk-king", name: "👑 King Maxwell", color: "#ffd84a" });
-      if (role === "sami" || role === "owner") list.push({ id: "sk-gengar", name: "👻 Gengar Maxwell", color: "#9b59ff" });
+      if (role === "sami" || role === "owner") {
+        list.push({ id: "sk-gengar", name: "👻 Gengar Maxwell", color: "#9b59ff" });
+        list.push({ id: "sk-charizard", name: "🔥 Charizard Maxwell", color: "#ff7a3c" });
+        list.push({ id: "sk-pikachu", name: "⚡ Pikachu Maxwell", color: "#ffd84a" });
+        list.push({ id: "sk-mewtwo", name: "🔮 Mewtwo Maxwell", color: "#b77bff" });
+        list.push({ id: "sk-squirtle", name: "💧 Squirtle Maxwell", color: "#4fb3ff" });
+        list.push({ id: "sk-bulbasaur", name: "🌿 Bulbasaur Maxwell", color: "#3ee08f" });
+      }
       return list;
     },
     pickAscension(id, msg) {

@@ -794,3 +794,76 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .mine-cell.boom { background: #e8303a; }
 .mine-cell[data-n="1"]{color:#6ab7ff}.mine-cell[data-n="2"]{color:#3ee08f}.mine-cell[data-n="3"]{color:#ff7a7a}
 .mine-cell[data-n="4"]{color:#b77bff}.mine-cell[data-n="5"]{color:#ffb14a}.mine-cell[data-n="6"]{color:#00cec9}
+
+/* ============================================================
+   MAXWELL 2.0 — NEW LOOK
+   ============================================================ */
+.topbar {
+  background: linear-gradient(110deg, rgba(108,92,231,0.30), rgba(0,206,201,0.22), rgba(255,95,162,0.25), rgba(108,92,231,0.30));
+  background-size: 300% 100%; animation: mg2-flow 18s ease infinite;
+  border-bottom: 1px solid rgba(255,255,255,0.10); backdrop-filter: blur(8px);
+}
+@keyframes mg2-flow { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+.tab { transition: transform .12s, box-shadow .12s, background .12s; position: relative; }
+.tab:hover { transform: translateY(-2px); }
+.tab.active { box-shadow: 0 4px 16px rgba(108,92,231,0.45); }
+.card { transition: transform .14s ease, box-shadow .14s ease, border-color .14s; border: 1px solid transparent; }
+.card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 14px 34px rgba(0,0,0,0.5), 0 0 0 2px var(--accent); border-color: var(--accent); }
+.card .thumb { transition: filter .14s; }
+.card:hover .thumb { filter: brightness(1.08) saturate(1.1); }
+.profile-btn, .yt-btn, .lock-btn, .jukebox-btn, .account-btn { transition: transform .12s, filter .12s; }
+.profile-btn:hover, .yt-btn:hover, .lock-btn:hover, .jukebox-btn:hover, .account-btn:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.12); }
+/* shiny animated section title in credits */
+.loader-title { background: linear-gradient(90deg,#6c5ce7,#00cec9,#ff5fa2,#ffd84a,#6c5ce7); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: mg2-flow 8s linear infinite; }
+/* subtle pulse on the NEW-ish tabs */
+.tab.hot::after { content:"NEW"; position:absolute; top:-7px; right:-7px; background:#ff5fa2; color:#fff; font-size:.52rem; font-weight:900; padding:1px 5px; border-radius:8px; }
+
+/* ===== Duels ===== */
+.duels-tab { background: linear-gradient(135deg,#ff5a6e,#ff9a3c); color:#fff; font-weight:800; }
+.duel-pad { width:min(380px,88vw); height:200px; border-radius:16px; border:none; display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:900; color:#fff; text-align:center; }
+.duel-pad.wait{background:#3a3f55}.duel-pad.ready{background:#e05a6e}.duel-pad.go{background:#3ee08f;color:#06281a}
+
+/* ===== Maxwell TV ===== */
+.tv-tab { background: linear-gradient(135deg,#ff0000,#c4302b); color:#fff; font-weight:800; }
+.tv-box { width:min(620px,96vw); }
+.tv-head { background: linear-gradient(135deg,#ff0000,#990000); }
+.tv-head h2{flex:1;text-align:center;margin:0;font-size:1.2rem}
+.tv-body{display:flex;flex-direction:column;gap:14px}
+.tv-spotlight{background:linear-gradient(90deg,rgba(255,0,0,.25),rgba(255,95,162,.25));border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 14px;text-align:center;font-weight:700;transition:opacity .25s}
+.tv-card{position:relative;background:#14172a;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.08);padding-bottom:16px}
+.tv-banner{height:74px;background:linear-gradient(120deg,var(--ch),#111827)}
+.tv-avatar{width:84px;height:84px;border-radius:50%;object-fit:cover;border:4px solid #14172a;background:#14172a;margin:-42px 0 0 18px;display:block}
+.tv-info{padding:4px 18px 0}
+.tv-name{font-weight:900;font-size:1.25rem}
+.tv-handle{color:var(--muted);font-size:.85rem;margin-bottom:6px}
+.tv-blurb{font-size:.9rem;margin-bottom:12px}
+.tv-sub{background:#ff0000!important;color:#fff;font-weight:900;font-size:1rem;padding:10px 22px;border-radius:24px;display:inline-block;text-decoration:none}
+.tv-sub:hover{filter:brightness(1.12);transform:scale(1.04)}
+
+/* Sliding puzzle */
+.slide-grid{display:grid;grid-template-columns:repeat(4,64px);grid-auto-rows:64px;gap:6px;background:#0d1428;padding:8px;border-radius:12px}
+.slide-cell{border:none;border-radius:8px;background:#6c5ce7;color:#fff;font-weight:800;font-size:1.3rem;cursor:pointer}
+.slide-cell.blank{background:transparent;cursor:default}
+.slide-cell:not(.blank):hover{filter:brightness(1.12)}
+/* Lights out */
+.lights-grid{display:grid;gap:6px;width:min(300px,80vw)}
+.lights-cell{aspect-ratio:1;border:none;border-radius:10px;background:#1a2340;cursor:pointer;transition:background .1s}
+.lights-cell.on{background:#ffd84a;box-shadow:0 0 16px #ffd84a}
+
+/* ===== Leaderboard ===== */
+.ranks-tab{background:linear-gradient(135deg,#ffd84a,#ff9a3c);color:#2a1800;font-weight:800}
+.lb-box{width:min(560px,96vw)}
+.lb-head{background:linear-gradient(135deg,#ffd84a,#ff7a3c)}
+.lb-head h2{flex:1;text-align:center;margin:0;color:#2a1800}
+.lb-body{display:flex;flex-direction:column;gap:12px}
+.lb-me{background:#14172a;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px}
+.lb-me-row{display:flex;gap:8px;margin-bottom:8px}
+.lb-mystats{font-size:.85rem;color:var(--muted)}
+.lb-mystats b{color:#ffd84a}
+.lb-status{font-size:.82rem;color:#3ee08f;margin:6px 0 0;min-height:16px}
+.lb-list{display:flex;flex-direction:column;gap:5px;max-height:48vh;overflow-y:auto}
+.lb-row{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:9px;background:#161a2e}
+.lb-row.mine{background:linear-gradient(90deg,rgba(255,216,74,.2),rgba(108,92,231,.2));border:1px solid #ffd84a}
+.lb-rank{width:38px;font-weight:900;font-size:1.05rem}
+.lb-name{flex:1;font-weight:700}
+.lb-score{color:#ffd84a;font-weight:800;font-size:.9rem}
