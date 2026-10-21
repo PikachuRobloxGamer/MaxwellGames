@@ -247,6 +247,8 @@
     { id: "battle",  icon: "🌐", name: "Online Warrior",     desc: "Win a Rock Paper Meow battle (bonus)", bonus: true, test: () => save.ach.includes("battle") },
     { id: "hunter",  icon: "🪙", name: "Treasure Hunter",    desc: "Collect all coins in Maxwell Hunt 3D (bonus)", bonus: true, test: () => (save.arcadeBest.hunt3d || 0) >= 10 },
     { id: "starpilot",icon:"🌌", name: "Star Pilot",         desc: "Fly 200 in Star Tunnel 3D (bonus)", bonus: true, test: () => (save.arcadeBest.tunnel3d || 0) >= 200 },
+    { id: "codes",   icon: "🎁", name: "Code Cracker",       desc: "Redeem a secret code (bonus)",    bonus: true, test: () => save.ach.includes("codes") },
+    { id: "loyal",   icon: "📅", name: "Super Loyal",        desc: "Hit a 7-day daily reward streak (bonus)", bonus: true, test: () => (save.dailyTab && save.dailyTab.day >= 7) },
     { id: "konami",  icon: "🕹️", name: "Secret Code",       desc: "??? (an old-school cheat code)",  secret: true, test: () => save.ach.includes("konami") },
     { id: "meow",    icon: "🙀", name: "Typed it",          desc: "??? (type a cat word anywhere)",   secret: true, test: () => save.ach.includes("meow") }
   ];

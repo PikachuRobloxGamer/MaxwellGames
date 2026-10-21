@@ -1246,7 +1246,7 @@
         // ===== chat UI =====
         const chat = document.createElement("div"); chat.className = "sball-chat"; host.appendChild(chat);
         chat.innerHTML = `
-          <div class="sball-chat-head"><span class="sball-ai-dot"></span><b>🔮 Satisfying AI</b><small>makes YouTube Shorts</small></div>
+          <div class="sball-chat-head"><span class="sball-ai-dot"></span><b>🔮 Satisfying AI</b><button class="sball-gear" id="sbGear" title="Use a real AI (your own key)">⚙️</button><small>makes YouTube Shorts</small></div>
           <div class="sball-msgs" id="sbMsgs"></div>
           <div class="sball-suggest" id="sbSuggest"></div>
           <form class="sball-inputbar" id="sbForm"><input class="sball-input" id="sbInput" placeholder="Describe your satisfying short…" autocomplete="off"><button class="btn sball-send" type="submit">Send</button></form>`;
@@ -1265,6 +1265,19 @@
         SUGG.forEach((s) => { const b = document.createElement("button"); b.className = "sball-chip"; b.type = "button"; b.textContent = s; b.onclick = () => { input.value = s; submit(); }; sug.appendChild(b); });
         const input = chat.querySelector("#sbInput");
         chat.querySelector("#sbForm").onsubmit = (e) => { e.preventDefault(); submit(); };
+        const gear = chat.querySelector("#sbGear");
+        if (gear) gear.onclick = () => {
+          const cur = (function () { try { return localStorage.getItem("mg-sball-key") || ""; } catch (e) { return ""; } })();
+          const msgs = chat.querySelector("#sbMsgs");
+          const b = document.createElement("div"); b.className = "sball-msg ai"; b.innerHTML =
+            '<b>🤖 Real AI mode (optional)</b><br>Paste your <b>free Google Gemini API key</b> to have a real AI design your shorts. ' +
+            '<b>It is saved only on THIS device</b> and never uploaded or shared. Leave blank &amp; Save to turn AI off and use the built-in engine.' +
+            '<br>Get a free key at <b>aistudio.google.com/apikey</b>.' +
+            '<div style="display:flex;gap:6px;margin-top:8px"><input class="sball-input" id="sbKey" placeholder="paste key (or leave blank)" value="' + cur.replace(/"/g, "&quot;") + '"><button class="btn sball-send" id="sbKeySave">Save</button></div>' +
+            '<div style="font-size:.75rem;margin-top:4px;color:#8b8fa3">Status: <b id="sbKeyStat">' + (cur ? "AI ON ✅" : "using built-in engine") + '</b></div>';
+          msgs.appendChild(b); msgs.scrollTop = msgs.scrollHeight;
+          b.querySelector("#sbKeySave").onclick = () => { const v = b.querySelector("#sbKey").value.trim(); try { if (v) localStorage.setItem("mg-sball-key", v); else localStorage.removeItem("mg-sball-key"); } catch (e) {} b.querySelector("#sbKeyStat").textContent = v ? "AI ON ✅ (saved on this device)" : "using built-in engine"; };
+        };
 
         // ===== fullscreen experience =====
         const fs = document.createElement("div"); fs.className = "sball-fs"; document.body.appendChild(fs);
@@ -1409,7 +1422,7 @@
         }
 
         // ===== physics =====
-        let balls = [], cfg = null, bgDraw = null, wall = 0, spinAng = 0, gapCenter = 0, totalBounces = 0, stoneCount = 0, running = false, raf = null, flash = null;
+        let balls = [], cfg = null, bgDraw = null, bgView = null, wall = 0, spinAng = 0, gapCenter = 0, totalBounces = 0, stoneCount = 0, running = false, raf = null, flash = null;
         const RC = () => SW * 0.44;
         const cx = SW / 2, cy = SH * 0.46;
         const GAP_HALF = 0.52; // half-width of the hole, radians
@@ -1425,7 +1438,7 @@
           return newBall(cx + (Math.random() - 0.5) * RC() * 0.3, cy - RC() * 0.3, r0); // falls into the circle
         }
         function buildBalls() {
-          bgDraw = makeBg(cfg.bg); wall = 0; spinAng = 0; gapCenter = Math.random() * Math.PI * 2; totalBounces = 0; stoneCount = 0; flash = null; rings = []; bxf.clearRect(0, 0, SW, SH); balls = [];
+          bgDraw = makeBg(cfg.bg); bgView = makeBg(cfg.bg); wall = 0; spinAng = 0; gapCenter = Math.random() * Math.PI * 2; totalBounces = 0; stoneCount = 0; flash = null; rings = []; bxf.clearRect(0, 0, SW, SH); balls = [];
           const n = cfg.sequence ? 1 : cfg.count; // sequences run one ball at a time
           for (let i = 0; i < n; i++) balls.push(freshBall());
         }
@@ -1541,12 +1554,14 @@
         function renderView() {
           const vw = view.width, vh = view.height; if (!vw || !vh) return;
           vx.clearRect(0, 0, vw, vh);
-          vx.save(); vx.filter = "blur(26px)";
-          const cover = Math.max(vw / SW, vh / SH), cw = SW * cover, ch = SH * cover;
-          vx.drawImage(scene, (vw - cw) / 2, (vh - ch) / 2, cw, ch); vx.restore();
-          vx.fillStyle = "rgba(0,0,0,0.45)"; vx.fillRect(0, 0, vw, vh);
+          // 1) draw the chosen background across the WHOLE screen (reliable, no filter needed)
+          if (bgView) { vx.save(); vx.setTransform(vw / SW, 0, 0, vh / SH, 0, 0); bgView(vx); vx.setTransform(1, 0, 0, 1, 0, 0); vx.restore(); }
+          else { vx.fillStyle = "#0a0c18"; vx.fillRect(0, 0, vw, vh); }
+          // soft darken so the centered play area pops
+          vx.fillStyle = "rgba(0,0,0,0.28)"; vx.fillRect(0, 0, vw, vh);
+          // 2) the crisp 9:16 play scene, centered, filling the height
           const fit = Math.min(vw / SW, vh / SH), fw = SW * fit, fh = SH * fit;
-          vx.save(); vx.shadowColor = "rgba(0,0,0,0.75)"; vx.shadowBlur = 46; vx.drawImage(scene, (vw - fw) / 2, (vh - fh) / 2, fw, fh); vx.restore();
+          vx.save(); vx.shadowColor = "rgba(0,0,0,0.6)"; vx.shadowBlur = 40; vx.drawImage(scene, (vw - fw) / 2, (vh - fh) / 2, fw, fh); vx.restore();
         }
         function loop() { if (!running) return; step(); renderScene(); renderView(); raf = requestAnimationFrame(loop); }
 
@@ -1560,16 +1575,45 @@
         document.addEventListener("fullscreenchange", onFsChange); document.addEventListener("webkitfullscreenchange", onFsChange);
 
         let loadIv = null;
-        function startExperience(p) {
-          cfg = parse(p); buildBalls();
+        function openStage() {
           fs.classList.add("on"); resizeView(); requestFS();
           try { const a = actx(); if (a && a.resume) a.resume(); } catch (e) {}
           loader.classList.remove("gone");
-          fs.querySelector("#sbLoadSub").textContent = summarize(cfg);
           fs.querySelector("#sbProg").style.width = "0%";
           let prog = 0; clearInterval(loadIv);
           loadIv = setInterval(() => { prog += 4 + Math.random() * 7; if (prog >= 100) { prog = 100; clearInterval(loadIv); setTimeout(() => loader.classList.add("gone"), 300); } fs.querySelector("#sbProg").style.width = prog + "%"; }, 95);
-          running = true; if (!raf) loop();
+        }
+        function applyCfg(c) { cfg = c; buildBalls(); const sub = fs.querySelector("#sbLoadSub"); if (sub) sub.textContent = summarize(cfg); running = true; if (!raf) loop(); }
+        // ----- optional "bring your own AI key" (Google Gemini). Key stays in THIS browser only. -----
+        function getKey() { try { return localStorage.getItem("mg-sball-key") || ""; } catch (e) { return ""; } }
+        function aiParse(prompt, key) {
+          const base = parse(prompt);
+          const schema = 'Return ONLY JSON with these keys (no prose): container ("circle"|"box"|"hole"), count (1-200 int), gravity (0 to 1 number), grow (bool), shrink (bool), split (bool), speedUp (bool), rainbow (bool), trail (bool), spin (bool), wallsClose (bool), changeAfter (int, 0 if none), changeTo (one of "stone","freeze","pop","explode","split","color", or null), sequence (bool), escape (bool), bg (one of "matrix","space","synthwave","sunset","aurora","fire","ocean","disco","dark").';
+          const body = { contents: [{ parts: [{ text: schema + '\nDescribe a satisfying bouncing-ball short for this request: "' + prompt + '"' }] }], generationConfig: { temperature: 0.3, responseMimeType: "application/json" } };
+          const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+          const to = setTimeout(() => { if (ctrl) ctrl.abort(); }, 12000);
+          return fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + encodeURIComponent(key), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctrl ? ctrl.signal : undefined })
+            .then((r) => r.json()).then((j) => {
+              clearTimeout(to);
+              const txt = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts[0].text;
+              const ai = JSON.parse(txt);
+              const c = Object.assign({}, base);
+              if (ai.container && ["circle", "box", "hole"].indexOf(ai.container) >= 0) c.container = ai.container;
+              if (typeof ai.count === "number") c.count = Math.max(1, Math.min(200, ai.count | 0));
+              if (typeof ai.gravity === "number") c.gravity = Math.max(0, Math.min(1, ai.gravity));
+              c.grow = ai.grow ? 1.07 : 0; c.shrink = ai.shrink ? 0.94 : 0; c.speedUp = ai.speedUp ? 1.03 : 0;
+              ["split", "rainbow", "trail", "spin", "wallsClose", "sequence", "escape"].forEach((k) => { if (typeof ai[k] === "boolean") c[k] = ai[k]; });
+              if (ai.changeTo && ["stone", "freeze", "pop", "explode", "split", "color"].indexOf(ai.changeTo) >= 0) { c.changeTo = ai.changeTo; c.changeAfter = Math.max(1, (ai.changeAfter | 0) || 1); } else { c.changeTo = base.changeTo; c.changeAfter = base.changeAfter; }
+              if (ai.bg && ["matrix", "space", "synthwave", "sunset", "aurora", "fire", "ocean", "disco", "dark"].indexOf(ai.bg) >= 0) c.bg = ai.bg;
+              if (c.escape) c.sequence = true;
+              return c;
+            }).catch((e) => { clearTimeout(to); throw e; });
+        }
+        function startExperience(p) {
+          openStage();
+          const key = getKey();
+          if (key) { const sub = fs.querySelector("#sbLoadSub"); if (sub) sub.textContent = "🤖 Asking the AI…"; aiParse(p, key).then(applyCfg).catch(() => applyCfg(parse(p))); }
+          else applyCfg(parse(p));
         }
         function doExit() { running = false; if (raf) cancelAnimationFrame(raf); raf = null; fs.classList.remove("on"); exitFSapi(); stopRec(); }
         fs.querySelector("#sbExit").onclick = doExit;

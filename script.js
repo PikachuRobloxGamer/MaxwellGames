@@ -94,6 +94,7 @@ function renderSounds() {
     f.title = s.title;
     f.loading = "lazy";
     f.scrolling = "no";
+    f.referrerPolicy = "no-referrer";
     const name = document.createElement("div");
     name.className = "sound-name";
     name.textContent = s.title;

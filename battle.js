@@ -9,7 +9,7 @@
 
   let poll = null;
   function stopPoll() { if (poll) { clearInterval(poll); poll = null; } }
-  function close() { stopPoll(); const o = document.getElementById("battleOv"); if (o) { document.removeEventListener("keydown", o._esc); o.remove(); } }
+  function close() { stopPoll(); const o = document.getElementById("battleOv"); if (o) { if (o._clean2) try { o._clean2(); } catch (e) {} document.removeEventListener("keydown", o._esc); o.remove(); } }
 
   function open() {
     close();
@@ -26,10 +26,27 @@
   function setTitle(t) { document.getElementById("bTitle").textContent = t; }
   function back(show) { document.getElementById("bBack").classList.toggle("hidden", !show); }
 
+  const MODES = [
+    { key: "rps", name: "Rock Paper Meow", icon: "✊", tag: "Online + CPU", fn: () => rpsMenu() },
+    { key: "ttt", name: "Tic-Tac-Toe", icon: "⭕", tag: "vs CPU", fn: () => tttBattle() },
+    { key: "dice", name: "Dice War", icon: "🎲", tag: "vs CPU", fn: () => diceWar() },
+    { key: "math", name: "Math Duel", icon: "➗", tag: "beat the CPU", fn: () => mathDuel() },
+    { key: "c4", name: "Connect Four", icon: "🔴", tag: "vs CPU", fn: () => connect4Battle() },
+    { key: "coin", name: "Coin War", icon: "🪙", tag: "vs CPU", fn: () => coinWar() }
+  ];
   function menu() {
     stopPoll(); back(false); setTitle("🌐 Maxwell Battle");
     const body = document.getElementById("bBody"); body.className = "arcade-body battle-body"; body.innerHTML = `
-      <p class="ar-hint">Battle a friend in <b>Rock Paper Meow</b> — first to 3 wins! Play online with a room code, or practice vs the computer.</p>
+      <p class="ar-hint">Pick a battle! Beat a friend online or the CPU — winners get 🐟.</p>
+      <div class="ar-grid" id="bGames"></div>`;
+    const grid = body.querySelector("#bGames");
+    MODES.forEach((m) => { const t = document.createElement("button"); t.className = "ar-tile is-new"; t.innerHTML = '<span class="ar-ic">' + m.icon + '</span><span class="ar-name">' + m.name + '</span><span class="ar-best">' + m.tag + '</span>'; t.onclick = m.fn; grid.appendChild(t); });
+  }
+
+  function rpsMenu() {
+    stopPoll(); back(true); setTitle("✊ Rock Paper Meow");
+    const body = document.getElementById("bBody"); body.className = "arcade-body battle-body"; body.innerHTML = `
+      <p class="ar-hint">First to 3 wins! Play online with a room code, or practice vs the computer.</p>
       <div class="battle-menu">
         <button class="btn asc-btn" id="bCreate">🌐 Create Online Room</button>
         <button class="btn asc-btn" id="bJoin">🔑 Join with Code</button>
@@ -40,6 +57,66 @@
     document.getElementById("bCreate").onclick = createRoom;
     document.getElementById("bJoin").onclick = joinPrompt;
     if (!dbURL()) document.getElementById("bNote").textContent = "ℹ️ Online needs the Home (Firebase) connection. Practice vs CPU works offline.";
+  }
+
+  function reward(won) { try { if (won && window.MG) { window.MG.addTreats(40); window.MG.flag("battle"); } else if (window.MG) window.MG.addTreats(10); } catch (e) {} }
+
+  // ---------- Tic-Tac-Toe battle ----------
+  function tttBattle() {
+    back(true); setTitle("⭕ Tic-Tac-Toe"); const body = document.getElementById("bBody"); body.className = "arcade-body battle-body";
+    body.innerHTML = '<p class="ar-hint">You are 🐈. Beat Maxwell (👑)!</p><div class="ttt-grid" id="bTtt"></div><p class="ar-hint" id="bTttMsg">Your move</p>';
+    let bd = ["", "", "", "", "", "", "", "", ""], done = false; const cells = []; const grid = body.querySelector("#bTtt");
+    for (let i = 0; i < 9; i++) { const d = document.createElement("button"); d.className = "ttt-cell"; d.onclick = () => play(i); grid.appendChild(d); cells.push(d); }
+    const WIN = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    function win(b) { for (const w of WIN) if (b[w[0]] && b[w[0]] === b[w[1]] && b[w[0]] === b[w[2]]) return b[w[0]]; return b.indexOf("") < 0 ? "draw" : null; }
+    function best(b, who) { const w = win(b); if (w === "O") return { s: 10 }; if (w === "X") return { s: -10 }; if (w === "draw") return { s: 0 }; let mv = []; b.forEach((v, i) => { if (!v) { const nb = b.slice(); nb[i] = who; mv.push({ i: i, s: best(nb, who === "O" ? "X" : "O").s }); } }); return who === "O" ? mv.reduce((a, m) => m.s > a.s ? m : a, { s: -99 }) : mv.reduce((a, m) => m.s < a.s ? m : a, { s: 99 }); }
+    function rend() { cells.forEach((c, i) => c.textContent = bd[i] === "X" ? "🐈" : bd[i] === "O" ? "👑" : ""); }
+    function play(i) { if (done || bd[i]) return; bd[i] = "X"; tone(520, 0.05); rend(); let w = win(bd); if (w) return end(w); const m = best(bd, "O").i; if (m != null) { bd[m] = "O"; tone(400, 0.05); } rend(); w = win(bd); if (w) end(w); }
+    function end(w) { done = true; const msg = body.querySelector("#bTttMsg"); const won = w === "X"; msg.textContent = won ? "🎉 You win! +40 🐟" : w === "draw" ? "Draw! +10 🐟" : "Maxwell wins 😼 +10 🐟"; reward(won); }
+    rend();
+  }
+
+  // ---------- Dice War ----------
+  function diceWar() {
+    back(true); setTitle("🎲 Dice War"); const body = document.getElementById("bBody"); body.className = "arcade-body battle-body";
+    body.innerHTML = '<p class="ar-hint">First to 3 round wins! Roll a higher die than Maxwell.</p><div class="battle-score"><span class="bs-you">You <b id="dwY">0</b></span><span class="bs-vs">vs</span><span class="bs-opp"><b id="dwO">0</b> Maxwell</span></div><div class="battle-show" id="dwShow">🎲 vs 🎲</div><button class="btn asc-btn" id="dwRoll">🎲 Roll</button><p class="ar-hint" id="dwMsg"></p>';
+    let you = 0, opp = 0, done = false;
+    body.querySelector("#dwRoll").onclick = () => { if (done) return; const a = 1 + (Math.random() * 6 | 0), b = 1 + (Math.random() * 6 | 0); body.querySelector("#dwShow").textContent = "🎲 " + a + "  vs  " + b + " 🎲"; if (a > b) { you++; tone(760, 0.08); } else if (b > a) { opp++; tone(240, 0.1, "sawtooth"); } body.querySelector("#dwY").textContent = you; body.querySelector("#dwO").textContent = opp; if (you >= 3 || opp >= 3) { done = true; const won = you >= 3; body.querySelector("#dwMsg").innerHTML = won ? "🎉 <b>You win! +40 🐟</b>" : "😿 Maxwell wins. +10 🐟"; reward(won); } };
+  }
+
+  // ---------- Math Duel ----------
+  function mathDuel() {
+    back(true); setTitle("➗ Math Duel"); const body = document.getElementById("bBody"); body.className = "arcade-body battle-body";
+    const cpuTarget = 6 + (Math.random() * 4 | 0);
+    body.innerHTML = '<p class="ar-hint">Answer as many as you can in <b>25s</b>! Beat Maxwell\'s score of <b>' + cpuTarget + '</b>.</p><div class="battle-score"><span class="bs-you">You <b id="mdY">0</b></span><span class="bs-vs">·</span><span class="bs-opp">⏱️ <b id="mdT">25</b>s</span></div><h3 class="md-q" id="mdQ"></h3><div class="trivia-opts" id="mdOpts"></div><p class="ar-hint" id="mdMsg"></p>';
+    let score = 0, time = 25, done = false;
+    function q() { if (done) return; const a = 2 + (Math.random() * 11 | 0), b = 2 + (Math.random() * 11 | 0), op = Math.random() < 0.5 ? "+" : "×"; const ans = op === "+" ? a + b : a * b; body.querySelector("#mdQ").textContent = a + " " + op + " " + b + " = ?"; const opts = [ans]; while (opts.length < 3) { const w = ans + (Math.random() * 10 | 0) - 5; if (w !== ans && w > 0 && opts.indexOf(w) < 0) opts.push(w); } opts.sort(() => Math.random() - 0.5); const wrap = body.querySelector("#mdOpts"); wrap.innerHTML = ""; opts.forEach((o) => { const bn = document.createElement("button"); bn.className = "btn trivia-opt"; bn.textContent = o; bn.onclick = () => { if (done) return; if (o === ans) { score++; tone(800, 0.06); body.querySelector("#mdY").textContent = score; } else tone(180, 0.1, "sawtooth"); q(); }; wrap.appendChild(bn); }); }
+    q();
+    const iv = setInterval(() => { const tEl = body.querySelector("#mdT"); if (!tEl || done) { clearInterval(iv); return; } time--; tEl.textContent = time; if (time <= 0) { done = true; clearInterval(iv); const won = score > cpuTarget; body.querySelector("#mdMsg").innerHTML = "Time! You got <b>" + score + "</b>, Maxwell got <b>" + cpuTarget + "</b> — " + (won ? "🎉 YOU WIN! +40 🐟" : "😿 +10 🐟"); reward(won); } }, 1000);
+    document.getElementById("battleOv")._clean2 = () => clearInterval(iv);
+  }
+
+  // ---------- Connect Four battle ----------
+  function connect4Battle() {
+    back(true); setTitle("🔴 Connect Four"); const body = document.getElementById("bBody"); body.className = "arcade-body battle-body";
+    const C = 7, R = 6, SZ = 46; body.innerHTML = '<p class="ar-hint">Drop discs (red). Get 4 in a row to beat Maxwell!</p><canvas id="c4cv" width="' + C * SZ + '" height="' + R * SZ + '" class="ar-canvas"></canvas><p class="ar-hint" id="c4Msg">Your turn</p>';
+    const cv = body.querySelector("#c4cv"), x = cv.getContext("2d"); let b = new Array(C * R).fill(0), turn = 1, over = false;
+    const idx = (c, r) => r * C + c;
+    function drop(col, who) { for (let r = R - 1; r >= 0; r--) if (!b[idx(col, r)]) { b[idx(col, r)] = who; return r; } return -1; }
+    function wins(who) { const D = [[1,0],[0,1],[1,1],[1,-1]]; for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) for (const d of D) { let ok = true; for (let k = 0; k < 4; k++) { const nr = r + d[1] * k, nc = c + d[0] * k; if (nr < 0 || nr >= R || nc < 0 || nc >= C || b[idx(nc, nr)] !== who) { ok = false; break; } } if (ok) return true; } return false; }
+    function full() { return b.every((v) => v); }
+    function ai() { const valid = []; for (let c = 0; c < C; c++) if (!b[idx(c, 0)]) valid.push(c); for (const c of valid) { const r = drop(c, 2); if (wins(2)) { draw(); return; } b[idx(c, r)] = 0; } for (const c of valid) { const r = drop(c, 1); const bad = wins(1); b[idx(c, r)] = 0; if (bad) { drop(c, 2); draw(); return; } } drop(valid[Math.random() * valid.length | 0], 2); draw(); }
+    function click(e) { if (over || turn !== 1) return; const rect = cv.getBoundingClientRect(); const col = ((e.clientX - rect.left) * (C * SZ / rect.width) / SZ) | 0; if (b[idx(col, 0)]) return; drop(col, 1); tone(500, 0.05); if (wins(1)) { over = true; body.querySelector("#c4Msg").innerHTML = "🎉 You win! +40 🐟"; reward(true); draw(); return; } if (full()) { over = true; body.querySelector("#c4Msg").textContent = "Draw!"; draw(); return; } turn = 2; draw(); setTimeout(() => { ai(); if (wins(2)) { over = true; body.querySelector("#c4Msg").innerHTML = "Maxwell wins 😼 +10 🐟"; reward(false); } else if (full()) { over = true; body.querySelector("#c4Msg").textContent = "Draw!"; } else { turn = 1; } draw(); }, 350); }
+    function draw() { x.fillStyle = "#1b3a8f"; x.fillRect(0, 0, C * SZ, R * SZ); for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) { const v = b[idx(c, r)]; x.fillStyle = v === 1 ? "#ff5a6e" : v === 2 ? "#ffd84a" : "#0d1428"; x.beginPath(); x.arc(c * SZ + SZ / 2, r * SZ + SZ / 2, SZ / 2 - 4, 0, 7); x.fill(); } }
+    cv.addEventListener("pointerdown", click); draw();
+  }
+
+  // ---------- Coin War ----------
+  function coinWar() {
+    back(true); setTitle("🪙 Coin War"); const body = document.getElementById("bBody"); body.className = "arcade-body battle-body";
+    body.innerHTML = '<p class="ar-hint">Call it! First to 3 correct calls beats Maxwell.</p><div class="battle-score"><span class="bs-you">You <b id="cwY">0</b></span><span class="bs-vs">vs</span><span class="bs-opp"><b id="cwO">0</b> Maxwell</span></div><div class="battle-show" id="cwShow">🪙</div><div class="battle-menu" style="flex-direction:row;justify-content:center"><button class="btn asc-btn" data-c="h">Heads</button><button class="btn asc-btn" data-c="t">Tails</button></div><p class="ar-hint" id="cwMsg"></p>';
+    let you = 0, opp = 0, done = false;
+    body.querySelectorAll("[data-c]").forEach((bn) => bn.onclick = () => { if (done) return; const r = Math.random() < 0.5 ? "h" : "t"; body.querySelector("#cwShow").textContent = r === "h" ? "🪙 Heads!" : "🪙 Tails!"; if (bn.dataset.c === r) { you++; tone(760, 0.08); } else { opp++; tone(240, 0.1, "sawtooth"); } body.querySelector("#cwY").textContent = you; body.querySelector("#cwO").textContent = opp; if (you >= 3 || opp >= 3) { done = true; const won = you >= 3; body.querySelector("#cwMsg").innerHTML = won ? "🎉 <b>You win! +40 🐟</b>" : "😿 Maxwell wins. +10 🐟"; reward(won); } });
   }
 
   // ---------- CPU ----------

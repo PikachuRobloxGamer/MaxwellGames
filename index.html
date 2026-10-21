@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Privacy: don't tell other servers which page a visitor came from -->
+  <meta name="referrer" content="no-referrer">
   <title>MaxwellGames</title>
   <link rel="icon" type="image/png" href="maxwell.png">
   <link rel="stylesheet" href="style.css">
@@ -38,6 +40,25 @@
       <button class="tab ranks-tab hot" id="ranksBtn" title="Global leaderboard — climb the ranks!">🏆 Ranks</button>
       <button class="tab pets-tab hot" id="petsBtn" title="Collect pets by hatching eggs!">🐾 Pets</button>
       <button class="tab battle-tab hot" id="battleBtn" title="Battle a friend online!">🌐 Battle</button>
+      <button class="tab x-tab hot" id="questsBtn" title="Daily quests for rewards!">🎯 Quests</button>
+      <button class="tab x-tab hot" id="casinoBtn" title="Gamble your treats!">🎰 Casino</button>
+      <button class="tab x-tab hot" id="triviaBtn" title="Maxwell trivia quiz!">🧠 Trivia</button>
+      <button class="tab x-tab hot" id="catdleBtn" title="Daily word game!">🟩 Catdle</button>
+      <button class="tab x-tab hot" id="codesBtn" title="Redeem secret codes!">🎁 Codes</button>
+      <button class="tab x-tab hot" id="dailyBtn" title="Daily login rewards!">🎁 Daily</button>
+      <button class="tab x-tab hot" id="jukeBtn" title="Chiptune music player!">🎵 Jukebox</button>
+      <button class="tab x-tab hot" id="aiBtn" title="Chat with Maxwell!">🤖 Maxwell AI</button>
+      <button class="tab x-tab hot" id="customBtn" title="Customize your look!">🎨 Customize</button>
+      <button class="tab x-tab hot" id="updatesBtn" title="See what's new!">📰 Updates</button>
+      <button class="tab x-tab hot" id="factsBtn" title="Random cat facts!">😺 Cat Facts</button>
+      <button class="tab x-tab hot" id="clickerBtn" title="Idle fish clicker!">🖱️ Clicker</button>
+      <button class="tab x-tab hot" id="speedBtn" title="Speedrun challenge!">🏁 Speedrun</button>
+      <button class="tab x-tab hot" id="memeBtn" title="Make Maxwell memes!">😹 Memes</button>
+      <button class="tab x-tab hot" id="statsBtn" title="See your stats!">📊 Stats</button>
+      <button class="tab x-tab hot" id="fishBtn2" title="Go fishing!">🎣 Fishing</button>
+      <button class="tab x-tab hot" id="boostBtn" title="Treat multiplier boosts!">💪 Boosts</button>
+      <button class="tab x-tab hot" id="profBtn" title="Your profile!">🪪 Profile</button>
+      <button class="tab safety-tab hot" id="safetyBtn" title="Safety & privacy info">🛡️ Safety</button>
     </nav>
     <input type="search" id="search" placeholder="Search games..." autocomplete="off">
     <button id="profileBtn" class="profile-btn" title="Your treats, level, shop &amp; achievements">
@@ -111,7 +132,7 @@
       </div>
     </div>
     <div class="frame-wrap" id="frameWrap">
-      <iframe id="gameFrame" title="Game" allow="fullscreen; autoplay; gamepad; pointer-lock" allowfullscreen></iframe>
+      <iframe id="gameFrame" title="Game" allow="fullscreen; autoplay; gamepad; pointer-lock" referrerpolicy="no-referrer" allowfullscreen></iframe>
     </div>
     <p id="playerDesc" class="player-desc"></p>
     <p class="yt-inline-row"><a class="yt-inline yt-link" href="https://www.youtube.com/channel/UCXcZ2HP_B3NLLbvnd3QT75A" target="_blank" rel="noopener noreferrer">▶ Having fun? Subscribe to <b>Pikachu Roblox Gamer</b>!</a>
@@ -290,6 +311,13 @@
   <script src="leaderboard.js"></script>
   <script src="pets.js"></script>
   <script src="battle.js"></script>
+  <script src="ui-kit.js"></script>
+  <script src="hubtabs1.js"></script>
+  <script src="hubtabs2.js"></script>
+  <script src="hubtabs3.js"></script>
+  <script src="hubtabs4.js"></script>
+  <script src="hubtabs5.js"></script>
+  <script src="safety.js"></script>
   <script src="suggest-config.js"></script>
   <script src="admin.js"></script>
 </body>
