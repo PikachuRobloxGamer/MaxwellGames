@@ -830,81 +830,122 @@
     });
   }
 
-  // Pokémon GO-style evolution animation
+  // Cinematic evolution/ascension animation
   function playEvolution(fromSrc, toSrc, glow, message, done) {
     const ov = document.createElement("div");
-    ov.className = "evo";
+    ov.className = "evo evo2";
     ov.style.setProperty("--glow", glow);
     ov.innerHTML = `
+      <div class="evo-bg"></div>
       <div class="evo-rays"></div>
+      <div class="evo-vignette"></div>
       <div class="evo-stage">
-        <div class="evo-ring"></div><div class="evo-ring r2"></div>
+        <div class="evo-beam"></div>
+        <div class="evo-aura"></div>
+        <div class="evo-ring"></div><div class="evo-ring r2"></div><div class="evo-ring r3"></div>
+        <div class="evo-shock"></div>
+        <div class="evo-orbit"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <img class="evo-img" alt="">
       </div>
+      <div class="evo-converge"></div>
       <div class="evo-sparks"></div>
       <div class="evo-flash"></div>
+      <div class="evo-badge">✨ NEW FORM ✨</div>
       <div class="evo-text"></div>
-      <button class="btn evo-ok">OK</button>`;
+      <button class="btn evo-ok">Awesome! ✨</button>`;
     document.body.appendChild(ov);
+    ov.querySelectorAll(".evo-orbit i").forEach((s, i) => s.style.setProperty("--a", (i * 45) + "deg"));
     const img = ov.querySelector(".evo-img"), text = ov.querySelector(".evo-text");
+    const sparks = ov.querySelector(".evo-sparks"), converge = ov.querySelector(".evo-converge"), stage = ov.querySelector(".evo-stage");
     img.src = fromSrc;
-    text.textContent = "What? Your Maxwell is ascending!";
+    text.textContent = "Your Maxwell is ascending!";
     requestAnimationFrame(() => ov.classList.add("show"));
 
+    // deep rising charge sweep
+    try {
+      const a = audio();
+      if (a) {
+        const o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+        o.type = "sawtooth"; o.frequency.setValueAtTime(80, t); o.frequency.exponentialRampToValueAtTime(880, t + 3.3);
+        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.05, t + 2.6); g.gain.exponentialRampToValueAtTime(0.0001, t + 3.5);
+        o.connect(g).connect(a.destination); o.start(t); o.stop(t + 3.6);
+      }
+    } catch (e) {}
+
+    // particles sucked INWARD toward the cat
+    let conv = setInterval(() => {
+      const s = document.createElement("i");
+      const ang = Math.random() * Math.PI * 2, r = 150 + Math.random() * 190;
+      s.style.setProperty("--sx", Math.cos(ang) * r + "px");
+      s.style.setProperty("--sy", Math.sin(ang) * r + "px");
+      s.style.animationDuration = (0.55 + Math.random() * 0.5) + "s";
+      converge.appendChild(s); setTimeout(() => s.remove(), 1200);
+    }, 42);
+
     // rising sparkles
-    const sparks = ov.querySelector(".evo-sparks");
     const sparkTimer = setInterval(() => {
       const s = document.createElement("i");
-      s.style.left = 30 + Math.random() * 40 + "%";
+      s.style.left = 24 + Math.random() * 52 + "%";
       s.style.animationDuration = 1 + Math.random() * 1.2 + "s";
       sparks.appendChild(s);
       setTimeout(() => s.remove(), 2400);
-    }, 70);
+    }, 55);
 
-    // chime that climbs higher
+    stage.classList.add("charge");
+
     let note = 0;
-    const chime = () => { blip(330 * Math.pow(1.06, note), 0.18, "sine", 0.07); note++; };
+    const chime = () => { blip(330 * Math.pow(1.055, note), 0.16, "sine", 0.07); note++; };
+    const pulse = () => { const p = document.createElement("div"); p.className = "evo-pulse"; stage.appendChild(p); setTimeout(() => p.remove(), 700); };
+    const bolt = () => { const z = document.createElement("div"); z.className = "evo-bolt"; z.style.setProperty("--rot", (Math.random() * 360) + "deg"); stage.appendChild(z); setTimeout(() => z.remove(), 220); blip(90 + Math.random() * 60, 0.12, "sawtooth", 0.05); };
 
-    setTimeout(() => img.classList.add("silhouette"), 1300);
+    setTimeout(() => { img.classList.add("silhouette"); stage.classList.add("shake"); clearInterval(conv); conv = null; }, 1700);
+
     // flip between old and new forms, faster and faster
     let flips = 0, delay = 520, showingNew = false;
     function flip() {
       showingNew = !showingNew;
       img.src = showingNew ? toSrc : fromSrc;
       img.classList.toggle("big", showingNew);
-      chime();
+      chime(); pulse();
+      if (flips > 8 && flips % 2 === 0) { bolt(); if (flips > 16) bolt(); }
       flips++;
-      delay = Math.max(55, delay * 0.82);
-      if (flips < 22) setTimeout(flip, delay);
+      delay = Math.max(50, delay * 0.8);
+      if (flips < 24) setTimeout(flip, delay);
       else finish();
     }
-    setTimeout(flip, 2200);
+    setTimeout(flip, 2100);
 
     function finish() {
-      clearInterval(sparkTimer);
-      ov.classList.add("flash");
+      clearInterval(sparkTimer); if (conv) clearInterval(conv);
+      stage.classList.remove("shake");
+      ov.classList.add("flash", "shakehard", "zoom");
       boomSound(0.12);
       setTimeout(() => {
         img.src = toSrc;
         img.classList.remove("silhouette", "big");
         ov.classList.add("revealed");
+        ov.classList.remove("shakehard");
+        setTimeout(() => ov.classList.remove("zoom"), 650);
         text.textContent = message;
         meow();
+        // triumphant chord
+        [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => blip(f, 0.55, "triangle", 0.08), i * 65));
         boomSound(0.1); setTimeout(() => boomSound(0.08), 180);
-        for (let i = 0; i < 90; i++) {
+        for (let i = 0; i < 120; i++) {
           const s = document.createElement("i");
           s.className = "burst";
-          const a = Math.random() * Math.PI * 2, d = 120 + Math.random() * 300;
+          const a = Math.random() * Math.PI * 2, d = 140 + Math.random() * 340;
           s.style.setProperty("--dx", Math.cos(a) * d + "px");
           s.style.setProperty("--dy", Math.sin(a) * d + "px");
-          s.style.animationDuration = (0.7 + Math.random() * 0.8) + "s";
+          s.style.background = "hsl(" + (Math.random() * 360 | 0) + " 90% 65%)";
+          s.style.animationDuration = (0.7 + Math.random() * 0.9) + "s";
           sparks.appendChild(s);
         }
-        try { if (window.MG) { MG.particles.burst(40); MG.particles.goldenStorm(20); } } catch (e) {}
+        try { if (window.MG) { MG.particles.burst(40); MG.particles.goldenStorm(24); } } catch (e) {}
         done();
-      }, 450);
+      }, 480);
     }
-    ov.querySelector(".evo-ok").onclick = () => { ov.classList.remove("show"); setTimeout(() => ov.remove(), 400); };
+    ov.querySelector(".evo-ok").onclick = () => { clearInterval(sparkTimer); if (conv) clearInterval(conv); ov.classList.remove("show"); setTimeout(() => ov.remove(), 400); };
   }
 
   // ---------- YouTube channel ----------

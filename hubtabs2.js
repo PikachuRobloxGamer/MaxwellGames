@@ -52,13 +52,60 @@
     const r = ["Meow? 😺", "Purrr... tell me more!", "I'm just a cat, but that sounds pawsome! 🐾", "Have you tried the Arcade yet?", "Meow meow! (That means hi.)"];
     return r[Math.random() * r.length | 0];
   }
+  // Real AI chatbot — bring-your-own Google Gemini key (stored only in this browser).
+  const AI_KEY = "mg-sball-key";
+  function getKey() { try { return localStorage.getItem(AI_KEY) || ""; } catch (e) { return ""; } }
+  function setKey(k) { try { if (k) localStorage.setItem(AI_KEY, k); else localStorage.removeItem(AI_KEY); } catch (e) {} }
+  const PERSONAS = [
+    { id: "maxwell", emoji: "😺", name: "Maxwell", sys: "You are Maxwell, a silly, friendly tuxedo cat and the mascot of a kids' games website called MaxwellGames. You love treats (called 🐟 fish), games, and being playful. Occasionally meow or use cat puns and cute emoji." },
+    { id: "prof", emoji: "🎓", name: "Professor", sys: "You are Professor Maxwell, a wise and encouraging cat tutor on a kids' games website. Explain things clearly and simply like you're helping a curious student. Stay warm and a little playful, with occasional cat flair." },
+    { id: "coach", emoji: "💪", name: "Coach", sys: "You are Coach Maxwell, a high-energy hype-cat on a kids' games website. Pump the user up, be encouraging and fun, use lots of energy and exclamation. Keep it positive." },
+    { id: "spooky", emoji: "👻", name: "Spooky", sys: "You are Spooky Maxwell, a goofy not-actually-scary ghost cat on a kids' games website. Be mysteriously silly and fun, never genuinely frightening — this is for kids." }
+  ];
   function openAI() {
     const p = U.panel("aiOv", "🤖 Maxwell AI", "ai2-head");
-    p.body.innerHTML = '<p class="ar-hint">Chat with Maxwell! (Just for fun — he\'s a cat, not a real AI 😸)</p><div class="ai2-msgs" id="ai2Msgs"></div><form class="ai2-form" id="ai2Form"><input class="sball-input" id="ai2In" placeholder="Say something to Maxwell..." autocomplete="off"><button class="btn asc-btn" type="submit">Send</button></form>';
+    let persona = PERSONAS[0];
+    const history = []; // {role:'user'|'model', text}
+    p.body.innerHTML = '<div class="ai2-personas" id="ai2Personas"></div><div class="ai2-msgs" id="ai2Msgs"></div><form class="ai2-form" id="ai2Form"><input class="sball-input" id="ai2In" placeholder="Chat with Maxwell..." autocomplete="off"><button class="btn asc-btn" type="submit">Send</button><button class="btn ai2-gear" id="ai2Gear" type="button" title="AI settings">⚙️</button></form>';
     const msgs = p.body.querySelector("#ai2Msgs");
-    function bubble(t, who) { const d = document.createElement("div"); d.className = "ai2-msg " + who; d.textContent = t; msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; }
-    bubble("Meow! 😺 I'm Maxwell. Ask me for a joke, a cat fact, or how to earn treats!", "ai");
-    p.body.querySelector("#ai2Form").onsubmit = (e) => { e.preventDefault(); const inp = p.body.querySelector("#ai2In"); const v = inp.value.trim(); if (!v) return; bubble(v, "me"); inp.value = ""; U.tone(500, 0.04); setTimeout(() => { bubble(aiReply(v), "ai"); U.tone(700, 0.05); }, 400); };
+    const pbar = p.body.querySelector("#ai2Personas");
+    PERSONAS.forEach((pr) => { const b = document.createElement("button"); b.className = "ai2-chip" + (pr === persona ? " on" : ""); b.innerHTML = pr.emoji + " " + pr.name; b.onclick = () => { persona = pr; pbar.querySelectorAll(".ai2-chip").forEach((c) => c.classList.remove("on")); b.classList.add("on"); bubble(pr.emoji + " " + pr.name + " Maxwell is here! What's up?", "ai"); }; pbar.appendChild(b); });
+    function bubble(t, who) { const d = document.createElement("div"); d.className = "ai2-msg " + who; d.textContent = t; msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d; }
+    function typing() { const d = document.createElement("div"); d.className = "ai2-msg ai ai2-typing"; d.innerHTML = '<span></span><span></span><span></span>'; msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d; }
+    const hasKey = !!getKey();
+    bubble(hasKey ? "Meow! 😺 I'm a real AI now — ask me anything! Pick a personality up top. 🐾" : "Meow! 😺 I'm Maxwell. I can chat for fun right now — tap ⚙️ to add a free Google AI key and I become a REAL smart AI! 🧠", "ai");
+
+    function askGemini(text) {
+      const key = getKey();
+      const contents = [];
+      history.slice(-10).forEach((h) => contents.push({ role: h.role, parts: [{ text: h.text }] }));
+      contents.push({ role: "user", parts: [{ text: text }] });
+      const body = { systemInstruction: { parts: [{ text: persona.sys + " Keep replies short (1-3 sentences), upbeat, and always safe and appropriate for children. Never discuss anything violent, scary, adult, or unsafe." }] }, contents: contents, generationConfig: { temperature: 0.9, maxOutputTokens: 300 } };
+      const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const to = setTimeout(() => { if (ctrl) ctrl.abort(); }, 15000);
+      return fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + encodeURIComponent(key), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctrl ? ctrl.signal : undefined })
+        .then((r) => r.json()).then((j) => { clearTimeout(to); const c = j && j.candidates && j.candidates[0]; const txt = c && c.content && c.content.parts && c.content.parts[0] && c.content.parts[0].text; if (!txt) throw new Error("no reply"); return txt.trim(); }).catch((e) => { clearTimeout(to); throw e; });
+    }
+
+    p.body.querySelector("#ai2Gear").onclick = () => keyDialog();
+    function keyDialog() {
+      const has = !!getKey();
+      const d = document.createElement("div"); d.className = "ai2-keybox";
+      d.innerHTML = '<p>Paste a free <b>Google Gemini</b> API key to make Maxwell a real AI. It is stored <b>only in your browser</b> — never uploaded or shared.</p><input class="sball-input" id="ai2Key" placeholder="AIza..." value="' + (has ? "" : "") + '"><div class="ai2-keybtns"><a class="btn" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Get a free key</a><button class="btn asc-btn" id="ai2Save">Save</button>' + (has ? '<button class="btn" id="ai2Clear">Remove key</button>' : '') + '</div>';
+      msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+      d.querySelector("#ai2Save").onclick = () => { const v = d.querySelector("#ai2Key").value.trim(); setKey(v); d.remove(); bubble(v ? "🔑 Key saved! I'm a real AI now — ask me anything! 🧠" : "Okay, I'll keep chatting for fun! 😸", "ai"); };
+      if (has) d.querySelector("#ai2Clear").onclick = () => { setKey(""); d.remove(); bubble("Key removed. Back to fun mode! 😺", "ai"); };
+    }
+
+    p.body.querySelector("#ai2Form").onsubmit = (e) => {
+      e.preventDefault(); const inp = p.body.querySelector("#ai2In"); const v = inp.value.trim(); if (!v) return;
+      bubble(v, "me"); inp.value = ""; U.tone(500, 0.04);
+      if (getKey()) {
+        const t = typing();
+        askGemini(v).then((reply) => { t.remove(); bubble(reply, "ai"); U.tone(700, 0.05); history.push({ role: "user", text: v }); history.push({ role: "model", text: reply }); })
+          .catch(() => { t.remove(); bubble(aiReply(v) + " (⚠️ couldn't reach the AI — check your key/connection.)", "ai"); });
+      } else { setTimeout(() => { bubble(aiReply(v), "ai"); U.tone(700, 0.05); }, 350); }
+    };
   }
 
   // ---------------- JUKEBOX (procedural chiptune) ----------------
