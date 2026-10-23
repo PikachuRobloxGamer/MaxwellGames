@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Maxwell Platformer</title>
+<style>
+  :root { --sky:#6cc3ff; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-user-select:none; user-select:none; }
+  html,body { height:100%; background:#0a0e1c; color:#fff; font-family:system-ui,Segoe UI,Arial,sans-serif; overflow:hidden; }
+  #wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+  canvas { background:#6cc3ff; max-width:100%; max-height:100%; image-rendering:pixelated; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,.6); touch-action:none; }
+  .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:20px; background:radial-gradient(circle at 50% 35%,#1b2a55,#0a0e1c); overflow:auto; }
+  .hidden { display:none !important; }
+  h1 { font-size:clamp(1.8rem,7vw,3.2rem); text-shadow:0 3px 0 #2a2f6a; }
+  h2 { font-size:1.3rem; margin-bottom:4px; }
+  .btn { background:#6c5ce7; color:#fff; border:none; border-radius:12px; padding:12px 24px; font-weight:800; font-size:1rem; cursor:pointer; box-shadow:0 4px 0 #4a3fb0; }
+  .btn:active { transform:translateY(2px); box-shadow:0 2px 0 #4a3fb0; }
+  .btn.sm { padding:8px 14px; font-size:.85rem; box-shadow:0 3px 0 #4a3fb0; }
+  .worlds { display:grid; grid-template-columns:repeat(2,minmax(130px,1fr)); gap:12px; max-width:420px; }
+  .world-card { border-radius:16px; padding:18px 12px; cursor:pointer; font-weight:800; color:#fff; border:3px solid rgba(255,255,255,.25); box-shadow:0 6px 18px rgba(0,0,0,.4); }
+  .world-card.locked { opacity:.5; cursor:not-allowed; }
+  .world-card small { display:block; font-weight:600; opacity:.9; margin-top:4px; }
+  .levels { display:grid; grid-template-columns:repeat(5,52px); gap:10px; justify-content:center; }
+  .lvl { width:52px; height:52px; border-radius:12px; border:2px solid rgba(255,255,255,.2); background:#20264d; color:#fff; font-weight:800; font-size:1.1rem; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .lvl.done { background:#2e7d52; border-color:#3ee08f; }
+  .lvl.locked { opacity:.4; cursor:not-allowed; }
+  .lvl small { font-size:.6rem; }
+  .hud { position:absolute; top:8px; left:8px; right:8px; display:flex; justify-content:space-between; font-weight:800; font-size:.95rem; text-shadow:0 2px 3px rgba(0,0,0,.6); pointer-events:none; }
+  .hud .btn { pointer-events:auto; }
+  .touch { position:absolute; bottom:12px; left:0; right:0; display:none; justify-content:space-between; padding:0 14px; pointer-events:none; }
+  .touch .pad { display:flex; gap:10px; }
+  .tbtn { width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,.18); border:2px solid rgba(255,255,255,.3); color:#fff; font-size:1.6rem; font-weight:900; pointer-events:auto; }
+  @media (hover:none) and (pointer:coarse){ .touch{display:flex;} }
+  .msg { font-size:1.1rem; opacity:.9; }
+  .coinrow { font-size:1.2rem; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="640" height="448"></canvas>
+
+  <!-- Title -->
+  <div class="screen" id="scrTitle">
+    <h1>🐾 Maxwell<br>Platformer</h1>
+    <p class="msg">4 worlds · 20 tricky levels. Can you beat them all?</p>
+    <button class="btn" id="startBtn">▶ Play</button>
+    <p class="msg" style="font-size:.85rem">← → / A D to move · Space / ↑ / W to jump · R to retry</p>
+  </div>
+
+  <!-- World select -->
+  <div class="screen hidden" id="scrWorlds">
+    <h1>Pick a World</h1>
+    <div class="worlds" id="worldGrid"></div>
+  </div>
+
+  <!-- Level select -->
+  <div class="screen hidden" id="scrLevels">
+    <h2 id="lvlTitle">World</h2>
+    <div class="levels" id="levelGrid"></div>
+    <button class="btn sm" id="backWorlds">← Worlds</button>
+  </div>
+
+  <!-- Win -->
+  <div class="screen hidden" id="scrWin">
+    <h1 id="winTitle">Level Clear! 🎉</h1>
+    <p class="coinrow" id="winCoins"></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <button class="btn" id="winNext">Next ▶</button>
+      <button class="btn sm" id="winRetry">↻ Retry</button>
+      <button class="btn sm" id="winLevels">Levels</button>
+    </div>
+  </div>
+
+  <!-- in-game HUD -->
+  <div class="hud hidden" id="hud">
+    <span id="hudLeft"></span>
+    <button class="btn sm" id="hudExit">Levels</button>
+  </div>
+
+  <!-- touch controls -->
+  <div class="touch" id="touch">
+    <div class="pad">
+      <button class="tbtn" data-k="left">◀</button>
+      <button class="tbtn" data-k="right">▶</button>
+    </div>
+    <button class="tbtn" data-k="jump">⤴</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  const TILE = 32, VW = 20, VH = 14, W = VW*TILE, H = VH*TILE;
+  const catImg = new Image(); catImg.src = "../../maxwell.png";
+
+  // ---- audio ----
+  let AC; function tone(f,d,ty,v){ try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime; o.type=ty||"square"; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(v||0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t+d);}catch(e){} }
+
+  // ---- levels ----
+  // legend: # solid  = platform  ^ spike  ~ lava  o coin  x enemy  * mover-H  v mover-V  J jump-pad  P player  F flag
+  function L(){ return Array.prototype.slice.call(arguments); }
+  const WORLDS = [
+    { name:"Grasslands", emoji:"🌱", sky:"#6cc3ff", ground:"#3a7d44", plat:"#8a6a3a", top:"#4e9d58", levels:[
+      L(
+      "                              ",
+      "                              ",
+      "                     o o      ",
+      "              o    #######    ",
+      "        o    ###              ",
+      "   o   ###              o   F ",
+      "  ###        o        ####  # ",
+      "         o  ###   o          #",
+      "P       ###     ####          ",
+      "###                          #",
+      "###   ^^    ####    ^^^   ### #",
+      "###############################",
+      "###############################"),
+      L(
+      "                               ",
+      "            o o o              ",
+      "           #######       F     ",
+      "     o              o    #     ",
+      "    ###     x       ##    #    ",
+      "          ####           ##   ",
+      "   o                 o    #   ",
+      "  ###     ^^^       ###   #   ",
+      "P        #####          ####  ",
+      "####                          ",
+      "####  ^^   ###   x   ^^  ###   ",
+      "##############################",
+      "##############################"),
+      L(
+      "                                    ",
+      "       o        o o        o        ",
+      "      ###      #####      ###    F   ",
+      "   o                           ###  ",
+      "  ###    x    ^^^^^    x       #     ",
+      "        ####        ####      #     ",
+      " o                          ###     ",
+      "###   J        o o        #         ",
+      "P          ^^^^^^^      ###          ",
+      "###                                 ",
+      "###     ###    x x    ###     ^^^   #",
+      "####################################",
+      "####################################"),
+      L(
+      "                                   ",
+      "   o o       * *       o o         ",
+      "  #####                #####   F   ",
+      "            o o              # #   ",
+      "   x       ######      x      #    ",
+      "  ###                 ###    #     ",
+      "        ^^^^^^^^^^           #      ",
+      "P      ###########       o o       ",
+      "###                    ######      ",
+      "###   o    x x x    ^^            # ",
+      "###  ###  #######  ####    x   ####",
+      "###################################",
+      "###################################"),
+      L(
+      "                                      ",
+      "  o          o          o         F   ",
+      " ###   J    ###   J    ###        ##   ",
+      "                                  #    ",
+      "     ^^^^^     x x     ^^^^^      #     ",
+      "P   #######         #######     #      ",
+      "###              o o           #       ",
+      "###     * *     #####    J    #        ",
+      "###                          ##        ",
+      "###  ^^   x   ^^^^   x   ^^   #         ",
+      "### ### ##### #### ##### ### ##    ^^^ #",
+      "######################################",
+      "######################################")
+    ]},
+    { name:"Caves", emoji:"🦇", sky:"#2a2440", ground:"#4a4055", plat:"#5a4a6a", top:"#6b5b7f", levels:[
+      L(
+      "##############################",
+      "#            o o            F#",
+      "#    o      #####          ###",
+      "#   ###            x        ##",
+      "#          ^^^^^   ##        #",
+      "#   x     #######          o #",
+      "#  ###              o     ## #",
+      "#P        o o      ####      #",
+      "###      #####              ##",
+      "###  ^^              ^^^     #",
+      "### ####   x x x    #####    #",
+      "##############################",
+      "##############################"),
+      L(
+      "##############################",
+      "#  o o         * *       o o #",
+      "# #####                 #####",
+      "#          o o o            F#",
+      "#  x      #######         ####",
+      "# ###                  o    #",
+      "#        ^^^^^^^      ####   #",
+      "#P      #########            #",
+      "###               x  x      #",
+      "###  o o   J     #######   # #",
+      "### #####  ###            #  #",
+      "##############################",
+      "##############################"),
+      L(
+      "######################################",
+      "#P   o     ^^^    o     ^^^    o     F#",
+      "####### #######  #####  #####  ##### ##",
+      "#                                    #",
+      "#   x    x    x    x    x    x   x    #",
+      "#  ### ####  ###  ####  ###  ####  ## #",
+      "#                                    #",
+      "#     J      J      J       J        #",
+      "#   ^^^^   ^^^^   ^^^^    ^^^^        #",
+      "#  ####   ####   ####    ####   o o   #",
+      "#                             ####### #",
+      "######################################",
+      "######################################"),
+      L(
+      "######################################",
+      "#   o o      v      o o      v     F  #",
+      "#  #####           #####          ## #",
+      "#            x x                  #   #",
+      "#   ^^^^^   #####    ^^^^^       #    #",
+      "#P #######         #######      #     #",
+      "#                            o o      #",
+      "#    * *     J    * *       #####     #",
+      "#                                     #",
+      "#  ^^  x  ^^^^^  x  ^^^^^  x  ^^^      #",
+      "# ### ### ##### ### ##### ### ####    #",
+      "######################################",
+      "######################################"),
+      L(
+      "##########################################",
+      "#P    o    J     ^^^^^     J    o        F#",
+      "######   #####  #######  #####  ####   ###",
+      "#                                        #",
+      "#   x    x    x     x    x     x    x     #",
+      "# ####  ####  ###   ###  ####  ###  ####  #",
+      "#                                        #",
+      "#    v      * *      v      * *      J    #",
+      "#  ^^^^   ^^^^^^   ^^^^   ^^^^^^   ^^^^    #",
+      "# ####   ######   ####   ######   ####    #",
+      "#                                   o o   #",
+      "##########################################",
+      "##########################################")
+    ]},
+    { name:"Icy Peaks", emoji:"❄️", sky:"#bfe8ff", ground:"#7fa8c9", plat:"#9fc4e0", top:"#cfeaff", ice:true, levels:[
+      L(
+      "                               ",
+      "        o o o            F     ",
+      "       #######          ###    ",
+      "   o              o      #     ",
+      "  ###    x       ###    #      ",
+      "              o              o ",
+      "   o        ####    x       ## ",
+      "P ###               ###       ",
+      "###     ^^^^                   ",
+      "###    ######    o o     ^^    ",
+      "###           ######    ###  ##",
+      "###############################",
+      "###############################"),
+      L(
+      "                                   ",
+      "   o       * *       o        F    ",
+      "  ###                ###      ##   ",
+      "         o o o                #    ",
+      "  x     #######     x        #     ",
+      " ###              ###       #      ",
+      "       ^^^^^^^             o o      ",
+      "P     #########          ######    ",
+      "###                x x             ",
+      "###   J    o o    #######    ^^^   ",
+      "###       #####            #######",
+      "###################################",
+      "###################################"),
+      L(
+      "                                      ",
+      "  o o       o o       o o        F    ",
+      " #####     #####     #####       ##   ",
+      "       x         x         x     #    ",
+      "      ###       ###       ###   #     ",
+      "   ^^^     ^^^     ^^^     ^^^  #      ",
+      "P #####   #####   #####   #### #       ",
+      "###                             #     ",
+      "###    J     * *     J     o o        ",
+      "###        ^^^^^^^        ######      ",
+      "###  x    #########    x         ^^^ #",
+      "######################################",
+      "######################################"),
+      L(
+      "                                        ",
+      "   o     v      o o     v       o   F   ",
+      "  ###          #####           ###  ##  ",
+      "        x x                x x      #   ",
+      "   ^^^ #####    ^^^^^     #####    #     ",
+      "P ##### #            #    #       #      ",
+      "###        o o o              o o       ",
+      "###  J    #######    J       ######     ",
+      "###                                     ",
+      "###  ^^  x ^^^^  x ^^^^  x ^^^^  x ^^   #",
+      "### ### ### ### ### #### ### ### ### ## #",
+      "########################################",
+      "########################################"),
+      L(
+      "                                           ",
+      "  o   J    * *    o    * *    J    o     F  ",
+      " ###      #####  ###  #####       ###   ##  ",
+      "                                        #   ",
+      "    x    x    x     x     x    x    x   #    ",
+      "   ###  ###  ###   ###   ###  ###  ### #     ",
+      "P                                     #      ",
+      "###   ^^^^   v    ^^^^    v   ^^^^   o o      ",
+      "###  ######      ######      ######  ####    ",
+      "###            x x     x x                 # ",
+      "###   ^^^^^^  #######  #######  ^^^^^^   ####",
+      "###########################################",
+      "###########################################")
+    ]},
+    { name:"Lava Castle", emoji:"🔥", sky:"#3a1020", ground:"#6a2a2a", plat:"#8a3a2a", top:"#b5503a", levels:[
+      L(
+      "##############################",
+      "#P   o      * *      o      F#",
+      "####       #####          ####",
+      "#               o o          #",
+      "#   x          #####    x     #".slice(0,30),
+      "#  ###                ###    #",
+      "#        ~~~~~~~             #",
+      "#       #########    o o     #",
+      "#   J             J #####     #".slice(0,30),
+      "#  ^^   x    ~~~~    x   ^^   #",
+      "# ###  ###  ######  ###  ###  #".slice(0,30),
+      "##############################",
+      "##############################"),
+      L(
+      "######################################",
+      "#P  o    ~~~~~    o    ~~~~~    o    F#",
+      "###### #######  #####  #######  ##### #",
+      "#                                    #",
+      "#   * *      x x      * *      J      #",
+      "#          #######                   #",
+      "#   o o                     o o      #",
+      "#  #####    ~~~~~~~~~~      #####     #",
+      "#         #############              #",
+      "#   x       x       x       x        #",
+      "#  ###  ~~ ### ~~~ ### ~~~ ###  ~~    #",
+      "######################################",
+      "######################################"),
+      L(
+      "######################################",
+      "#   o o      v      o o      v      F #",
+      "#  #####           #####           ## #",
+      "#P           ~~~~~~~                # #",
+      "####        #########     x x     #   #",
+      "#                        #####   #    #",
+      "#    J      * *                 o o    #",
+      "#          ######    J        #####    #",
+      "#   ~~~~              ~~~~~             #",
+      "#  ######   x x x    #######   ~~~~~   #",
+      "#         #########          #######   #",
+      "######################################",
+      "######################################"),
+      L(
+      "##########################################",
+      "#P   o    J    ~~~~~    J    o    ~~~~~  F#",
+      "######   ###  #######  ###  ####  ##### ##",
+      "#                                        #",
+      "#   * *     x    * *    x    * *    v     #",
+      "#                                        #",
+      "#   o o     ~~~~~~~~     o o     ~~~~     #",
+      "#  #####   ##########   #####   ######    #",
+      "#        x          x          x         #",
+      "#  ~~~  ###  ~~~~~  ###  ~~~~~  ###  ~~~   #",
+      "# #### ### ####### ### ####### ### ####   #",
+      "##########################################",
+      "##########################################"),
+      L(
+      "##############################################",
+      "#P  o   J   ~~~  v  ~~~   J   ~~~  v  ~~~   F #",
+      "#####   ### ###    ### ###   ###    ### ##### #",
+      "#                                            #",
+      "#   * *    x    * *    x    * *    x    * *    #",
+      "#                                            #",
+      "#   ~~~~~~    v     ~~~~~~    v     ~~~~~~     #",
+      "#  ########       ########       ########     #",
+      "#         x x             x x            o o  #",
+      "#  ~~~~~  ######  ~~~~~~  ######  ~~~~~  ##### #",
+      "# ###### ######  ####### ######  ##### ###### #",
+      "##############################################",
+      "##############################################")
+    ]}
+  ];
+
+  // ---- save ----
+  const SAVE="mg-platformer-save";
+  function load(){ try{ return JSON.parse(localStorage.getItem(SAVE)||"{}"); }catch(e){ return {}; } }
+  function save(s){ try{ localStorage.setItem(SAVE, JSON.stringify(s)); }catch(e){} }
+  let prog = load(); prog.done = prog.done || {}; // done["w-l"]=coins
+  function lvlKey(w,l){ return w+"-"+l; }
+  function worldUnlocked(w){ if(w===0) return true; const pw=WORLDS[w-1]; for(let l=0;l<pw.levels.length;l++) if(!prog.done[lvlKey(w-1,l)]&&prog.done[lvlKey(w-1,l)]!==0) return false; return true; }
+  function levelUnlocked(w,l){ if(l===0) return worldUnlocked(w); return prog.done[lvlKey(w,l-1)]!==undefined; }
+
+  // ---- screens ----
+  const S = { title:"scrTitle", worlds:"scrWorlds", levels:"scrLevels", win:"scrWin" };
+  function show(name){ Object.values(S).forEach(id=>document.getElementById(id).classList.add("hidden")); document.getElementById("hud").classList.add("hidden"); if(name&&S[name]) document.getElementById(S[name]).classList.remove("hidden"); }
+  document.getElementById("startBtn").onclick=()=>{ worlds(); };
+  document.getElementById("backWorlds").onclick=()=>worlds();
+  document.getElementById("hudExit").onclick=()=>levels(curW);
+
+  function worlds(){ show("worlds"); const g=document.getElementById("worldGrid"); g.innerHTML=""; WORLDS.forEach((wd,i)=>{ const unl=worldUnlocked(i); const c=document.createElement("div"); c.className="world-card"+(unl?"":" locked"); c.style.background="linear-gradient(135deg,"+wd.sky+","+wd.ground+")"; const done=wd.levels.filter((_,l)=>prog.done[lvlKey(i,l)]!==undefined).length; c.innerHTML=wd.emoji+" "+wd.name+"<small>"+(unl?done+"/"+wd.levels.length+" cleared":"🔒 Locked")+"</small>"; if(unl) c.onclick=()=>levels(i); g.appendChild(c); }); }
+
+  let curW=0, curL=0;
+  function levels(w){ curW=w; show("levels"); const wd=WORLDS[w]; document.getElementById("lvlTitle").textContent=wd.emoji+" "+wd.name; const g=document.getElementById("levelGrid"); g.innerHTML=""; wd.levels.forEach((_,l)=>{ const unl=levelUnlocked(w,l); const done=prog.done[lvlKey(w,l)]; const b=document.createElement("button"); b.className="lvl"+(done!==undefined?" done":"")+(unl?"":" locked"); b.innerHTML=(l+1)+(done!==undefined?'<small>🪙'+done+'</small>':''); if(unl) b.onclick=()=>play(w,l); g.appendChild(b); }); }
+
+  // ---- gameplay ----
+  let game=null, raf=null;
+  const keys={};
+  function parse(rows){
+    const maxW = Math.max.apply(null, rows.map(r=>r.length));
+    const grid = rows.map(r=>r.padEnd(maxW," "));
+    const solid=new Set(), tiles={}, coins=[], spikes=[], lava=[], enemies=[], movers=[], pads=[]; let start={x:TILE,y:TILE*8}, goal={x:maxW*TILE-TILE,y:TILE*8};
+    for(let r=0;r<grid.length;r++) for(let c=0;c<maxW;c++){ const ch=grid[r][c]; const X=c*TILE, Y=r*TILE;
+      if(ch==='#'||ch==='='){ solid.add(c+","+r); tiles[c+","+r]=ch; }
+      else if(ch==='o') coins.push({x:X+TILE/2,y:Y+TILE/2,got:false});
+      else if(ch==='^') spikes.push({x:X,y:Y});
+      else if(ch==='~') lava.push({x:X,y:Y});
+      else if(ch==='x') enemies.push({x:X+4,y:Y+6,w:24,h:24,dir:Math.random()<.5?-1:1,dead:false});
+      else if(ch==='*') movers.push({x:X,y:Y,w:TILE,h:14,type:"h",base:X,baseY:Y,ph:Math.random()*6,amp:2.4*TILE,ddx:0,ddy:0});
+      else if(ch==='v') movers.push({x:X,y:Y,w:TILE,h:14,type:"v",base:X,baseY:Y,ph:Math.random()*6,amp:2.2*TILE,ddx:0,ddy:0});
+      else if(ch==='J') pads.push({x:X,y:Y+TILE-10,w:TILE,h:10});
+      else if(ch==='P') start={x:X+6,y:Y};
+      else if(ch==='F') goal={x:X+4,y:Y};
+    }
+    return {grid,maxW,solid,tiles,coins,spikes,lava,enemies,movers,pads,start,goal,rows:grid.length};
+  }
+  function play(w,l){
+    curW=w; curL=l; const wd=WORLDS[w]; const lv=parse(wd.levels[l]);
+    game={ w,l,wd,lv, px:lv.start.x, py:lv.start.y, vx:0, vy:0, onGround:false, dir:1, coins:0, deaths:0, coyote:0, buffer:0, stand:null, done:false, t:0, cam:0, flagT:0 };
+    show(null); document.getElementById("hud").classList.remove("hidden");
+    updateHud();
+    if(raf) cancelAnimationFrame(raf); last=0; loop();
+  }
+  function updateHud(){ document.getElementById("hudLeft").textContent = game.wd.emoji+" "+game.wd.name+"  ·  Lv "+(game.l+1)+"  ·  🪙 "+game.coins+"/"+game.lv.coins.length+"  ·  💀 "+game.deaths; }
+  function respawn(){ game.deaths++; game.px=game.lv.start.x; game.py=game.lv.start.y; game.vx=0; game.vy=0; game.stand=null; tone(140,0.2,"sawtooth",0.06); updateHud(); }
+
+  const ICE = ()=>game.wd.ice;
+  function solidAt(c,r){ return game.lv.solid.has(c+","+r); }
+  function rectSolid(x,y,w,h){ // check collision with solid tiles
+    const c0=Math.floor(x/TILE), c1=Math.floor((x+w-1)/TILE), r0=Math.floor(y/TILE), r1=Math.floor((y+h-1)/TILE);
+    for(let r=r0;r<=r1;r++) for(let c=c0;c<=c1;c++) if(solidAt(c,r)) return true; return false;
+  }
+  const PW=20, PH=26;
+  function step(){
+    const g=game; g.t++;
+    // input
+    const left=keys.left||keys.a||keys.ArrowLeft, right=keys.right||keys.d||keys.ArrowRight;
+    const jp=keys.jump||keys.w||keys.ArrowUp||keys[" "];
+    const accel=ICE()?0.35:0.8, fric=ICE()?0.94:0.72, maxRun=ICE()?4.8:4.2;
+    if(left){ g.vx-=accel; g.dir=-1; } if(right){ g.vx+=accel; g.dir=1; }
+    if(!left&&!right) g.vx*=fric;
+    g.vx=Math.max(-maxRun,Math.min(maxRun,g.vx));
+    // jump buffer + coyote
+    if(jp){ if(!g._jpHeld) g.buffer=7; g._jpHeld=true; } else { g._jpHeld=false; if(g.vy<-3) g.vy=-3; }
+    if(g.onGround) g.coyote=7;
+    if(g.buffer>0 && g.coyote>0){ g.vy=-11.8; g.onGround=false; g.coyote=0; g.buffer=0; tone(620,0.07); }
+    if(g.buffer>0) g.buffer--; if(g.coyote>0) g.coyote--;
+    g.vy=Math.min(15, g.vy+0.62);
+    // movers update
+    g.lv.movers.forEach(m=>{ const nx = m.type==="h" ? m.base+Math.sin(g.t/48+m.ph)*m.amp : m.base; const ny = m.type==="v" ? m.baseY+Math.sin(g.t/48+m.ph)*m.amp : m.baseY; m.ddx=nx-m.x; m.ddy=ny-m.y; m.x=nx; m.y=ny; });
+    // carry by standing mover
+    if(g.stand){ g.px+=g.stand.ddx; g.py+=g.stand.ddy; }
+    // horizontal move + collide
+    g.px+=g.vx;
+    if(rectSolid(g.px,g.py,PW,PH)){ if(g.vx>0){ g.px=Math.floor((g.px+PW)/TILE)*TILE-PW-0.01; } else if(g.vx<0){ g.px=Math.floor(g.px/TILE)*TILE+TILE+0.01; } g.vx=0; }
+    // mover horizontal collision (push)
+    g.lv.movers.forEach(m=>{ if(aabb(g.px,g.py,PW,PH,m.x,m.y,m.w,m.h)){ if(g.py+PH-6 < m.y){} else { if(g.vx>0) g.px=m.x-PW; else if(g.vx<0) g.px=m.x+m.w; g.vx=0; } } });
+    // vertical move + collide
+    g.py+=g.vy; g.onGround=false; g.stand=null;
+    if(rectSolid(g.px,g.py,PW,PH)){ if(g.vy>0){ g.py=Math.floor((g.py+PH)/TILE)*TILE-PH-0.01; g.onGround=true; } else if(g.vy<0){ g.py=Math.floor(g.py/TILE)*TILE+TILE+0.01; } g.vy=0; }
+    // land on movers
+    g.lv.movers.forEach(m=>{ if(g.vy>=0 && aabb(g.px,g.py+2,PW,PH,m.x,m.y,m.w,m.h) && g.py+PH-14 < m.y){ g.py=m.y-PH; g.vy=0; g.onGround=true; g.stand=m; } });
+    // jump pads
+    g.lv.pads.forEach(p=>{ if(aabb(g.px,g.py,PW,PH,p.x,p.y,p.w,p.h) && g.vy>=0){ g.vy=-16; g.onGround=false; tone(880,0.1); } });
+    // coins
+    g.lv.coins.forEach(cn=>{ if(!cn.got && Math.hypot(g.px+PW/2-cn.x,g.py+PH/2-cn.y)<22){ cn.got=true; g.coins++; tone(760+g.coins*8,0.05); updateHud(); } });
+    // hazards: spikes & lava & fall
+    const feet={x:g.px+3,y:g.py+6,w:PW-6,h:PH-6};
+    let dead=false;
+    g.lv.spikes.forEach(s=>{ if(aabb(feet.x,feet.y,feet.w,feet.h,s.x+6,s.y+14,TILE-12,TILE-14)) dead=true; });
+    g.lv.lava.forEach(s=>{ if(aabb(feet.x,feet.y,feet.w,feet.h,s.x,s.y+6,TILE,TILE-6)) dead=true; });
+    if(g.py>H+80) dead=true;
+    // enemies
+    g.lv.enemies.forEach(e=>{ if(e.dead) return;
+      // patrol
+      e.x+=e.dir*1.3;
+      const cAhead=Math.floor((e.dir>0?e.x+e.w+1:e.x-1)/TILE), rFoot=Math.floor((e.y+e.h+2)/TILE), rMid=Math.floor((e.y+e.h/2)/TILE);
+      if(!solidAt(cAhead,rFoot) || solidAt(cAhead,rMid)) e.dir*=-1;
+      if(aabb(g.px,g.py,PW,PH,e.x,e.y,e.w,e.h)){
+        if(g.vy>0 && g.py+PH-14 < e.y){ e.dead=true; g.vy=-9; tone(400,0.08); } else dead=true;
+      }
+    });
+    if(dead && !g.done){ respawn(); return; }
+    // goal
+    if(Math.abs(g.px+PW/2-(g.lv.goal.x+TILE/2))<26 && Math.abs(g.py+PH/2-(g.lv.goal.y+TILE/2))<60){ win(); return; }
+    // camera
+    g.cam=Math.max(0, Math.min(g.px-W/2, g.lv.maxW*TILE-W));
+  }
+  function aabb(ax,ay,aw,ah,bx,by,bw,bh){ return ax<bx+bw&&ax+aw>bx&&ay<by+bh&&ay+ah>by; }
+
+  function win(){
+    const g=game; g.done=true; tone(660,0.12); setTimeout(()=>tone(880,0.16),120);
+    const prev=prog.done[lvlKey(g.w,g.l)];
+    if(prev===undefined || g.coins>prev) prog.done[lvlKey(g.w,g.l)]=g.coins;
+    save(prog);
+    show("win");
+    const last = g.l>=g.wd.levels.length-1;
+    const lastWorld = g.w>=WORLDS.length-1;
+    document.getElementById("winTitle").textContent = (last? (lastWorld?"🏆 World Complete!":"🌟 World "+(g.w+1)+" done!") : "Level Clear! 🎉");
+    document.getElementById("winCoins").textContent = "🪙 "+g.coins+" / "+g.lv.coins.length+" coins  ·  💀 "+g.deaths+" deaths";
+    const nb=document.getElementById("winNext");
+    nb.textContent = last ? (lastWorld?"🎉 Worlds":"Next World ▶") : "Next ▶";
+    nb.onclick = ()=>{ if(last){ if(lastWorld) worlds(); else levels(g.w+1); } else play(g.w,g.l+1); };
+    document.getElementById("winRetry").onclick=()=>play(g.w,g.l);
+    document.getElementById("winLevels").onclick=()=>levels(g.w);
+  }
+
+  // ---- render ----
+  function draw(){
+    const g=game, lv=g.lv; ctx.clearRect(0,0,W,H);
+    // sky
+    const sky=ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,g.wd.sky); sky.addColorStop(1,shade(g.wd.sky,-30)); ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+    ctx.save(); ctx.translate(-Math.round(g.cam),0);
+    // tiles
+    const c0=Math.floor(g.cam/TILE), c1=c0+VW+1;
+    for(let r=0;r<lv.rows;r++) for(let c=c0;c<=c1;c++){ if(lv.solid.has(c+","+r)){ const ch=lv.tiles[c+","+r]; const X=c*TILE,Y=r*TILE; if(ch==='='){ ctx.fillStyle=g.wd.plat; ctx.fillRect(X,Y,TILE,10); ctx.fillStyle=g.wd.top; ctx.fillRect(X,Y,TILE,3);} else { ctx.fillStyle=g.wd.plat; ctx.fillRect(X,Y,TILE,TILE); ctx.fillStyle=g.wd.top; ctx.fillRect(X,Y,TILE,5);} } }
+    // lava
+    lv.lava.forEach(s=>{ const yy=s.y+6+Math.sin(g.t/10+s.x)*2; ctx.fillStyle="#ff5a1e"; ctx.fillRect(s.x,yy,TILE,TILE-6); ctx.fillStyle="#ffce3a"; ctx.fillRect(s.x,yy,TILE,4); });
+    // spikes
+    ctx.fillStyle="#d8d8e0"; lv.spikes.forEach(s=>{ for(let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(s.x+i*11+2,s.y+TILE); ctx.lineTo(s.x+i*11+7,s.y+14); ctx.lineTo(s.x+i*11+12,s.y+TILE); ctx.fill(); } });
+    // pads
+    ctx.fillStyle="#ffd34a"; lv.pads.forEach(p=>ctx.fillRect(p.x,p.y,p.w,p.h));
+    // movers
+    lv.movers.forEach(m=>{ ctx.fillStyle="#c58b4a"; ctx.fillRect(m.x,m.y,m.w,m.h); ctx.fillStyle="#e0b070"; ctx.fillRect(m.x,m.y,m.w,3); });
+    // coins
+    lv.coins.forEach(cn=>{ if(cn.got) return; const s=Math.abs(Math.sin(g.t/14))*4; ctx.font="18px serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("🪙",cn.x, cn.y - s/2); });
+    // enemies
+    lv.enemies.forEach(e=>{ if(e.dead) return; ctx.font="22px serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("👾", e.x+e.w/2, e.y+e.h/2); });
+    // goal flag
+    ctx.font="30px serif"; ctx.textAlign="center"; ctx.textBaseline="bottom"; ctx.fillText("🚩", lv.goal.x+TILE/2, lv.goal.y+TILE+4);
+    // player (Maxwell)
+    const px=g.px, py=g.py;
+    ctx.save(); if(g.dir<0){ ctx.translate(px+PW,0); ctx.scale(-1,1); ctx.translate(-px,0); }
+    if(catImg.complete && catImg.naturalWidth){ ctx.save(); ctx.beginPath(); ctx.arc(px+PW/2,py+PH/2,PH/2,0,7); ctx.clip(); ctx.drawImage(catImg, px-3, py-2, PH+6, PH+6); ctx.restore(); }
+    else { ctx.fillStyle="#222"; ctx.fillRect(px,py,PW,PH); }
+    ctx.restore();
+    ctx.restore();
+  }
+  function shade(hex,amt){ try{ const n=parseInt(hex.slice(1),16); let r=(n>>16)+amt,gc=((n>>8)&255)+amt,b=(n&255)+amt; r=Math.max(0,Math.min(255,r));gc=Math.max(0,Math.min(255,gc));b=Math.max(0,Math.min(255,b)); return "#"+((1<<24)+(r<<16)+(gc<<8)+b).toString(16).slice(1);}catch(e){return hex;} }
+
+  let last=0;
+  function loop(t){ if(!game) return; if(!last)last=t||0; const dt=(t||0)-last; last=t||0;
+    // fixed-ish step
+    if(!game.done){ step(); }
+    draw();
+    raf=requestAnimationFrame(loop);
+  }
+
+  // ---- controls ----
+  const map={ArrowLeft:"ArrowLeft",ArrowRight:"ArrowRight",ArrowUp:"ArrowUp"," ":" ",a:"a",d:"d",w:"w"};
+  window.addEventListener("keydown",e=>{ const k=e.key.length===1?e.key.toLowerCase():e.key; if(k in {ArrowLeft:1,ArrowRight:1,ArrowUp:1,ArrowDown:1," ":1}) e.preventDefault();
+    if(k==="ArrowLeft"||k==="a")keys.left=true; if(k==="ArrowRight"||k==="d")keys.right=true; if(k==="ArrowUp"||k==="w"||k===" ")keys.jump=true;
+    if(k==="r"&&game&&!game.done) play(game.w,game.l);
+    if(k==="Escape"&&game) levels(curW);
+    keys[k]=true;
+  });
+  window.addEventListener("keyup",e=>{ const k=e.key.length===1?e.key.toLowerCase():e.key;
+    if(k==="ArrowLeft"||k==="a")keys.left=false; if(k==="ArrowRight"||k==="d")keys.right=false; if(k==="ArrowUp"||k==="w"||k===" ")keys.jump=false; keys[k]=false; });
+  // touch
+  document.querySelectorAll(".tbtn").forEach(btn=>{ const k=btn.dataset.k; const on=e=>{e.preventDefault(); keys[k]=true;}; const off=e=>{e.preventDefault(); keys[k]=false;}; btn.addEventListener("touchstart",on); btn.addEventListener("touchend",off); btn.addEventListener("mousedown",on); btn.addEventListener("mouseup",off); btn.addEventListener("mouseleave",off); });
+
+  window.MGPlat = { get g(){ return game; }, keys:keys };
+  show("title");
+})();
+</script>
+</body>
+</html>
