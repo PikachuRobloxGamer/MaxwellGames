@@ -61,6 +61,9 @@
   $("lockCancel").onclick = () => $("lockModal").classList.add("hidden");
   $("lockForm").onsubmit = async (e) => {
     e.preventDefault();
+    // Secret unlock: typing the passphrase opens the hidden mode gate (not an owner login)
+    const raw = ($("lockInput").value || "").trim().toLowerCase().replace(/\s+/g, "");
+    if (raw === "thebindingofisaac") { $("lockModal").classList.add("hidden"); $("lockInput").value = ""; $("lockMsg").textContent = ""; try { window.MG_SECRET.openGate(); } catch (err) {} return; }
     let hash = "";
     try { hash = await sha256(SALT + $("lockInput").value); } catch (err) { $("lockMsg").textContent = "This browser can't check codes here."; return; }
     const found = Object.keys(ROLES).find((r) => ROLES[r].hash === hash);

@@ -1367,3 +1367,44 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .meme-tpl{width:52px;height:52px;padding:0;border-radius:10px;border:2px solid rgba(255,255,255,.15);background:#1b2140;cursor:pointer;overflow:hidden}
 .meme-tpl img{width:100%;height:100%;object-fit:cover;display:block}
 .meme-tpl.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+
+/* ===== Universal touch gamepad (mobile) ===== */
+.touch-pad{position:fixed;left:0;right:0;bottom:0;z-index:97;display:none;justify-content:space-between;align-items:flex-end;padding:10px 18px calc(10px + env(safe-area-inset-bottom));pointer-events:none}
+.touch-pad.show{display:flex}
+.tp-dpad{position:relative;width:156px;height:156px;pointer-events:none}
+.tp-b{position:absolute;width:52px;height:52px;border-radius:14px;background:rgba(20,24,48,.55);border:2px solid rgba(255,255,255,.4);color:#fff;font-size:1.2rem;font-weight:800;pointer-events:auto;touch-action:none;-webkit-user-select:none;user-select:none;backdrop-filter:blur(3px)}
+.tp-up{left:52px;top:0}.tp-down{left:52px;bottom:0}.tp-left{left:0;top:52px}.tp-right{right:0;top:52px}
+.tp-b.on{background:rgba(108,92,231,.75)}
+.tp-actions{pointer-events:none;display:flex;align-items:flex-end;padding-bottom:30px}
+.tp-a{width:84px;height:84px;border-radius:50%;background:rgba(108,92,231,.6);border:3px solid rgba(255,255,255,.45);color:#fff;font-size:1.7rem;font-weight:900;pointer-events:auto;touch-action:none;-webkit-user-select:none;user-select:none;backdrop-filter:blur(3px)}
+.tp-a.on{background:rgba(62,224,143,.8)}
+/* make game canvases fit phone screens */
+.arcade canvas, .sim-canvas, .ar-canvas{max-width:100%;height:auto}
+body.touch-playing .arcade-body.game, body.touch-playing .battle-body, body.touch-playing #dBody.game, body.touch-playing .sim-stage{padding-bottom:180px}
+
+/* ===== The Binding of Maxwell (secret mode) ===== */
+.bm-overlay{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#2a1414,#0a0707 70%);padding:14px;overflow:auto}
+.bm-gate{position:relative;max-width:440px;width:100%;background:#1a1012;border:2px solid #4a2222;border-radius:18px;padding:26px 20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.bm-x{position:absolute;top:10px;right:12px;background:none;border:none;color:#caa;font-size:1.3rem;cursor:pointer;z-index:5}
+.bm-title{font-family:Georgia,serif;color:#c0392b;font-size:1.7rem;margin-bottom:4px;text-shadow:0 2px 0 #3a0f0f}
+.bm-sub{color:#a88;font-size:.9rem;margin-bottom:18px}
+.bm-switch-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0}
+.bm-switch{width:120px;height:56px;border-radius:30px;background:#2a1414;border:3px solid #5a2a2a;position:relative;cursor:pointer;transition:background .3s}
+.bm-switch .bm-knob{position:absolute;top:4px;left:4px;width:44px;height:44px;border-radius:50%;background:#7a3a3a;transition:left .3s,background .3s}
+.bm-switch-wrap.live .bm-switch{box-shadow:0 0 18px rgba(192,57,43,.5)}
+.bm-switch.on{background:#c0392b}.bm-switch.on .bm-knob{left:68px;background:#ffd34a}
+.bm-switch.nope{animation:bmShake .3s}
+@keyframes bmShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.bm-switch-wrap.locked .bm-switch{opacity:.6}
+.bm-switch-label{color:#caa;font-weight:800;letter-spacing:1px;font-size:.8rem}
+.bm-note{color:#b99;font-size:.9rem;margin-top:10px;line-height:1.5}
+.bm-prog{height:14px;background:#2a1414;border-radius:8px;overflow:hidden;margin:10px 0 4px}
+.bm-prog-fill{height:100%;background:linear-gradient(90deg,#c0392b,#ffd34a);transition:width .4s}
+.bm-canvas{max-width:100%;border-radius:10px;background:#000}
+.bm-skip{position:absolute;bottom:20px;right:20px;background:rgba(0,0,0,.5);border:1px solid #633;color:#fff;border-radius:10px;padding:8px 14px;cursor:pointer}
+.bm-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:100%}
+.bm-hud{color:#fff;font-weight:800;font-size:.95rem;text-align:center}
+.bm-help{color:#a88;font-size:.78rem;text-align:center;max-width:460px}
+.bm-result{text-align:center;color:#fff;padding:30px}
+.bm-result h2{font-family:Georgia,serif;color:#c0392b;font-size:1.8rem}
+.bm-reward{color:#ffd34a;font-weight:800;font-size:1.2rem;margin:8px 0}
