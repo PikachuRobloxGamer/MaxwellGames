@@ -26,6 +26,7 @@
   }
 
   const B = () => document.getElementById("bBody");
+  function maxwellMascot(container) { if (!container || container.querySelector(".game-maxwell")) return; const im = document.createElement("img"); im.className = "game-maxwell"; im.src = (document.querySelector(".logo-img") || {}).src || "maxwell.png"; im.alt = "Maxwell"; container.appendChild(im); }
   function setTitle(t) { document.getElementById("bTitle").textContent = t; }
   function back(show) { document.getElementById("bBack").classList.toggle("hidden", !show); }
   function reward(won) { try { if (won && window.MG) { window.MG.addTreats(40); window.MG.flag("battle"); } else if (window.MG) window.MG.addTreats(10); } catch (e) {} }
@@ -66,6 +67,7 @@
     const info = document.createElement("p"); info.className = "ar-hint"; info.textContent = mode === "net" ? "🌐 Play your run — your friend plays theirs. Higher score wins!" : "Beat the CPU's score!";
     body.appendChild(info);
     const host = document.createElement("div"); host.className = "duel-solo-host"; body.appendChild(host);
+    maxwellMascot(body);
     const solo = (window.MG_DUELSOLO || {})[g.solo];
     if (!solo) { info.textContent = "This duel couldn't load — go back and try again."; return; }
     const api = { tone: tone, onClean: (fn) => duelClean.push(fn), img: (document.querySelector(".logo-img") || {}).src || "maxwell.png" };
@@ -142,6 +144,7 @@
         back(true); setTitle("✊ Rock Paper Meow"); const nm = names(mode);
         const body = B(); body.className = "arcade-body battle-body";
         body.innerHTML = '<div class="battle-score"><span class="bs-you">' + nm[0] + ' <b id="bY">0</b></span><span class="bs-vs">vs</span><span class="bs-opp"><b id="bO">0</b> ' + nm[1] + '</span></div><div class="battle-show" id="bShow">Pick!</div><p class="ar-hint" id="bMsg">Round 1 — pick your move!</p><div class="rps-btns" id="bBtns"></div>';
+        maxwellMascot(body);
         let you = 0, opp = 0, round = 1, done = false, p1turn = true, p1pick = null;
         const btns = body.querySelector("#bBtns");
         RPS.forEach((o, i) => { const b = document.createElement("button"); b.className = "btn rps-b"; b.innerHTML = o[0] + "<small>" + o[1] + "</small>"; b.dataset.i = i; btns.appendChild(b); });
@@ -169,6 +172,7 @@
       start(mode, ctx) {
         back(true); setTitle("⭕ Tic-Tac-Toe"); const body = B(); body.className = "arcade-body battle-body";
         body.innerHTML = '<p class="ar-hint" id="bMsg"></p><div class="ttt-grid" id="bTtt"></div>';
+        maxwellMascot(body);
         const WIN = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
         const cells = []; const grid = body.querySelector("#bTtt"); const msg = body.querySelector("#bMsg");
         for (let i = 0; i < 9; i++) { const d = document.createElement("button"); d.className = "ttt-cell"; d.onclick = () => clickCell(i); grid.appendChild(d); cells.push(d); }
@@ -200,6 +204,7 @@
         back(true); setTitle("🔴 Connect Four"); const body = B(); body.className = "arcade-body battle-body";
         const C = 7, R = 6, SZ = 46;
         body.innerHTML = '<p class="ar-hint" id="bMsg"></p><canvas id="c4cv" width="' + C * SZ + '" height="' + R * SZ + '" class="ar-canvas"></canvas>';
+        maxwellMascot(body);
         const cv = body.querySelector("#c4cv"), x = cv.getContext("2d"), msg = body.querySelector("#bMsg");
         let bd = new Array(C * R).fill(0), done = false, turn = 1;
         const myNum = mode === "net" ? (ctx.slot === "a" ? 1 : 2) : 1;
@@ -232,6 +237,7 @@
       start(mode, ctx) {
         back(true); setTitle("🎲 Dice War"); const nm = names(mode); const body = B(); body.className = "arcade-body battle-body";
         body.innerHTML = '<div class="battle-score"><span class="bs-you">' + nm[0] + ' <b id="bY">0</b></span><span class="bs-vs">vs</span><span class="bs-opp"><b id="bO">0</b> ' + nm[1] + '</span></div><div class="battle-show" id="bShow">🎲 vs 🎲</div><button class="btn asc-btn" id="bRoll">🎲 Roll</button><p class="ar-hint" id="bMsg"></p>';
+        maxwellMascot(body);
         let you = 0, opp = 0, round = 1, done = false; const self = this;
         function resolve(a, b) {
           body.querySelector("#bShow").textContent = "🎲 " + a + "  vs  " + b + " 🎲";
@@ -255,6 +261,7 @@
         back(true); setTitle("🤜 Odd or Even"); const nm = names(mode); const body = B(); body.className = "arcade-body battle-body";
         const youIsOdd = mode === "net" ? ctx.slot === "a" : true;
         body.innerHTML = '<p class="ar-hint">' + (mode === "net" ? (youIsOdd ? "You score on ODD totals." : "You score on EVEN totals.") : "🟢 P1 = ODD · 🩷 P2 = EVEN") + '</p><div class="battle-score"><span class="bs-you">' + (mode === "net" ? "You" : "ODD") + ' <b id="bY">0</b></span><span class="bs-vs">vs</span><span class="bs-opp"><b id="bO">0</b> ' + (mode === "net" ? "Opp" : "EVEN") + '</span></div><div class="battle-show" id="bShow">?</div><p class="ar-hint" id="bMsg">Throw your fingers (0–5)!</p><div class="rps-btns" id="bBtns"></div>';
+        maxwellMascot(body);
         let odd = 0, even = 0, round = 1, done = false, p1pick = null, p1turn = true; const self = this; const btns = body.querySelector("#bBtns");
         for (let i = 0; i <= 5; i++) { const b = document.createElement("button"); b.className = "btn rps-b"; b.textContent = i; b.dataset.i = i; btns.appendChild(b); }
         function resolve(a, b) {
@@ -280,6 +287,7 @@
       start(mode, ctx) {
         back(true); setTitle("➗ Math Race"); const nm = names(mode); const body = B(); body.className = "arcade-body battle-body";
         body.innerHTML = '<div class="battle-score"><span class="bs-you">' + nm[0] + ' <b id="bY">0</b></span><span class="bs-vs">·</span><span class="bs-opp">⏱️ <b id="bT">20</b>s</span></div><h3 class="md-q" id="bQ"></h3><div class="trivia-opts" id="bOpts"></div><p class="ar-hint" id="bMsg"></p>';
+        maxwellMascot(body);
         let score = 0, time = 20, done = false; const self = this;
         function q() { if (done) return; const a = 2 + (Math.random() * 11 | 0), b = 2 + (Math.random() * 11 | 0), op = Math.random() < 0.5 ? "+" : "×"; const ans = op === "+" ? a + b : a * b; body.querySelector("#bQ").textContent = a + " " + op + " " + b + " = ?"; const set = new Set([ans]); while (set.size < 3) { const w = ans + (Math.random() * 10 | 0) - 5; if (w > 0) set.add(w); } const opts = [...set].sort(() => Math.random() - 0.5); const wrap = body.querySelector("#bOpts"); wrap.innerHTML = ""; opts.forEach((o) => { const bn = document.createElement("button"); bn.className = "btn trivia-opt"; bn.textContent = o; bn.onclick = () => { if (done) return; if (o === ans) { score++; tone(800, 0.06); body.querySelector("#bY").textContent = score; } else tone(180, 0.1, "sawtooth"); q(); }; wrap.appendChild(bn); }); }
         q();

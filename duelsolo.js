@@ -2,17 +2,20 @@
 (function () {
   function cv(host, w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; c.className = "ar-canvas"; host.appendChild(c); return c; }
   function hint(host, html) { const p = document.createElement("p"); p.className = "ar-hint"; p.innerHTML = html; host.appendChild(p); }
+  let MAXIMG = null;
+  function maxImg(api) { if (!MAXIMG) { MAXIMG = new Image(); MAXIMG.src = (api && api.img) || (document.querySelector(".logo-img") || {}).src || "maxwell.png"; } return MAXIMG; }
+  function drawMax(x, cx, cy, r, img) { if (img && img.complete && img.naturalWidth) { x.save(); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.closePath(); x.clip(); x.drawImage(img, cx - r, cy - r, r * 2, r * 2); x.restore(); } else { x.fillStyle = "#fff"; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); } }
 
   const SOLO = {
     // Pong → keep the ball up, most hits wins
     pong(host, api, done) {
-      const W = 420, H = 300, c = cv(host, W, H), x = c.getContext("2d");
-      hint(host, "Keep the ball up! <b>A/D</b> or drag. +1 per hit.");
+      const W = 420, H = 300, c = cv(host, W, H), x = c.getContext("2d"); const cat = maxImg(api);
+      hint(host, "Keep Maxwell up! <b>A/D</b> or drag. +1 per bounce.");
       let px = W / 2, bx = W / 2, by = 60, vx = 3, vy = 3, score = 0, over = false, raf; const keys = {}, PW = 70;
       function loop() {
         x.fillStyle = "#0e1730"; x.fillRect(0, 0, W, H);
         if (!over) { if (keys["a"]) px -= 7; if (keys["d"]) px += 7; px = Math.max(PW / 2, Math.min(W - PW / 2, px)); bx += vx; by += vy; if (bx < 8 || bx > W - 8) vx *= -1; if (by < 8) vy = Math.abs(vy); if (by > H - 24 && bx > px - PW / 2 && bx < px + PW / 2 && vy > 0) { vy = -Math.abs(vy) * 1.03; vx += (bx - px) * 0.05; score++; api.tone(500, 0.04); } if (by > H) { over = true; cancelAnimationFrame(raf); return done(score); } }
-        x.fillStyle = "#3ee08f"; x.fillRect(px - PW / 2, H - 14, PW, 8); x.fillStyle = "#fff"; x.beginPath(); x.arc(bx, by, 7, 0, 7); x.fill(); x.font = "bold 22px system-ui"; x.textAlign = "left"; x.fillText("Hits: " + score, 10, 26);
+        x.fillStyle = "#3ee08f"; x.fillRect(px - PW / 2, H - 14, PW, 8); drawMax(x, bx, by, 13, cat); x.fillStyle = "#fff"; x.font = "bold 22px system-ui"; x.textAlign = "left"; x.fillText("Hits: " + score, 10, 26);
         raf = requestAnimationFrame(loop);
       }
       const kd = (e) => { const k = e.key.toLowerCase(); if (["a", "d"].includes(k)) { keys[k] = true; e.preventDefault(); } }; const ku = (e) => keys[e.key.toLowerCase()] = false;
@@ -52,14 +55,14 @@
     },
     // Catch → most fish in 20s
     catch(host, api, done) {
-      const W = 420, H = 300, c = cv(host, W, H), x = c.getContext("2d");
-      hint(host, "Catch the 🐟! <b>A/D</b> or drag. <b>20s</b>.");
+      const W = 420, H = 300, c = cv(host, W, H), x = c.getContext("2d"); const cat = maxImg(api);
+      hint(host, "Help Maxwell catch the 🐟! <b>A/D</b> or drag. <b>20s</b>.");
       let bx = W / 2, items = [], score = 0, t = 20, over = false, raf, frame = 0; const keys = {};
       function loop() {
         x.fillStyle = "#0e1526"; x.fillRect(0, 0, W, H);
         if (!over) { if (keys["a"]) bx -= 7; if (keys["d"]) bx += 7; bx = Math.max(26, Math.min(W - 26, bx)); frame++; if (frame % 26 === 0) items.push({ x: 20 + Math.random() * (W - 40), y: -20, v: 3 + Math.random() * 2 }); items.forEach((it) => it.y += it.v); items = items.filter((it) => { if (it.y > H - 40 && it.y < H - 12 && Math.abs(it.x - bx) < 30) { score++; api.tone(660, 0.05); return false; } return it.y < H + 20; }); }
         x.font = "22px system-ui,'Segoe UI Emoji'"; x.textAlign = "center"; x.textBaseline = "middle"; items.forEach((it) => x.fillText("🐟", it.x, it.y));
-        x.fillStyle = "#3ee08f"; x.fillRect(bx - 26, H - 14, 52, 10); x.fillStyle = "#fff"; x.font = "bold 20px system-ui"; x.textBaseline = "alphabetic"; x.textAlign = "left"; x.fillText("🐟 " + score, 10, 24); x.textAlign = "right"; x.fillText("⏱️ " + t, W - 10, 24);
+        x.fillStyle = "#3ee08f"; x.fillRect(bx - 26, H - 10, 52, 8); drawMax(x, bx, H - 24, 18, cat); x.fillStyle = "#fff"; x.font = "bold 20px system-ui"; x.textBaseline = "alphabetic"; x.textAlign = "left"; x.fillText("🐟 " + score, 10, 24); x.textAlign = "right"; x.fillText("⏱️ " + t, W - 10, 24);
         if (!over) raf = requestAnimationFrame(loop);
       }
       const kd = (e) => { const k = e.key.toLowerCase(); if (["a", "d"].includes(k)) { keys[k] = true; e.preventDefault(); } }; const ku = (e) => keys[e.key.toLowerCase()] = false;
@@ -81,14 +84,14 @@
     },
     // Soccer → score past the goalie in 20s
     soccer(host, api, done) {
-      const W = 420, H = 280, c = cv(host, W, H), x = c.getContext("2d");
-      hint(host, "Aim <b>A/D</b>, shoot <b>Space</b>! Beat the goalie. <b>20s</b>.");
+      const W = 420, H = 280, c = cv(host, W, H), x = c.getContext("2d"); const cat = maxImg(api);
+      hint(host, "Aim <b>A/D</b>, shoot <b>Space</b>! Blast Maxwell past the goalie. <b>20s</b>.");
       let aim = W / 2, gx = W / 2, gdir = 2.4, score = 0, t = 20, over = false, raf, flash = 0, good = false; const keys = {};
       function loop() {
         x.fillStyle = "#123b1e"; x.fillRect(0, 0, W, H); x.strokeStyle = "#fff"; x.lineWidth = 3; x.strokeRect(60, 28, W - 120, 16);
         gx += gdir; if (gx < 70 || gx > W - 70) gdir *= -1; x.fillStyle = "#ff5fa2"; x.fillRect(gx - 30, 28, 60, 16);
         if (!over) { if (keys["a"]) aim -= 6; if (keys["d"]) aim += 6; aim = Math.max(70, Math.min(W - 70, aim)); }
-        x.strokeStyle = "#ffd84a"; x.beginPath(); x.moveTo(aim, H - 20); x.lineTo(aim, 36); x.stroke(); x.fillStyle = "#fff"; x.beginPath(); x.arc(aim, H - 20, 8, 0, 7); x.fill();
+        x.strokeStyle = "#ffd84a"; x.beginPath(); x.moveTo(aim, H - 20); x.lineTo(aim, 36); x.stroke(); drawMax(x, aim, H - 20, 12, cat);
         if (flash > 0) { x.fillStyle = good ? "#3ee08f" : "#ff4d4d"; x.font = "bold 28px system-ui"; x.textAlign = "center"; x.fillText(good ? "GOAL!" : "SAVED!", W / 2, H / 2); flash--; }
         x.fillStyle = "#fff"; x.font = "bold 20px system-ui"; x.textAlign = "left"; x.fillText("⚽ " + score, 10, 24); x.textAlign = "right"; x.fillText("⏱️ " + t, W - 10, 24);
         if (!over) raf = requestAnimationFrame(loop);
@@ -101,13 +104,13 @@
     },
     // Snake → eat the most before crashing
     snakeduel(host, api, done) {
-      const SZ = 16, GW = 26, GH = 18, W = GW * SZ, H = GH * SZ, c = cv(host, W, H), x = c.getContext("2d");
-      hint(host, "Eat 🐟, don't crash! <b>Arrows / WASD</b>.");
+      const SZ = 16, GW = 26, GH = 18, W = GW * SZ, H = GH * SZ, c = cv(host, W, H), x = c.getContext("2d"); const cat = maxImg(api);
+      hint(host, "Maxwell eats 🐟 — don't crash! <b>Arrows / WASD</b>.");
       let snake = [{ x: 5, y: 9 }], dir = { x: 1, y: 0 }, nd = dir, score = 0, over = false, raf, acc = 0, last = 0;
       function place() { let f; do { f = { x: (Math.random() * GW) | 0, y: (Math.random() * GH) | 0 }; } while (snake.some((s) => s.x === f.x && s.y === f.y)); return f; }
       let food = place();
       function step() { dir = nd; const h = { x: snake[0].x + dir.x, y: snake[0].y + dir.y }; if (h.x < 0 || h.y < 0 || h.x >= GW || h.y >= GH || snake.some((s) => s.x === h.x && s.y === h.y)) { over = true; cancelAnimationFrame(raf); return done(score); } snake.unshift(h); if (h.x === food.x && h.y === food.y) { score++; api.tone(700, 0.05); food = place(); } else snake.pop(); }
-      function draw() { x.fillStyle = "#0a1020"; x.fillRect(0, 0, W, H); x.font = SZ + "px system-ui,'Segoe UI Emoji'"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("🐟", food.x * SZ + SZ / 2, food.y * SZ + SZ / 2); snake.forEach((s, i) => { x.fillStyle = i === 0 ? "#7dffb8" : "#3ee08f"; x.fillRect(s.x * SZ + 1, s.y * SZ + 1, SZ - 2, SZ - 2); }); x.fillStyle = "#fff"; x.font = "bold 16px system-ui"; x.textBaseline = "alphabetic"; x.textAlign = "left"; x.fillText("🐟 " + score, 6, 18); }
+      function draw() { x.fillStyle = "#0a1020"; x.fillRect(0, 0, W, H); x.font = SZ + "px system-ui,'Segoe UI Emoji'"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("🐟", food.x * SZ + SZ / 2, food.y * SZ + SZ / 2); snake.forEach((s, i) => { if (i === 0) { drawMax(x, s.x * SZ + SZ / 2, s.y * SZ + SZ / 2, SZ / 2, cat); } else { x.fillStyle = "#3ee08f"; x.fillRect(s.x * SZ + 1, s.y * SZ + 1, SZ - 2, SZ - 2); } }); x.fillStyle = "#fff"; x.font = "bold 16px system-ui"; x.textBaseline = "alphabetic"; x.textAlign = "left"; x.fillText("🐟 " + score, 6, 18); }
       function loop(t) { if (!last) last = t; acc += t - last; last = t; if (!over && acc > 110) { acc = 0; step(); } if (!over) { draw(); raf = requestAnimationFrame(loop); } }
       const kd = (e) => { const k = e.key.toLowerCase(); const s = (dx, dy) => { if (dir.x !== -dx || dir.y !== -dy) nd = { x: dx, y: dy }; }; if (k === "w" || k === "arrowup") s(0, -1); else if (k === "s" || k === "arrowdown") s(0, 1); else if (k === "a" || k === "arrowleft") s(-1, 0); else if (k === "d" || k === "arrowright") s(1, 0); if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) e.preventDefault(); };
       document.addEventListener("keydown", kd); api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); }); raf = requestAnimationFrame(loop);

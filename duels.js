@@ -8,6 +8,9 @@
   function cleanup() { reg.forEach((fn) => { try { fn(); } catch (e) {} }); reg = []; }
   function onClean(fn) { reg.push(fn); }
   function canvas(host, w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; c.className = "ar-canvas"; host.appendChild(c); return c; }
+  let MAXIMG = null;
+  function maxImg() { if (!MAXIMG) { MAXIMG = new Image(); MAXIMG.src = (document.querySelector(".logo-img") || {}).src || "maxwell.png"; } return MAXIMG; }
+  function drawMax(x, cx, cy, r) { const img = maxImg(); if (img && img.complete && img.naturalWidth) { x.save(); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.closePath(); x.clip(); x.drawImage(img, cx - r, cy - r, r * 2, r * 2); x.restore(); } else { x.fillStyle = "#fff"; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); } }
 
   function close() { cleanup(); const o = document.getElementById("duelOv"); if (o) { if (o._esc) document.removeEventListener("keydown", o._esc); o.remove(); } }
 
@@ -32,20 +35,29 @@
     menu();
   }
 
+  let duelMode = "local"; // "local" (2-player) or "solo"
   function menu() {
     cleanup();
     document.getElementById("dBack").classList.add("hidden");
     document.getElementById("dTitle").textContent = "⚔️ Maxwell Duels";
     const body = document.getElementById("dBody");
     body.className = "arcade-body menu"; body.innerHTML = "";
+    const toggle = document.createElement("div"); toggle.className = "duel-modes";
+    toggle.innerHTML = '<button class="duel-mode' + (duelMode === "local" ? " on" : "") + '" data-m="local">👥 2-Player</button><button class="duel-mode' + (duelMode === "solo" ? " on" : "") + '" data-m="solo">🙋 Solo</button>';
+    toggle.querySelectorAll(".duel-mode").forEach((b) => b.onclick = () => { duelMode = b.dataset.m; menu(); });
+    body.appendChild(toggle);
     const note = document.createElement("div"); note.className = "ar-news";
-    note.innerHTML = "<b>⚔️ 1v1 your friend on the same keyboard!</b> Green = Player 1, Pink = Player 2. Winner gets 🐟.";
+    note.innerHTML = duelMode === "solo"
+      ? "<b>🙋 Solo mode — play a one-player version of any duel!</b> Chase a high score and earn 🐟. (Switch to 2-Player to play a friend on the same keyboard.)"
+      : "<b>⚔️ 1v1 your friend on the same keyboard!</b> Green = Player 1, Pink = Player 2. Winner gets 🐟. (Switch to 🙋 Solo to play alone!)";
     body.appendChild(note);
     const grid = document.createElement("div"); grid.className = "ar-grid";
     DUELS.forEach((d) => {
+      const solo = duelMode === "solo" && window.MG_DUELSOLO && window.MG_DUELSOLO[d.key];
+      if (duelMode === "solo" && !(window.MG_DUELSOLO && window.MG_DUELSOLO[d.key])) return; // skip if no solo version
       const t = document.createElement("button"); t.className = "ar-tile is-new";
       t.innerHTML = `<span class="ar-ic"></span><span class="ar-name"></span><span class="ar-best"></span>`;
-      t.querySelector(".ar-ic").textContent = d.icon; t.querySelector(".ar-name").textContent = d.name; t.querySelector(".ar-best").textContent = d.tag;
+      t.querySelector(".ar-ic").textContent = d.icon; t.querySelector(".ar-name").textContent = d.name; t.querySelector(".ar-best").textContent = duelMode === "solo" ? "Solo • high score" : d.tag;
       t.onclick = () => launch(d); grid.appendChild(t);
     });
     body.appendChild(grid);
@@ -54,11 +66,35 @@
   function launch(d) {
     cleanup();
     document.getElementById("dBack").classList.remove("hidden");
-    document.getElementById("dTitle").textContent = d.icon + " " + d.name;
+    document.getElementById("dTitle").textContent = d.icon + " " + d.name + (duelMode === "solo" ? " (Solo)" : "");
     const body = document.getElementById("dBody"); body.className = "arcade-body game"; body.innerHTML = "";
-    const api = { tone, onClean, win: (p, line) => result(d, p, line) };
-    try { d.play(body, api); } catch (e) { body.innerHTML = "<p class='ar-hint'>That duel hiccuped — go back and retry.</p>"; }
+    if (duelMode === "solo" && window.MG_DUELSOLO && window.MG_DUELSOLO[d.key]) {
+      const api = { tone, onClean, img: (document.querySelector(".logo-img") || {}).src || "maxwell.png" };
+      try { window.MG_DUELSOLO[d.key](body, api, (score) => soloResult(d, score)); } catch (e) { body.innerHTML = "<p class='ar-hint'>That hiccuped — go back and retry.</p>"; }
+    } else {
+      const api = { tone, onClean, win: (p, line) => result(d, p, line) };
+      try { d.play(body, api); } catch (e) { body.innerHTML = "<p class='ar-hint'>That duel hiccuped — go back and retry.</p>"; }
+    }
+    maxwellMascot(body);
   }
+
+  function soloResult(d, score) {
+    cleanup();
+    const rew = Math.max(5, Math.min(120, Math.round(score)));
+    give(rew);
+    try { if (window.MG) window.MG.flag("duel"); } catch (e) {}
+    const body = document.getElementById("dBody"); body.className = "arcade-body result"; body.innerHTML = `
+      <div class="ar-result">
+        <h2 class="ar-res-title">Your score: ${score}</h2>
+        <p class="ar-score">Nice solo run! 🙋</p>
+        <p class="ar-reward">+${rew} 🐟</p>
+        <div class="ar-res-btns"><button class="btn asc-btn" id="dAgain">↻ Play again</button><button class="btn" id="dMenu">⚔️ Duels</button></div>
+      </div>`;
+    document.getElementById("dAgain").onclick = () => launch(d);
+    document.getElementById("dMenu").onclick = menu;
+    try { window.MG.boomSound(0.1); } catch (e) {}
+  }
+  function maxwellMascot(container) { if (!container || container.querySelector(".game-maxwell")) return; const im = document.createElement("img"); im.className = "game-maxwell"; im.src = (document.querySelector(".logo-img") || {}).src || "maxwell.png"; im.alt = "Maxwell"; container.appendChild(im); }
 
   function result(d, winner, line) {
     cleanup();
@@ -100,7 +136,7 @@
             if (bx < 0) { s2++; if (s2 >= 7) return end(); reset(1); } if (bx > W) { s1++; if (s1 >= 7) return end(); reset(-1); }
           }
           x.fillStyle = "#3ee08f"; x.fillRect(12, l - PH / 2, PW, PH); x.fillStyle = "#ff5fa2"; x.fillRect(W - 12 - PW, r - PH / 2, PW, PH);
-          x.fillStyle = "#fff"; x.beginPath(); x.arc(bx, by, 6, 0, 7); x.fill(); x.font = "bold 26px system-ui"; x.textAlign = "center"; x.fillText(s1 + "   " + s2, W / 2, 32);
+          drawMax(x, bx, by, 9); x.fillStyle = "#fff"; x.font = "bold 26px system-ui"; x.textAlign = "center"; x.fillText(s1 + "   " + s2, W / 2, 32);
           raf = requestAnimationFrame(loop);
         }
         function end() { over = true; cancelAnimationFrame(raf); api.win(s1 >= 7 ? 1 : 2, "Final: " + s1 + " — " + s2); }
@@ -279,7 +315,7 @@
             if (bx > W - 4) { if (by > H / 2 - GH / 2 && by < H / 2 + GH / 2) { s1++; goal(); } else vx = -Math.abs(vx); }
           }
           x.fillStyle = "#3ee08f"; x.fillRect(14, l - PH / 2, PW, PH); x.fillStyle = "#ff5fa2"; x.fillRect(W - 14 - PW, r - PH / 2, PW, PH);
-          x.font = "22px system-ui,'Segoe UI Emoji'"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("⚽", bx, by);
+          drawMax(x, bx, by, 12);
           x.fillStyle = "#fff"; x.font = "bold 26px system-ui"; x.textBaseline = "alphabetic"; x.fillText(s1 + "   " + s2, W / 2, 30);
           if (!over) raf = requestAnimationFrame(loop);
         }
@@ -307,8 +343,8 @@
         function draw() {
           x.fillStyle = "#0a1020"; x.fillRect(0, 0, W, H);
           x.font = (SZ) + "px system-ui,'Segoe UI Emoji'"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("🐟", food.x * SZ + SZ / 2, food.y * SZ + SZ / 2);
-          s1.b.forEach((p, i) => { x.fillStyle = i === 0 ? "#7dffb8" : "#3ee08f"; x.fillRect(p.x * SZ + 1, p.y * SZ + 1, SZ - 2, SZ - 2); });
-          s2.b.forEach((p, i) => { x.fillStyle = i === 0 ? "#ffa8d2" : "#ff5fa2"; x.fillRect(p.x * SZ + 1, p.y * SZ + 1, SZ - 2, SZ - 2); });
+          s1.b.forEach((p, i) => { if (i === 0) drawMax(x, p.x * SZ + SZ / 2, p.y * SZ + SZ / 2, SZ / 2); else { x.fillStyle = "#3ee08f"; x.fillRect(p.x * SZ + 1, p.y * SZ + 1, SZ - 2, SZ - 2); } });
+          s2.b.forEach((p, i) => { if (i === 0) drawMax(x, p.x * SZ + SZ / 2, p.y * SZ + SZ / 2, SZ / 2); else { x.fillStyle = "#ff5fa2"; x.fillRect(p.x * SZ + 1, p.y * SZ + 1, SZ - 2, SZ - 2); } });
           if (!started) { x.fillStyle = "#fff"; x.font = "bold 40px system-ui"; x.textAlign = "center"; x.fillText(cd > 0 ? cd : "GO!", W / 2, H / 2); }
         }
         function loop(t) { if (!last) last = t; acc += t - last; last = t; if (started && !over && acc > 95) { acc = 0; tick(); } if (!over) { draw(); raf = requestAnimationFrame(loop); } }

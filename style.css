@@ -867,7 +867,7 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 /* shiny animated section title in credits */
 .loader-title { background: linear-gradient(90deg,#6c5ce7,#00cec9,#ff5fa2,#ffd84a,#6c5ce7); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: mg2-flow 8s linear infinite; }
 /* subtle pulse on the NEW-ish tabs */
-.tab.hot::after { content:"NEW"; position:absolute; top:-7px; right:-7px; background:#ff5fa2; color:#fff; font-size:.52rem; font-weight:900; padding:1px 5px; border-radius:8px; }
+.tab.hot::after { content:"NEW"; position:absolute; top:-8px; right:-4px; background:#ff5fa2; color:#fff; font-size:.52rem; font-weight:900; padding:1px 5px; border-radius:8px; z-index:3; pointer-events:none; }
 
 /* ===== Duels ===== */
 .duels-tab { background: linear-gradient(135deg,#ff5a6e,#ff9a3c); color:#fff; font-weight:800; }
@@ -976,9 +976,7 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 @media (max-width:560px){.suggest-banner-text{font-size:.82rem}.suggest-btn{font-size:.8rem;padding:6px 10px}}
 
 /* ===== 20-tab scrollable strip ===== */
-.tabs{display:flex;flex-wrap:nowrap;gap:6px;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;padding-bottom:4px}
-.tabs::-webkit-scrollbar{height:6px}
-.tabs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:3px}
+.tabs{display:flex;flex-wrap:wrap;column-gap:6px;row-gap:18px;flex:1 1 100%;min-width:0;align-content:flex-start;padding-top:10px}
 .tabs .tab{flex:0 0 auto;white-space:nowrap}
 .x-tab{background:linear-gradient(135deg,#2a2f45,#1c2030);color:#fff;font-weight:700}
 .x-tab:hover{background:linear-gradient(135deg,#6c5ce7,#00cec9)}
@@ -1340,3 +1338,19 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .mw-hat{top:-42%;font-size:0.9em}
 .mw-face{top:28%;font-size:0.7em}
 .mw-neck{bottom:-6%;font-size:0.65em}
+
+/* ===== Sound settings ===== */
+.snd-row{display:flex;align-items:center;gap:12px;justify-content:space-between;background:#161a30;border-radius:12px;padding:12px 14px;margin:8px 0}
+.snd-row input[type=range]{flex:1}
+/* ===== Lootboxes ===== */
+.loot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.loot-crate{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px;border-radius:16px;border:2px solid rgba(255,255,255,.12);background:#1b2140;color:var(--text);cursor:pointer;transition:transform .12s}
+.loot-crate:hover{transform:translateY(-3px);border-color:var(--accent)}
+.loot-ic{font-size:2.6rem}.loot-nm{font-weight:800;font-size:.9rem}.loot-cost{color:#ffd34a;font-weight:700;font-size:.85rem}
+.loot-open{text-align:center;padding:20px 0}
+.loot-box{font-size:5rem;display:inline-block}
+.loot-box.shake{animation:lootShake .5s ease-in-out 2}
+@keyframes lootShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg) scale(1.05)}75%{transform:rotate(12deg) scale(1.05)}}
+.loot-reward{font-size:5rem;animation:lootPop .5s cubic-bezier(.2,1.5,.4,1)}
+@keyframes lootPop{0%{transform:scale(0)}100%{transform:scale(1)}}
+.loot-label{margin:8px 0 14px}

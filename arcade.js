@@ -15,6 +15,9 @@
   }
 
   function canvas(host, w, h, cls) { const c = document.createElement("canvas"); c.width = w; c.height = h; c.className = "ar-canvas " + (cls || ""); host.appendChild(c); return c; }
+  let MAXIMG = null;
+  function maxImg() { if (!MAXIMG) { MAXIMG = new Image(); MAXIMG.src = MAXsrc(); } return MAXIMG; }
+  function drawMax(x, cx, cy, r) { const img = maxImg(); if (img && img.complete && img.naturalWidth) { x.save(); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.closePath(); x.clip(); x.drawImage(img, cx - r, cy - r, r * 2, r * 2); x.restore(); } else { x.fillStyle = "#fff"; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); } }
   function hintLine(host, text) { const p = document.createElement("p"); p.className = "ar-hint"; p.innerHTML = text; host.appendChild(p); return p; }
 
   // ---------- cleanup registry (per active game) ----------
@@ -111,7 +114,9 @@
       refreshTreats
     };
     try { g.play(body, api); } catch (e) { body.innerHTML = "<p class='ar-hint'>Oops, that game hiccuped. Go back and try again.</p>"; }
+    maxwellMascot(body);
   }
+  function maxwellMascot(container) { if (!container || container.querySelector(".game-maxwell")) return; const im = document.createElement("img"); im.className = "game-maxwell"; im.src = MAXsrc(); im.alt = "Maxwell"; container.appendChild(im); }
 
   function finish(g, score, opts) {
     cleanup();
@@ -1077,7 +1082,7 @@
           x.fillStyle = "#101828"; x.fillRect(0, 0, W, H);
           x.font = "15px system-ui, 'Segoe UI Emoji'"; x.textAlign = "center"; x.textBaseline = "middle";
           x.fillText("🐟", food.x * SZ + SZ / 2, food.y * SZ + SZ / 2);
-          snake.forEach((s, i) => { x.fillStyle = i === 0 ? "#3ee08f" : "#6c5ce7"; x.fillRect(s.x * SZ + 1, s.y * SZ + 1, SZ - 2, SZ - 2); });
+          snake.forEach((s, i) => { if (i === 0) { drawMax(x, s.x * SZ + SZ / 2, s.y * SZ + SZ / 2, SZ / 2); } else { x.fillStyle = "#6c5ce7"; x.fillRect(s.x * SZ + 1, s.y * SZ + 1, SZ - 2, SZ - 2); } });
           x.fillStyle = "#fff"; x.font = "bold 16px system-ui"; x.textAlign = "left"; x.textBaseline = "alphabetic"; x.fillText("🐟 " + score, 8, 20);
         }
         function loop(t) { if (!last) last = t; acc += t - last; last = t; if (acc > 110 && !over) { acc = 0; step(); } if (!over) { draw(); raf = requestAnimationFrame(loop); } }
@@ -1132,8 +1137,8 @@
           }
           x.fillStyle = "#e05a6e"; x.fillRect(12, ay - PH / 2, PW, PH);
           x.fillStyle = "#3ee08f"; x.fillRect(W - 12 - PW, py - PH / 2, PW, PH);
-          x.fillStyle = "#fff"; x.beginPath(); x.arc(bx, by, 6, 0, 7); x.fill();
-          x.font = "bold 24px system-ui"; x.textAlign = "center"; x.fillText(cpu + "   " + me, W / 2, 30);
+          drawMax(x, bx, by, 10);
+          x.fillStyle = "#fff"; x.font = "bold 24px system-ui"; x.textAlign = "center"; x.fillText(cpu + "   " + me, W / 2, 30);
           raf = requestAnimationFrame(loop);
         }
         function end() { over = true; cancelAnimationFrame(raf); api.boom(); const pts = me >= 5 ? 120 : 15; api.finish(pts, { scoreForBest: pts, title: me >= 5 ? "You win! 🎉" : "Maxwell wins 😼", line: "Final: Maxwell " + cpu + " — " + me + " you" }); }
@@ -1276,6 +1281,152 @@
         round(); msg.textContent = "Score: 0 · ⏱️ 25";
         const clock = setInterval(() => { time--; msg.textContent = "Score: " + score + " · ⏱️ " + time; if (time <= 0) { over = true; clearInterval(clock); api.finish(score, { title: "Time!", line: "Score: <b>" + score + "</b>" }); } }, 1000);
         api.onClean(() => clearInterval(clock));
+      }
+    },
+
+    // ---------- Maxwell Kart ----------
+    {
+      key: "kart", name: "Maxwell Kart", icon: "🏁", isNew: true, reward: (s) => s ? 60 : 10,
+      play(host, api) {
+        const W = 300, H = 460, LANES = 3, LW = W / LANES; const c = canvas(host, W, H); const x = c.getContext("2d"); const cat = maxImg();
+        hintLine(host, "Race to 100%! <b>← →</b> or <b>A/D</b> to switch lanes. Grab ⚡, dodge 🛢️!");
+        let lane = 1, prog = 0, cpu = 0, items = [], over = false, raf, frame = 0, dashY = 0, boost = 0;
+        function loop() {
+          frame++; dashY = (dashY + 5 + boost) % 44;
+          x.fillStyle = "#2a2f3c"; x.fillRect(0, 0, W, H);
+          x.strokeStyle = "rgba(255,255,255,.3)"; x.setLineDash([22, 22]); x.lineWidth = 4;
+          for (let i = 1; i < LANES; i++) { x.beginPath(); x.moveTo(i * LW, dashY - 44); x.lineTo(i * LW, H); x.stroke(); }
+          x.setLineDash([]);
+          if (!over) {
+            prog += (0.18 + boost * 0.12); cpu += 0.16 + Math.sin(frame / 40) * 0.03; if (boost > 0) boost -= 0.04;
+            frame % 28 === 0 && items.push({ lane: Math.random() * LANES | 0, y: -30, type: Math.random() < 0.45 ? "boost" : "oil" });
+            items.forEach((it) => it.y += 4 + boost); items = items.filter((it) => it.y < H + 30);
+            const py = H - 70;
+            items.forEach((it) => { if (it.hit) return; if (it.lane === lane && it.y > py - 26 && it.y < py + 26) { it.hit = 1; if (it.type === "boost") { boost = 3; prog += 4; api.tone(760, 0.06); } else { prog = Math.max(0, prog - 5); api.tone(180, 0.1, "sawtooth"); } } });
+            if (prog >= 100) { over = true; cancelAnimationFrame(raf); return api.finish(1, { title: "🏁 You WON the race!", line: "First place! 🥇" }); }
+            if (cpu >= 100) { over = true; cancelAnimationFrame(raf); return api.finish(0, { title: "🏁 CPU won", line: "So close! Try again." }); }
+          }
+          x.font = "22px system-ui,'Segoe UI Emoji'"; x.textAlign = "center"; x.textBaseline = "middle";
+          items.forEach((it) => { if (!it.hit) x.fillText(it.type === "boost" ? "⚡" : "🛢️", it.lane * LW + LW / 2, it.y); });
+          drawMax(x, lane * LW + LW / 2, H - 70, 18);
+          // progress bars
+          x.fillStyle = "#111"; x.fillRect(8, 8, 12, H - 16); x.fillRect(W - 20, 8, 12, H - 16);
+          x.fillStyle = "#3ee08f"; x.fillRect(8, 8 + (H - 16) * (1 - prog / 100), 12, (H - 16) * prog / 100);
+          x.fillStyle = "#ff5fa2"; x.fillRect(W - 20, 8 + (H - 16) * (1 - cpu / 100), 12, (H - 16) * cpu / 100);
+          x.fillStyle = "#fff"; x.font = "bold 14px system-ui"; x.textAlign = "center"; x.fillText("YOU", 14, H - 2); x.fillText("CPU", W - 14, H - 2);
+          if (!over) raf = requestAnimationFrame(loop);
+        }
+        const kd = (e) => { const k = e.key.toLowerCase(); if (k === "arrowleft" || k === "a") { lane = Math.max(0, lane - 1); e.preventDefault(); } else if (k === "arrowright" || k === "d") { lane = Math.min(LANES - 1, lane + 1); e.preventDefault(); } };
+        document.addEventListener("keydown", kd);
+        c.addEventListener("pointerdown", (e) => { const r = c.getBoundingClientRect(); lane = Math.max(0, Math.min(LANES - 1, Math.floor((e.clientX - r.left) * (W / r.width) / LW))); });
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); });
+        loop();
+      }
+    },
+
+    // ---------- Maxwell Platformer ----------
+    {
+      key: "platformer", name: "Maxwell Platformer", icon: "🏃", isNew: true, reward: (s) => s * 5,
+      play(host, api) {
+        const W = 480, H = 320; const c = canvas(host, W, H); const x = c.getContext("2d"); const cat = maxImg();
+        hintLine(host, "<b>← →</b> move, <b>Space / ↑</b> jump. Grab 🪙, reach the flag 🚩!");
+        const G = 0.5, JUMP = -10.5, SPD = 3.2, PWd = 22, PHt = 26, WORLD = 1080;
+        const plats = [{ x: 0, y: 290, w: WORLD, h: 30 }, { x: 180, y: 240, w: 90, h: 14 }, { x: 320, y: 200, w: 90, h: 14 }, { x: 480, y: 240, w: 90, h: 14 }, { x: 640, y: 185, w: 110, h: 14 }, { x: 820, y: 240, w: 120, h: 14 }];
+        let coins = [{ x: 210, y: 215 }, { x: 355, y: 175 }, { x: 515, y: 215 }, { x: 685, y: 160 }, { x: 870, y: 215 }];
+        const goal = { x: 1020, y: 262 };
+        let px = 40, py = 250, vx = 0, vy = 0, onGround = false, score = 0, over = false, raf, camX = 0; const keys = {};
+        function hit(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+        function loop() {
+          if (!over) {
+            vx = 0; if (keys["arrowleft"] || keys["a"]) vx = -SPD; if (keys["arrowright"] || keys["d"]) vx = SPD;
+            px += vx; plats.forEach((p) => { if (hit({ x: px, y: py, w: PWd, h: PHt }, p)) { if (vx > 0) px = p.x - PWd; else if (vx < 0) px = p.x + p.w; } });
+            px = Math.max(0, Math.min(WORLD - PWd, px));
+            vy += G; py += vy; onGround = false;
+            plats.forEach((p) => { if (hit({ x: px, y: py, w: PWd, h: PHt }, p)) { if (vy > 0) { py = p.y - PHt; vy = 0; onGround = true; } else if (vy < 0) { py = p.y + p.h; vy = 0; } } });
+            coins = coins.filter((cn) => { if (Math.hypot((px + PWd / 2) - cn.x, (py + PHt / 2) - cn.y) < 22) { score++; api.tone(700, 0.05); return false; } return true; });
+            if (Math.abs((px + PWd / 2) - goal.x) < 28 && Math.abs((py + PHt / 2) - goal.y) < 60) { over = true; cancelAnimationFrame(raf); return api.finish(score, { title: "🏁 Level Complete!", line: "Coins: <b>" + score + "</b> / 5", scoreForBest: score }); }
+            camX = Math.max(0, Math.min(px - W / 2, WORLD - W));
+          }
+          x.fillStyle = "#6cc3ff"; x.fillRect(0, 0, W, H);
+          x.save(); x.translate(-camX, 0);
+          plats.forEach((p) => { x.fillStyle = p.y === 290 ? "#3a7d44" : "#8a6a3a"; x.fillRect(p.x, p.y, p.w, p.h); x.fillStyle = "#4e9d58"; if (p.y !== 290) x.fillRect(p.x, p.y, p.w, 4); });
+          x.font = "20px system-ui,'Segoe UI Emoji'"; x.textAlign = "center"; x.textBaseline = "middle"; coins.forEach((cn) => x.fillText("🪙", cn.x, cn.y));
+          x.font = "28px system-ui,'Segoe UI Emoji'"; x.fillText("🚩", goal.x, goal.y - 20);
+          drawMax(x, px + PWd / 2, py + PHt / 2, 15);
+          x.restore();
+          x.fillStyle = "#fff"; x.font = "bold 18px system-ui"; x.textAlign = "left"; x.textBaseline = "alphabetic"; x.fillText("🪙 " + score + " / 5", 10, 24);
+          if (!over) raf = requestAnimationFrame(loop);
+        }
+        const kd = (e) => { const k = e.key.toLowerCase(); if (["arrowleft", "arrowright", "a", "d", "arrowup", "w", " "].includes(k)) { keys[k] = true; if ((k === "arrowup" || k === "w" || k === " ") && onGround) { vy = JUMP; api.tone(500, 0.06); } e.preventDefault(); } };
+        const ku = (e) => keys[e.key.toLowerCase()] = false;
+        document.addEventListener("keydown", kd); document.addEventListener("keyup", ku);
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku); });
+        loop();
+      }
+    },
+
+    // ---------- Maxwell Pinball ----------
+    {
+      key: "pinball", name: "Maxwell Pinball", icon: "🪩", isNew: true, reward: (s) => Math.floor(s / 50),
+      play(host, api) {
+        const W = 360, H = 460; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "Keep Maxwell alive with your <b>paddle</b> (mouse / <b>← →</b>). Bump the bumpers! 3 balls.");
+        let px = W / 2, bx = W / 2, by = 80, vx = 2, vy = 0, score = 0, balls = 3, over = false, raf; const keys = {}; const PW = 84;
+        const bumpers = [{ x: 90, y: 150, r: 24, c: "#ff5fa2" }, { x: 270, y: 150, r: 24, c: "#3ee08f" }, { x: 180, y: 108, r: 26, c: "#ffd34a" }, { x: 115, y: 250, r: 20, c: "#6c5ce7" }, { x: 245, y: 250, r: 20, c: "#4ea8ff" }];
+        function reset() { bx = W / 2; by = 80; vx = (Math.random() * 2 - 1) * 2; vy = 1.2; }
+        function loop() {
+          x.fillStyle = "#0c1024"; x.fillRect(0, 0, W, H);
+          if (!over) {
+            if (keys["arrowleft"]) px -= 8; if (keys["arrowright"]) px += 8; px = Math.max(PW / 2, Math.min(W - PW / 2, px));
+            vy += 0.14; bx += vx; by += vy;
+            if (bx < 10) { bx = 10; vx = Math.abs(vx); } if (bx > W - 10) { bx = W - 10; vx = -Math.abs(vx); }
+            if (by < 10) { by = 10; vy = Math.abs(vy); }
+            bumpers.forEach((bp) => { const dx = bx - bp.x, dy = by - bp.y, d = Math.hypot(dx, dy) || 1; if (d < bp.r + 8) { const nx = dx / d, ny = dy / d; bx = bp.x + nx * (bp.r + 8); by = bp.y + ny * (bp.r + 8); const dot = vx * nx + vy * ny; vx = (vx - 2 * dot * nx) + nx * 1.5; vy = (vy - 2 * dot * ny) + ny * 1.5; score += 100; bp.hit = 6; api.tone(560, 0.04); } if (bp.hit) bp.hit--; });
+            if (by > H - 28 && by < H - 8 && bx > px - PW / 2 && bx < px + PW / 2 && vy > 0) { vy = -Math.abs(vy) * 1.03 - 1; vx += (bx - px) * 0.08; api.tone(400, 0.05); }
+            if (by > H + 10) { balls--; if (balls <= 0) { over = true; cancelAnimationFrame(raf); return api.finish(score, { title: score >= 2000 ? "Pinball Wizard! 🪩" : "Game Over", line: "Score: <b>" + score + "</b>" }); } reset(); }
+          }
+          bumpers.forEach((bp) => { x.fillStyle = bp.c; x.shadowColor = bp.c; x.shadowBlur = bp.hit ? 22 : 10; x.beginPath(); x.arc(bp.x, bp.y, bp.r, 0, 7); x.fill(); x.shadowBlur = 0; });
+          x.fillStyle = "#e0e6ff"; x.fillRect(px - PW / 2, H - 16, PW, 11);
+          drawMax(x, bx, by, 9);
+          x.fillStyle = "#fff"; x.font = "bold 18px system-ui"; x.textAlign = "left"; x.fillText("Score " + score, 10, 24); x.textAlign = "right"; x.fillText("🔴".repeat(balls), W - 10, 24);
+          if (!over) raf = requestAnimationFrame(loop);
+        }
+        const kd = (e) => { const k = e.key.toLowerCase(); if (["arrowleft", "arrowright"].includes(k)) { keys[k] = true; e.preventDefault(); } }; const ku = (e) => keys[e.key.toLowerCase()] = false;
+        document.addEventListener("keydown", kd); document.addEventListener("keyup", ku);
+        const mv = (e) => { const r = c.getBoundingClientRect(); px = (e.clientX - r.left) * (W / r.width); }; c.addEventListener("pointermove", mv);
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku); });
+        reset(); loop();
+      }
+    },
+
+    // ---------- Maxwell Beat (rhythm) ----------
+    {
+      key: "rhythm", name: "Maxwell Beat", icon: "🎵", isNew: true, reward: (s) => Math.floor(s / 30),
+      play(host, api) {
+        const LANES = 4, W = 320, H = 440, LW = W / LANES; const c = canvas(host, W, H); const x = c.getContext("2d");
+        hintLine(host, "Hit the notes on the line! Keys <b>D F J K</b> (or tap the lanes).");
+        const KEYS = ["d", "f", "j", "k"], HITY = H - 54, COL = ["#ff5fa2", "#3ee08f", "#ffd34a", "#4ea8ff"];
+        let notes = [], score = 0, combo = 0, best = 0, over = false, raf, t = 0, idx = 0; const flash = [0, 0, 0, 0];
+        const pat = [0, 1, 2, 3, 0, 2, 1, 3, 0, 0, 1, 1, 2, 2, 3, 3, 0, 2, 1, 3, 3, 2, 1, 0, 1, 2, 0, 3]; const chart = pat.map((l, i) => ({ lane: l, at: 50 + i * 24 }));
+        function loop() {
+          t++; x.fillStyle = "#0a0e1c"; x.fillRect(0, 0, W, H);
+          for (let i = 0; i < LANES; i++) { x.fillStyle = flash[i] > 0 ? "rgba(108,92,231," + flash[i] / 12 + ")" : "rgba(255,255,255,0.03)"; x.fillRect(i * LW, 0, LW - 2, H); if (flash[i] > 0) flash[i]--; }
+          x.strokeStyle = "#6c5ce7"; x.lineWidth = 3; x.beginPath(); x.moveTo(0, HITY); x.lineTo(W, HITY); x.stroke();
+          while (idx < chart.length && chart[idx].at <= t) { notes.push({ lane: chart[idx].lane, y: -20 }); idx++; }
+          notes.forEach((n) => n.y += 4.6);
+          notes = notes.filter((n) => { if (n.y > HITY + 42) { combo = 0; return false; } return true; });
+          notes.forEach((n) => { x.fillStyle = COL[n.lane]; if (x.roundRect) { x.beginPath(); x.roundRect(n.lane * LW + 8, n.y - 10, LW - 18, 20, 6); x.fill(); } else x.fillRect(n.lane * LW + 8, n.y - 10, LW - 18, 20); });
+          x.fillStyle = "#fff"; x.font = "bold 18px system-ui"; x.textAlign = "center"; for (let i = 0; i < LANES; i++) x.fillText(KEYS[i].toUpperCase(), i * LW + LW / 2, HITY + 32);
+          x.textAlign = "left"; x.fillText("Score " + score, 8, 24); x.textAlign = "right"; x.fillText("Combo " + combo, W - 8, 24);
+          if (idx >= chart.length && notes.length === 0 && !over) { over = true; cancelAnimationFrame(raf); return api.finish(score, { title: "Song complete! 🎶", line: "Score <b>" + score + "</b> · Best combo <b>" + best + "</b>" }); }
+          if (!over) raf = requestAnimationFrame(loop);
+        }
+        function hit(lane) { if (over) return; flash[lane] = 12; let bestN = null, bd = 999; notes.forEach((n) => { if (n.lane === lane) { const d = Math.abs(n.y - HITY); if (d < bd) { bd = d; bestN = n; } } }); if (bestN && bd < 42) { notes = notes.filter((n) => n !== bestN); combo++; best = Math.max(best, combo); score += (bd < 16 ? 100 : 50) * (1 + Math.floor(combo / 10)); api.tone(500 + lane * 80, 0.05); } else { combo = 0; api.tone(160, 0.08, "sawtooth"); } }
+        const kd = (e) => { const l = KEYS.indexOf(e.key.toLowerCase()); if (l >= 0) { e.preventDefault(); hit(l); } };
+        document.addEventListener("keydown", kd);
+        const pd = (e) => { const r = c.getBoundingClientRect(); const lx = (e.clientX - r.left) * (W / r.width); hit(Math.max(0, Math.min(LANES - 1, Math.floor(lx / LW)))); }; c.addEventListener("pointerdown", pd);
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); });
+        loop();
       }
     },
 
