@@ -7,7 +7,47 @@
   <meta name="referrer" content="no-referrer">
   <title>MaxwellGames</title>
   <link rel="icon" type="image/png" href="maxwell.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6c5ce7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="maxwell.png">
   <link rel="stylesheet" href="style.css">
+  <script>
+    /* Offline support: cache the whole site so it works with no internet (bus mode!) */
+    (function () {
+      function pill() {
+        var p = document.getElementById("offPill");
+        if (!p) { p = document.createElement("div"); p.id = "offPill"; p.className = "off-pill"; document.body.appendChild(p); }
+        return p;
+      }
+      function show(txt, cls, autohide) {
+        var p = pill(); p.textContent = txt; p.className = "off-pill show " + cls;
+        clearTimeout(p._t); if (autohide) p._t = setTimeout(function () { p.classList.remove("show"); }, 3500);
+      }
+      function updateOnline() {
+        if (navigator.onLine) { var p = document.getElementById("offPill"); if (p && p.classList.contains("is-off")) p.classList.remove("show"); }
+        else { show("📴 Offline mode — playing from cache", "is-off", false); }
+      }
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("sw.js").then(function () {
+            navigator.serviceWorker.ready.then(function () { if (navigator.onLine) show("✓ Ready to play offline!", "is-ready", true); updateOnline(); });
+          }).catch(function () {});
+        });
+        window.addEventListener("online", updateOnline);
+        window.addEventListener("offline", updateOnline);
+      }
+    })();
+  </script>
+  <!-- ===== Analytics: paste YOUR OWN IDs below, then it turns on automatically ===== -->
+  <script>
+    window.MG_ANALYTICS = {
+      ga: "G-Z5PRGNES26",   // <- Google Analytics 4 "Measurement ID" (looks like G-ABC123XYZ)
+      clarity: "xxxxxxxxxx" // <- Microsoft Clarity "Project ID" (paste yours here to turn Clarity on too)
+    };
+  </script>
+  <script src="analytics.js"></script>
 </head>
 <body>
   <!-- Loading screen -->

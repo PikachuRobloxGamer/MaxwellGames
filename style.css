@@ -1354,3 +1354,16 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .loot-reward{font-size:5rem;animation:lootPop .5s cubic-bezier(.2,1.5,.4,1)}
 @keyframes lootPop{0%{transform:scale(0)}100%{transform:scale(1)}}
 .loot-label{margin:8px 0 14px}
+
+/* ===== Offline-ready indicator pill ===== */
+.off-pill{position:fixed;left:14px;bottom:14px;z-index:95;padding:9px 16px;border-radius:22px;font-weight:800;font-size:.85rem;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.4);opacity:0;transform:translateY(12px);transition:opacity .35s,transform .35s;pointer-events:none;max-width:86vw}
+.off-pill.show{opacity:1;transform:translateY(0)}
+.off-pill.is-ready{background:linear-gradient(135deg,#2e9e5b,#3ee08f);color:#06210f}
+.off-pill.is-off{background:linear-gradient(135deg,#e8871e,#ff5fa2)}
+@media(max-width:760px){.off-pill{left:10px;bottom:68px;font-size:.78rem;padding:8px 12px}}
+
+/* ===== Meme template picker ===== */
+.meme-templates{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
+.meme-tpl{width:52px;height:52px;padding:0;border-radius:10px;border:2px solid rgba(255,255,255,.15);background:#1b2140;cursor:pointer;overflow:hidden}
+.meme-tpl img{width:100%;height:100%;object-fit:cover;display:block}
+.meme-tpl.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}

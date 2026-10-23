@@ -48,12 +48,31 @@
   // ---------------- MEME MAKER ----------------
   function openMemes() {
     const p = U.panel("memeOv", "😹 Meme Maker", "meme-head");
-    const CAPS = [["WHEN YOU FIND", "MAXWELLGAMES"], ["ME AND THE BOYS", "PLAYING AT SCHOOL"], ["TEACHER: NO GAMES", "ME:"], ["WHEN THE :3", "IS GOLDEN"], ["NOBODY:", "MAXWELL: :3"]];
+    const CAPS = [["WHEN YOU FIND", "MAXWELLGAMES"], ["ME AND THE BOYS", "PLAYING AT SCHOOL"], ["TEACHER: NO GAMES", "ME:"], ["WHEN THE :3", "IS GOLDEN"], ["NOBODY:", "MAXWELL: :3"], ["MONDAY MORNINGS", "BE LIKE"], ["WHEN SOMEONE SAYS", "CATS ARE MID"], ["POV: YOU LOSE", "THE RACE"], ["MY FACE WHEN", "HOMEWORK"], ["IT'S FREE", "REAL ESTATE"]];
+    const TEMPLATES = [
+      { n: "Maxwell", src: "maxwell.png" },
+      { n: "Happy", src: "images/memes/happy.png" },
+      { n: "Grumpy", src: "images/memes/grumpy.png" },
+      { n: "Shocked", src: "images/memes/shocked.png" },
+      { n: "Crying", src: "images/memes/crying.png" },
+      { n: "Cool", src: "images/memes/cool.png" },
+      { n: "Sleepy", src: "images/memes/sleepy.png" },
+      { n: "Judging", src: "images/memes/judging.png" },
+      { n: "Love", src: "images/memes/love.png" },
+      { n: "Derp", src: "images/memes/derp.png" },
+      { n: "King", src: "images/maxwell-king.png" },
+      { n: "Pikachu", src: "images/maxwell-pikachu.png" }
+    ];
+    let cur = 0;
     p.body.innerHTML = `
-      <div class="meme-card" id="memeCard"><div class="meme-top" id="memeTop">TOP TEXT</div><img src="maxwell.png" class="meme-img"><div class="meme-bot" id="memeBot">BOTTOM TEXT</div></div>
+      <div class="meme-card" id="memeCard"><div class="meme-top" id="memeTop">TOP TEXT</div><img src="${TEMPLATES[0].src}" class="meme-img" id="memeImg" alt="meme"><div class="meme-bot" id="memeBot">BOTTOM TEXT</div></div>
+      <p class="ar-hint" style="margin:8px 0 4px">Pick a cat 👇</p>
+      <div class="meme-templates" id="memeTpls"></div>
       <div class="meme-controls"><input class="sball-input" id="memeT" placeholder="Top text"><input class="sball-input" id="memeB" placeholder="Bottom text"></div>
       <button class="btn asc-btn" id="memeRand">🎲 Random Caption</button>
-      <p class="ar-hint">Make a Maxwell meme, then screenshot it to share! 📸</p>`;
+      <p class="ar-hint">Pick a cat, add your text, then screenshot it to share! 📸</p>`;
+    const tpls = p.body.querySelector("#memeTpls");
+    TEMPLATES.forEach((t, i) => { const b = document.createElement("button"); b.className = "meme-tpl" + (i === 0 ? " on" : ""); b.title = t.n; b.innerHTML = '<img src="' + t.src + '" alt="' + t.n + '">'; b.onclick = () => { cur = i; p.body.querySelector("#memeImg").src = t.src; tpls.querySelectorAll(".meme-tpl").forEach((e) => e.classList.remove("on")); b.classList.add("on"); U.tone(560, 0.04); }; tpls.appendChild(b); });
     function upd() { p.body.querySelector("#memeTop").textContent = (p.body.querySelector("#memeT").value || "TOP TEXT").toUpperCase(); p.body.querySelector("#memeBot").textContent = (p.body.querySelector("#memeB").value || "BOTTOM TEXT").toUpperCase(); }
     p.body.querySelector("#memeT").oninput = upd; p.body.querySelector("#memeB").oninput = upd;
     p.body.querySelector("#memeRand").onclick = () => { const c = CAPS[Math.random() * CAPS.length | 0]; p.body.querySelector("#memeT").value = c[0]; p.body.querySelector("#memeB").value = c[1]; upd(); U.tone(600, 0.05); };
