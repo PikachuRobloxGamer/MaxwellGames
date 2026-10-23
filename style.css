@@ -1263,3 +1263,80 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .cp-upg{display:flex;align-items:center;gap:8px;justify-content:space-between;background:#1b2140;border-radius:10px;padding:10px;margin-bottom:8px;font-size:.82rem}
 .cp-upg button{white-space:nowrap;padding:8px 10px}
 @media(max-width:760px){.cp-fab{width:52px;height:52px;font-size:1.5rem;right:12px;bottom:12px}.cp-pop{right:12px;bottom:74px}}
+
+/* ===== Maxwell IN every game ===== */
+.arcade-body.game, .battle-body, .mgui-body { position: relative; }
+.game-maxwell{position:absolute;right:10px;bottom:10px;width:50px;height:auto;z-index:6;pointer-events:none;filter:drop-shadow(0 2px 7px rgba(0,0,0,.55));animation:gmBob 2s ease-in-out infinite}
+.game-maxwell::after{content:"";}
+@keyframes gmBob{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-7px) rotate(5deg)}}
+@media(max-width:760px){.game-maxwell{width:38px;right:6px;bottom:6px}}
+
+/* ===== Duels Solo/2-player toggle ===== */
+.duel-modes{display:flex;gap:8px;justify-content:center;margin-bottom:10px}
+.duel-mode{padding:9px 18px;border-radius:22px;border:2px solid rgba(255,255,255,.15);background:#141830;color:var(--text);font-weight:800;cursor:pointer}
+.duel-mode.on{border-color:var(--accent);background:var(--accent);color:#fff}
+
+/* ===== Fish Factory ===== */
+.fac-prestige{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#161a30;border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:.9rem}
+.fac-list{display:flex;flex-direction:column;gap:8px}
+.fac-gen{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#1b2140;border-radius:12px;padding:10px 14px}
+.fac-info{font-size:.9rem}.fac-info small{color:var(--muted)}
+.fac-count{color:var(--accent);font-weight:800}
+.fac-buy{white-space:nowrap}.fac-buy.dim{opacity:.5}
+/* ===== Crafting ===== */
+.craft-list{display:flex;flex-direction:column;gap:10px}
+.craft-card{background:#1b2140;border-radius:12px;padding:12px 14px}
+.craft-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.craft-reward{color:#ffd34a;font-size:.82rem;font-weight:700}
+.craft-ins{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.craft-in{font-size:.82rem;padding:3px 8px;border-radius:10px;background:#0d1020}
+.craft-in.ok{color:#7dffb8}.craft-in.no{color:#ff8a9a}
+.craft-go{width:100%}.craft-go.dim{opacity:.5}
+/* ===== Boss Battles ===== */
+.boss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.boss-tile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:14px;border:2px solid rgba(255,255,255,.1);background:#1b2140;color:var(--text);cursor:pointer}
+.boss-tile.won{border-color:#3ee08f}.boss-tile.locked{opacity:.5;cursor:not-allowed}
+.boss-ic{font-size:2.2rem}.boss-nm{font-weight:800;font-size:.9rem;text-align:center}.boss-sub{font-size:.72rem;color:var(--muted);text-align:center}
+.boss-fight{text-align:center;position:relative}
+.boss-sprite{font-size:5rem;margin:10px 0;display:inline-block;transition:transform .08s}
+.boss-sprite.hit{transform:scale(1.15) rotate(6deg);filter:brightness(1.6)}
+.boss-hpwrap{height:22px;background:#2a0f16;border-radius:12px;overflow:hidden;margin:8px auto;max-width:340px}
+.boss-hp{height:100%;background:linear-gradient(90deg,#ff4d4d,#ff8a4d);transition:width .12s}
+.boss-stat{font-size:.9rem}
+.boss-attack{font-size:1.2rem;padding:14px 40px;margin-top:6px}
+.boss-crit{position:absolute;left:50%;top:30%;transform:translateX(-50%);color:#ffd34a;font-weight:900;font-size:1.3rem;animation:bossCrit .6s ease-out forwards;pointer-events:none}
+@keyframes bossCrit{to{transform:translate(-50%,-30px);opacity:0}}
+/* ===== Battle Pass ===== */
+.pass-prog{height:14px;background:#0d1020;border-radius:8px;overflow:hidden;margin:4px 0}
+.pass-prog-fill{height:100%;background:linear-gradient(90deg,#6c5ce7,#a06bff);transition:width .4s}
+.pass-track{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.pass-tier{display:flex;align-items:center;gap:10px;background:#161a30;border-radius:12px;padding:10px 14px;opacity:.55}
+.pass-tier.reached{opacity:1;border-left:3px solid var(--accent)}
+.pass-tier.claimed{opacity:.8;border-left:3px solid #3ee08f}
+.pass-ic{font-size:1.5rem}.pass-lbl{flex:1;font-weight:700;font-size:.9rem}.pass-xp{font-size:.78rem;color:var(--muted)}
+.pass-check{color:#3ee08f;font-weight:800;font-size:.82rem}.pass-lock{opacity:.6}
+
+/* ===== Treat Exchange ===== */
+.exch-price{text-align:center;font-size:2rem;font-weight:900;margin:6px 0}
+.exch-cv{display:block;margin:0 auto;border-radius:10px;background:#0d1020;max-width:100%}
+.exch-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.exch-btns .btn{flex:1;min-width:70px}
+/* ===== Dress Up ===== */
+.dress-preview{position:relative;width:140px;height:140px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center}
+.dp-cat{width:110px;height:auto;border-radius:12px}
+.dp-hat{position:absolute;top:-4px;left:50%;transform:translateX(-50%);font-size:2.4rem;z-index:2}
+.dp-face{position:absolute;top:52px;left:50%;transform:translateX(-50%);font-size:1.8rem;z-index:2}
+.dp-neck{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:1.8rem;z-index:2}
+.dress-slot{margin:8px 0}
+.dress-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.dress-item{position:relative;min-width:50px;height:50px;font-size:1.6rem;border-radius:12px;border:2px solid rgba(255,255,255,.12);background:#1b2140;color:#fff;cursor:pointer}
+.dress-item.on{border-color:var(--accent);background:var(--accent)}
+.dress-item.locked{opacity:.75}
+.dress-item small{position:absolute;bottom:1px;right:4px;font-size:.6rem;color:#ffd34a}
+/* Maxwell outfit overlay on the logo */
+.logo{position:relative}
+.mw-outfit{position:absolute;pointer-events:none;z-index:3}
+.mw-outfit span{position:absolute;left:50%;transform:translateX(-50%);line-height:1}
+.mw-hat{top:-42%;font-size:0.9em}
+.mw-face{top:28%;font-size:0.7em}
+.mw-neck{bottom:-6%;font-size:0.65em}

@@ -1,6 +1,14 @@
 {
   "games": [
     {
+      "id": "undertale",
+      "title": "Undertale",
+      "category": "RPG",
+      "thumbnail": "images/undertale.png",
+      "description": "The classic RPG where nobody has to die. Arrow keys to move, Z to confirm, X to cancel.",
+      "iframe": "https://pluhmath.github.io/undertale.html"
+    },
+    {
       "id": "deltarune",
       "title": "Deltarune",
       "category": "RPG",
