@@ -1286,40 +1286,86 @@
 
     // ---------- Maxwell Kart ----------
     {
-      key: "kart", name: "Maxwell Kart", icon: "🏁", isNew: true, reward: (s) => s ? 60 : 10,
+      key: "kart", name: "Maxwell Kart 3D", icon: "🏁", isNew: true, reward: (s) => Math.max(10, (4 - s) * 25),
       play(host, api) {
-        const W = 300, H = 460, LANES = 3, LW = W / LANES; const c = canvas(host, W, H); const x = c.getContext("2d"); const cat = maxImg();
-        hintLine(host, "Race to 100%! <b>← →</b> or <b>A/D</b> to switch lanes. Grab ⚡, dodge 🛢️!");
-        let lane = 1, prog = 0, cpu = 0, items = [], over = false, raf, frame = 0, dashY = 0, boost = 0;
+        const W = 480, H = 320; const c = canvas(host, W, H); const x = c.getContext("2d"); const cat = maxImg();
+        hintLine(host, "<b>↑</b> gas · <b>↓</b> brake · <b>← →</b> steer. 3 laps — finish ahead of the pack! 🏁");
+        // ---- pseudo-3D road (behind-the-kart perspective) ----
+        const SEG = 200, N = 760, ROADW = 2000, DRAW = 160, DEPTH = 0.84, CAMH = 1500;
+        const TRACK = N * SEG;
+        const segs = [];
+        for (let i = 0; i < N; i++) segs.push({ curve: Math.sin(i * 0.013) * 2.6 + Math.sin(i * 0.031) * 1.3, y: Math.sin(i * 0.021) * 1400 + Math.sin(i * 0.05) * 500 });
+        const MAX = SEG * 0.62, ACC = MAX / 90, DEC = MAX / 55, OFFDEC = MAX / 30, OFFMAX = MAX * 0.42;
+        let pos = 0, speed = 0, playerX = 0, over = false, raf, t = 0;
+        const LAPS = 3; let lap = 1, started = false;
+        const cpus = []; for (let i = 0; i < 5; i++) cpus.push({ pos: (i + 1) * 420, x: (Math.random() * 1.4 - 0.7), spd: MAX * (0.62 + Math.random() * 0.14), hue: [0, 45, 130, 280, 200][i] });
+        const keys = {};
+        function project(camX, camY, camZ, wy, wz) { const cz = wz - camZ, scale = DEPTH / Math.max(1, cz); return { x: Math.round(W / 2 + scale * (0 - camX) * W / 2) + 0, sx: scale, cz: cz, X: Math.round(W / 2 + scale * (-camX) * W / 2), Y: Math.round(H / 2 - scale * (wy - camY) * H / 2), w: Math.round(scale * ROADW * W / 2) }; }
+        function proj(camX, wy, wz, camZ) { const cz = wz - camZ, scale = DEPTH / Math.max(1, cz); return { X: Math.round(W / 2 + scale * -camX * W / 2), Y: Math.round(H / 2 - scale * (wy - CAMH) * H / 2), W: Math.round(scale * ROADW * W / 2), s: scale, cz }; }
+        function poly(ax, ay, bx, by, cx, cy, dx, dy, col) { x.fillStyle = col; x.beginPath(); x.moveTo(ax, ay); x.lineTo(bx, by); x.lineTo(cx, cy); x.lineTo(dx, dy); x.closePath(); x.fill(); }
         function loop() {
-          frame++; dashY = (dashY + 5 + boost) % 44;
-          x.fillStyle = "#2a2f3c"; x.fillRect(0, 0, W, H);
-          x.strokeStyle = "rgba(255,255,255,.3)"; x.setLineDash([22, 22]); x.lineWidth = 4;
-          for (let i = 1; i < LANES; i++) { x.beginPath(); x.moveTo(i * LW, dashY - 44); x.lineTo(i * LW, H); x.stroke(); }
-          x.setLineDash([]);
-          if (!over) {
-            prog += (0.18 + boost * 0.12); cpu += 0.16 + Math.sin(frame / 40) * 0.03; if (boost > 0) boost -= 0.04;
-            frame % 28 === 0 && items.push({ lane: Math.random() * LANES | 0, y: -30, type: Math.random() < 0.45 ? "boost" : "oil" });
-            items.forEach((it) => it.y += 4 + boost); items = items.filter((it) => it.y < H + 30);
-            const py = H - 70;
-            items.forEach((it) => { if (it.hit) return; if (it.lane === lane && it.y > py - 26 && it.y < py + 26) { it.hit = 1; if (it.type === "boost") { boost = 3; prog += 4; api.tone(760, 0.06); } else { prog = Math.max(0, prog - 5); api.tone(180, 0.1, "sawtooth"); } } });
-            if (prog >= 100) { over = true; cancelAnimationFrame(raf); return api.finish(1, { title: "🏁 You WON the race!", line: "First place! 🥇" }); }
-            if (cpu >= 100) { over = true; cancelAnimationFrame(raf); return api.finish(0, { title: "🏁 CPU won", line: "So close! Try again." }); }
+          t++;
+          if (!over && started) {
+            if (keys.up) speed += ACC; else if (keys.down) speed -= DEC; else speed -= DEC * 0.35;
+            speed = Math.max(0, Math.min(MAX, speed));
+            const offroad = Math.abs(playerX) > 1;
+            if (offroad && speed > OFFMAX) speed -= OFFDEC;
+            const sp = speed / MAX, base = Math.floor(pos / SEG) % N;
+            const dxp = 0.0024 * sp;
+            if (keys.left) playerX -= dxp; if (keys.right) playerX += dxp;
+            playerX -= segs[base].curve * sp * sp * 0.0007;
+            playerX = Math.max(-2.2, Math.min(2.2, playerX));
+            pos += speed;
+            cpus.forEach((cp) => { cp.pos += cp.spd; });
+            const newLap = Math.floor(pos / TRACK) + 1;
+            if (newLap > lap) { lap = newLap; api.tone(700, 0.12); if (lap > LAPS) return finish(); }
           }
-          x.font = "22px system-ui,'Segoe UI Emoji'"; x.textAlign = "center"; x.textBaseline = "middle";
-          items.forEach((it) => { if (!it.hit) x.fillText(it.type === "boost" ? "⚡" : "🛢️", it.lane * LW + LW / 2, it.y); });
-          drawMax(x, lane * LW + LW / 2, H - 70, 18);
-          // progress bars
-          x.fillStyle = "#111"; x.fillRect(8, 8, 12, H - 16); x.fillRect(W - 20, 8, 12, H - 16);
-          x.fillStyle = "#3ee08f"; x.fillRect(8, 8 + (H - 16) * (1 - prog / 100), 12, (H - 16) * prog / 100);
-          x.fillStyle = "#ff5fa2"; x.fillRect(W - 20, 8 + (H - 16) * (1 - cpu / 100), 12, (H - 16) * cpu / 100);
-          x.fillStyle = "#fff"; x.font = "bold 14px system-ui"; x.textAlign = "center"; x.fillText("YOU", 14, H - 2); x.fillText("CPU", W - 14, H - 2);
+          // sky + ground
+          const grad = x.createLinearGradient(0, 0, 0, H / 2); grad.addColorStop(0, "#4ab3ff"); grad.addColorStop(1, "#bfe8ff"); x.fillStyle = grad; x.fillRect(0, 0, W, H);
+          x.fillStyle = "#3a7d44"; x.fillRect(0, H / 2, W, H / 2);
+          // road
+          const base = Math.floor(pos / SEG); let xx = 0, dx = 0, maxy = H;
+          for (let n = 0; n < DRAW; n++) {
+            const si = (base + n) % N, seg = segs[si], nseg = segs[(base + n + 1) % N];
+            const z1 = (base + n) * SEG, z2 = (base + n + 1) * SEG;
+            const p1 = proj(playerX * ROADW - xx, seg.y, z1, pos);
+            const p2 = proj(playerX * ROADW - xx - dx, nseg.y, z2, pos);
+            xx += dx; dx += seg.curve;
+            if (p1.cz <= DEPTH || p2.Y >= maxy) continue;
+            const dark = Math.floor((base + n) / 3) % 2;
+            const grass = dark ? "#3a7d44" : "#45944f"; const road = dark ? "#4a4e58" : "#53575f"; const rum = dark ? "#e2e2ea" : "#c43a3a";
+            x.fillStyle = grass; x.fillRect(0, p2.Y, W, p1.Y - p2.Y);
+            const r1 = p1.W * 0.14, r2 = p2.W * 0.14;
+            poly(p1.X - p1.W - r1, p1.Y, p1.X - p1.W, p1.Y, p2.X - p2.W, p2.Y, p2.X - p2.W - r2, p2.Y, rum);
+            poly(p1.X + p1.W + r1, p1.Y, p1.X + p1.W, p1.Y, p2.X + p2.W, p2.Y, p2.X + p2.W + r2, p2.Y, rum);
+            poly(p1.X - p1.W, p1.Y, p1.X + p1.W, p1.Y, p2.X + p2.W, p2.Y, p2.X - p2.W, p2.Y, road);
+            if (!dark) { poly(p1.X - p1.W * 0.04, p1.Y, p1.X + p1.W * 0.04, p1.Y, p2.X + p2.W * 0.04, p2.Y, p2.X - p2.W * 0.04, p2.Y, "#d8d8e0"); }
+            if (si === 0) { x.fillStyle = "#fff"; for (let k = -5; k <= 5; k++) { if ((k + t) % 2 === 0) x.fillRect(p2.X + k * p2.W / 5, p2.Y - 2, p2.W / 5, Math.max(2, p1.Y - p2.Y + 4)); } }
+            // CPU karts on this segment
+            cpus.forEach((cp) => { if (Math.floor(cp.pos / SEG) % N === si && cp.pos > pos - SEG) { const kx = p1.X + cp.x * p1.W, ky = p1.Y, sz = Math.max(6, p1.s * 1600); x.fillStyle = "hsl(" + cp.hue + " 80% 55%)"; x.fillRect(kx - sz / 2, ky - sz, sz, sz * 0.7); x.fillStyle = "#222"; x.fillRect(kx - sz / 2, ky - sz * 0.35, sz, sz * 0.35); x.font = (sz | 0) + "px serif"; x.textAlign = "center"; x.fillText("🏎️", kx, ky - sz * 0.5); } });
+            maxy = p2.Y;
+          }
+          // player kart (Maxwell)
+          const tilt = (keys.left ? -0.12 : 0) + (keys.right ? 0.12 : 0);
+          x.save(); x.translate(W / 2 + playerX * 10, H - 54); x.rotate(tilt);
+          x.fillStyle = "#222"; x.fillRect(-30, 6, 60, 14);
+          drawMax(x, 0, -8, 26);
+          x.fillStyle = "#333"; x.fillRect(-32, 14, 14, 14); x.fillRect(18, 14, 14, 14);
+          x.restore();
+          // HUD
+          x.fillStyle = "rgba(0,0,0,.45)"; x.fillRect(0, 0, W, 26);
+          x.fillStyle = "#fff"; x.font = "bold 16px system-ui"; x.textAlign = "left"; x.fillText("LAP " + Math.min(lap, LAPS) + "/" + LAPS, 10, 19);
+          const ahead = cpus.filter((cp) => cp.pos > pos).length; x.textAlign = "center"; x.fillText("POS " + (ahead + 1) + "/" + (cpus.length + 1), W / 2, 19);
+          x.textAlign = "right"; x.fillText((speed / MAX * 180 | 0) + " mph", W - 10, 19);
+          if (!started) { x.fillStyle = "rgba(0,0,0,.5)"; x.fillRect(0, H / 2 - 30, W, 60); x.fillStyle = "#ffd34a"; x.font = "900 34px system-ui"; x.textAlign = "center"; x.fillText(t < 40 ? "3" : t < 80 ? "2" : t < 120 ? "1" : "GO!", W / 2, H / 2 + 12); if (t >= 120) started = true; }
           if (!over) raf = requestAnimationFrame(loop);
         }
-        const kd = (e) => { const k = e.key.toLowerCase(); if (k === "arrowleft" || k === "a") { lane = Math.max(0, lane - 1); e.preventDefault(); } else if (k === "arrowright" || k === "d") { lane = Math.min(LANES - 1, lane + 1); e.preventDefault(); } };
-        document.addEventListener("keydown", kd);
-        c.addEventListener("pointerdown", (e) => { const r = c.getBoundingClientRect(); lane = Math.max(0, Math.min(LANES - 1, Math.floor((e.clientX - r.left) * (W / r.width) / LW))); });
-        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); });
+        function finish() { over = true; cancelAnimationFrame(raf); const ahead = cpus.filter((cp) => cp.pos > pos).length; const place = ahead + 1; api.finish(place, { title: place === 1 ? "🥇 1st place! You WON!" : place <= 3 ? "🏁 " + place + (place === 2 ? "nd" : "rd") + " place!" : "🏁 " + place + "th place", line: "Finished " + place + " of " + (cpus.length + 1) + " racers", scoreForBest: (cpus.length + 2 - place) }); }
+        const kd = (e) => { const k = e.key.toLowerCase(); if (k === "arrowup" || k === "w") keys.up = 1; else if (k === "arrowdown" || k === "s") keys.down = 1; else if (k === "arrowleft" || k === "a") keys.left = 1; else if (k === "arrowright" || k === "d") keys.right = 1; else return; e.preventDefault(); };
+        const ku = (e) => { const k = e.key.toLowerCase(); if (k === "arrowup" || k === "w") keys.up = 0; else if (k === "arrowdown" || k === "s") keys.down = 0; else if (k === "arrowleft" || k === "a") keys.left = 0; else if (k === "arrowright" || k === "d") keys.right = 0; };
+        document.addEventListener("keydown", kd); document.addEventListener("keyup", ku);
+        c.addEventListener("pointerdown", () => { keys.up = 1; }); c.addEventListener("pointerup", () => { keys.up = 0; });
+        api.onClean(() => { cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku); });
         loop();
       }
     },

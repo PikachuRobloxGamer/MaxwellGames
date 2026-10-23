@@ -57,6 +57,14 @@
       "iframe": "games/lumin/index.html"
     },
     {
+      "id": "maxwell-platformer",
+      "title": "Maxwell Platformer",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "games/platformer/thumb.png",
+      "description": "A full platformer adventure! 4 worlds, 20 tricky levels. Arrow keys / WASD to move, Space to jump, R to retry.",
+      "iframe": "games/platformer/index.html"
+    },
+    {
       "id": "builtin-snake",
       "title": "Maxwell Snake",
       "category": "🐱 Maxwell Originals",
