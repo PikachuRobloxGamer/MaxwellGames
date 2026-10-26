@@ -5,7 +5,7 @@
   // ---------------- IDLE CLICKER ----------------
   function openClicker() {
     const p = U.panel("clickerOv", "🖱️ Fish Factory", "clicker-head");
-    const s = window.MG.save; if (!s.clicker) s.clicker = { power: 1, auto: 0 };
+    const s = window.MG.save; if (!s.clicker) s.clicker = { power: 1, auto: 0 }; const CAP = 50; if (s.clicker.power > CAP) s.clicker.power = CAP; if (s.clicker.auto > CAP) s.clicker.auto = CAP; window.MG.persist();
     function costPow() { return 50 * Math.pow(2, s.clicker.power - 1); }
     function costAuto() { return 100 * Math.pow(2, s.clicker.auto); }
     function render() {
@@ -18,8 +18,8 @@
           <button class="btn" id="clkAuto">🤖 Auto Clicker → ${s.clicker.auto + 1}/sec<br><small>${costAuto()} 🐟</small></button>
         </div>`;
       p.body.querySelector("#clkFish").onclick = () => { window.MG.addTreats(s.clicker.power); U.tone(500 + Math.random() * 200, 0.03); const f = p.body.querySelector("#clkFish"); f.classList.remove("pop"); void f.offsetWidth; f.classList.add("pop"); p.body.querySelector("#clkT").textContent = U.treats(); };
-      p.body.querySelector("#clkPow").onclick = () => { if (U.spend(costPow())) { s.clicker.power++; window.MG.persist(); U.tone(800, 0.1); render(); } };
-      p.body.querySelector("#clkAuto").onclick = () => { if (U.spend(costAuto())) { s.clicker.auto++; window.MG.persist(); U.tone(800, 0.1); render(); } };
+      p.body.querySelector("#clkPow").onclick = () => { if (s.clicker.power < CAP && U.spend(costPow())) { s.clicker.power++; window.MG.persist(); U.tone(800, 0.1); render(); } };
+      p.body.querySelector("#clkAuto").onclick = () => { if (s.clicker.auto < CAP && U.spend(costAuto())) { s.clicker.auto++; window.MG.persist(); U.tone(800, 0.1); render(); } };
     }
     render();
     const iv = setInterval(() => { if (s.clicker.auto > 0) { window.MG.addTreats(s.clicker.auto); const t = p.body.querySelector("#clkT"); if (t) t.textContent = U.treats(); } }, 1000);

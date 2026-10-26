@@ -175,6 +175,86 @@
       "thumbnail": "games/builtin/thumbs/colormatch.svg",
       "description": "",
       "iframe": "games/builtin/colormatch.html"
+    },
+    {
+      "id": "hextris",
+      "title": "Hextris",
+      "category": "Puzzle",
+      "thumbnail": "",
+      "description": "Rotate the hexagon to match colored blocks. Arrow keys or tap sides.",
+      "iframe": "https://hextris.github.io/hextris/"
+    },
+    {
+      "id": "clumsy-bird",
+      "title": "Clumsy Bird",
+      "category": "Arcade",
+      "thumbnail": "",
+      "description": "A Flappy Bird remake. Click, tap, or press Space to flap.",
+      "iframe": "https://ellisonleao.github.io/clumsy-bird/"
+    },
+    {
+      "id": "tower-game",
+      "title": "Tower Blocks",
+      "category": "Arcade",
+      "thumbnail": "",
+      "description": "Drop blocks to build the tallest tower. Tap to drop.",
+      "iframe": "https://iamkun.github.io/tower_game/"
+    },
+    {
+      "id": "t-rex-runner",
+      "title": "T-Rex Runner",
+      "category": "Arcade",
+      "thumbnail": "",
+      "description": "The offline dino game. Space to jump, Down to duck.",
+      "iframe": "https://wayou.github.io/t-rex-runner/"
+    },
+    {
+      "id": "untrusted",
+      "title": "Untrusted",
+      "category": "Puzzle",
+      "thumbnail": "",
+      "description": "Hack the code of each level to escape. Uses real JavaScript.",
+      "iframe": "https://alexnisnevich.github.io/untrusted/"
+    },
+    {
+      "id": "astray",
+      "title": "Astray",
+      "category": "Puzzle",
+      "thumbnail": "",
+      "description": "Roll a ball through a 3D maze. Arrow keys to move.",
+      "iframe": "https://wwwtyro.github.io/Astray/"
+    },
+    {
+      "id": "cube-composer",
+      "title": "Cube Composer",
+      "category": "Puzzle",
+      "thumbnail": "",
+      "description": "Combine functions to transform cubes into the goal pattern.",
+      "iframe": "https://david-peter.de/cube-composer/"
+    },
+    {
+      "id": "hexgl",
+      "title": "HexGL",
+      "category": "Racing",
+      "thumbnail": "",
+      "description": "Futuristic 3D racing. Arrow keys to steer and boost.",
+      "iframe": "https://hexgl.bkcore.com/play/"
+    },
+    {
+      "id": "a-dark-room",
+      "title": "A Dark Room",
+      "category": "RPG",
+      "thumbnail": "",
+      "description": "A minimalist text adventure that grows into much more.",
+      "iframe": "https://adarkroom.doublespeakgames.com/"
+    },
+    {
+      "id": "2048-original",
+      "title": "2048 (Original)",
+      "category": "Puzzle",
+      "thumbnail": "",
+      "description": "The original 2048. Arrow keys to merge tiles.",
+      "iframe": "https://gabrielecirulli.github.io/2048/"
     }
   ]
 }
