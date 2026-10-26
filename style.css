@@ -1369,7 +1369,7 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .meme-tpl.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 
 /* ===== Universal touch gamepad (mobile) ===== */
-.touch-pad{position:fixed;left:0;right:0;bottom:0;z-index:97;display:none;justify-content:space-between;align-items:flex-end;padding:10px 18px calc(10px + env(safe-area-inset-bottom));pointer-events:none}
+.touch-pad{position:fixed;left:0;right:0;bottom:0;z-index:99999;display:none;justify-content:space-between;align-items:flex-end;padding:10px 18px calc(10px + env(safe-area-inset-bottom));pointer-events:none}
 .touch-pad.show{display:flex}
 .tp-dpad{position:relative;width:156px;height:156px;pointer-events:none}
 .tp-b{position:absolute;width:52px;height:52px;border-radius:14px;background:rgba(20,24,48,.55);border:2px solid rgba(255,255,255,.4);color:#fff;font-size:1.2rem;font-weight:800;pointer-events:auto;touch-action:none;-webkit-user-select:none;user-select:none;backdrop-filter:blur(3px)}
