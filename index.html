@@ -70,6 +70,7 @@
   <header class="topbar">
     <a href="#" class="logo" id="homeLink"><img src="maxwell.png" alt="Maxwell the cat" class="logo-img">MaxwellGames</a>
     <span id="roleTag" class="role-tag"></span>
+    <button id="navToggle" class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰ Menu</button>
     <nav class="tabs">
       <button class="tab active" data-tab="games">Games</button>
       <button class="tab" data-tab="proxies">Proxies</button>
@@ -383,6 +384,19 @@
   <script src="dressup.js"></script>
   <script src="lootbox.js"></script>
   <script src="admin.js"></script>
-  <script src="secretmode.js"></script>
+  <script>
+    /* Mobile hamburger: collapse the tab bar on phones */
+    (function () {
+      function ready(fn) { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn); else fn(); }
+      ready(function () {
+        var tb = document.querySelector(".topbar"), tog = document.getElementById("navToggle"), tabs = document.querySelector(".tabs");
+        if (!tb || !tog || !tabs) return;
+        function setOpen(o) { tb.classList.toggle("nav-open", o); tog.setAttribute("aria-expanded", o ? "true" : "false"); }
+        tog.addEventListener("click", function (e) { e.stopPropagation(); setOpen(!tb.classList.contains("nav-open")); });
+        tabs.addEventListener("click", function (e) { if (e.target.closest(".tab")) setOpen(false); });
+        document.addEventListener("click", function (e) { if (tb.classList.contains("nav-open") && !tb.contains(e.target)) setOpen(false); });
+      });
+    })();
+  </script>
 </body>
 </html>

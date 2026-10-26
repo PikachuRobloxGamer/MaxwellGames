@@ -1382,29 +1382,52 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .arcade canvas, .sim-canvas, .ar-canvas{max-width:100%;height:auto}
 body.touch-playing .arcade-body.game, body.touch-playing .battle-body, body.touch-playing #dBody.game, body.touch-playing .sim-stage{padding-bottom:180px}
 
-/* ===== The Binding of Maxwell (secret mode) ===== */
-.bm-overlay{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#2a1414,#0a0707 70%);padding:14px;overflow:auto}
-.bm-gate{position:relative;max-width:440px;width:100%;background:#1a1012;border:2px solid #4a2222;border-radius:18px;padding:26px 20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.bm-x{position:absolute;top:10px;right:12px;background:none;border:none;color:#caa;font-size:1.3rem;cursor:pointer;z-index:5}
-.bm-title{font-family:Georgia,serif;color:#c0392b;font-size:1.7rem;margin-bottom:4px;text-shadow:0 2px 0 #3a0f0f}
-.bm-sub{color:#a88;font-size:.9rem;margin-bottom:18px}
-.bm-switch-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0}
-.bm-switch{width:120px;height:56px;border-radius:30px;background:#2a1414;border:3px solid #5a2a2a;position:relative;cursor:pointer;transition:background .3s}
-.bm-switch .bm-knob{position:absolute;top:4px;left:4px;width:44px;height:44px;border-radius:50%;background:#7a3a3a;transition:left .3s,background .3s}
-.bm-switch-wrap.live .bm-switch{box-shadow:0 0 18px rgba(192,57,43,.5)}
-.bm-switch.on{background:#c0392b}.bm-switch.on .bm-knob{left:68px;background:#ffd34a}
-.bm-switch.nope{animation:bmShake .3s}
-@keyframes bmShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-.bm-switch-wrap.locked .bm-switch{opacity:.6}
-.bm-switch-label{color:#caa;font-weight:800;letter-spacing:1px;font-size:.8rem}
-.bm-note{color:#b99;font-size:.9rem;margin-top:10px;line-height:1.5}
-.bm-prog{height:14px;background:#2a1414;border-radius:8px;overflow:hidden;margin:10px 0 4px}
-.bm-prog-fill{height:100%;background:linear-gradient(90deg,#c0392b,#ffd34a);transition:width .4s}
-.bm-canvas{max-width:100%;border-radius:10px;background:#000}
-.bm-skip{position:absolute;bottom:20px;right:20px;background:rgba(0,0,0,.5);border:1px solid #633;color:#fff;border-radius:10px;padding:8px 14px;cursor:pointer}
-.bm-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:100%}
-.bm-hud{color:#fff;font-weight:800;font-size:.95rem;text-align:center}
-.bm-help{color:#a88;font-size:.78rem;text-align:center;max-width:460px}
-.bm-result{text-align:center;color:#fff;padding:30px}
-.bm-result h2{font-family:Georgia,serif;color:#c0392b;font-size:1.8rem}
-.bm-reward{color:#ffd34a;font-weight:800;font-size:1.2rem;margin:8px 0}
+/* ===== Mobile: hamburger tab menu + responsive header ===== */
+.nav-toggle{display:none;background:#1b2140;color:#fff;border:2px solid var(--accent);border-radius:12px;padding:8px 14px;font-weight:800;font-size:.95rem;cursor:pointer}
+@media (max-width:760px){
+  .topbar{gap:8px;padding:10px 12px;align-items:center}
+  .logo{font-size:1.1rem;flex:1 1 auto}
+  .nav-toggle{display:inline-flex;align-items:center;order:2}
+  .tabs{display:none;order:5;flex-basis:100%;flex-direction:column;flex-wrap:nowrap;row-gap:6px;padding:8px 0 4px;max-height:66vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .topbar.nav-open .tabs{display:flex}
+  .tabs .tab{width:100%;text-align:left;padding:12px 14px;font-size:1rem;border-radius:12px}
+  .tab.hot::after{top:8px;right:8px}
+  #search{order:3;flex:1 1 100%;min-width:0;font-size:16px}
+  .profile-btn{order:4}
+  .yt-btn,.suggest-btn{order:6}
+  .yt-txt{display:none}
+  .abuse-bar{order:7;flex-basis:100%}
+  /* panels & overlays fill the phone */
+  .arcade-box,.mgui-box,.battle-box,.panel{width:100%!important;max-width:100%!important;max-height:92vh;border-radius:14px}
+  .arcade,.bm-overlay{padding:6px}
+  .ar-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+}
+@media (max-width:420px){
+  .tabs{max-height:60vh}
+  .ar-grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px}
+  .logo-img{height:1.1em}
+}
+
+/* ===== Mobile: compact YouTube banners so games aren't buried ===== */
+@media (max-width:760px){
+  .yt-banners{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .yt-banner{flex-direction:column;text-align:center;padding:10px 8px;gap:6px}
+  .yt-banner-logo{font-size:.95rem;padding:3px 9px}
+  .yt-banner-text{font-size:.72rem;line-height:1.25;flex:0 0 auto}
+  .yt-banner-text small{display:none}
+  .yt-banner-btn{padding:7px 12px;font-size:.78rem}
+}
+@media (max-width:420px){ .yt-banner-text b{font-size:.78rem} }
+
+/* ===== Mobile: compact banners (override) ===== */
+@media (max-width:760px){
+  .yt-banners{grid-template-columns:1fr !important;gap:8px;margin-bottom:10px}
+  .yt-banner,.suggest-banner{display:flex;flex-direction:row !important;align-items:center;text-align:left !important;padding:9px 12px;gap:10px}
+  .yt-banner-text,.suggest-banner-text{font-size:.76rem;line-height:1.25;flex:1 1 auto}
+  .yt-banner-text small{display:none}
+  .yt-banner-logo,.suggest-banner-ic{font-size:1rem;flex:0 0 auto}
+  .yt-banner-btn,.suggest-banner-btn{padding:8px 12px;font-size:.76rem;flex:0 0 auto;white-space:nowrap}
+}
+
+/* ===== Mobile: hide big promo banners (header already has Subscribe + Suggestions) ===== */
+@media (max-width:760px){ .yt-banners{display:none !important} }
