@@ -1,0 +1,38 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Runner</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🏃 Maxwell Runner</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>SPACE / ↑ / tap to jump. Dodge the obstacles — it gets faster!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var c=GK.canvas(480,260),x=c.getContext('2d'),W=480,H=260,GND=210;
+var cat,obs,spd,dist,over,last=0,img=new Image();img.src='../../maxwell.png';
+function R(){cat={y:GND,vy:0,on:true};obs=[];spd=4;dist=0;over=false;spawn();GK.score(0);window.__g={score:0,over:false};}
+function spawn(){var gap=260+Math.random()*180;obs.push({x:W+20,w:18+Math.random()*16,h:26+Math.random()*34,next:gap});}
+function jump(){if(over){R();return;}if(cat.on){cat.vy=-11.4;cat.on=false;GK.tone(560,0.08);}}
+GK.onKey(function(e){var k=e.key;if(k===' '||k==='ArrowUp'||k==='w'||k==='W')jump();});
+c.addEventListener('pointerdown',jump);GK.pad({act:'⤒',onAct:jump});
+function step(){
+  if(over)return;
+  dist+=spd/8;spd+=0.0022;
+  cat.vy+=0.62;cat.y+=cat.vy;if(cat.y>=GND){cat.y=GND;cat.vy=0;cat.on=true;}
+  for(var i=0;i<obs.length;i++){obs[i].x-=spd;}
+  var lastx=obs.length?obs[obs.length-1].x:0;
+  if(W-lastx>=obs[obs.length-1].next)spawn();
+  obs=obs.filter(function(o){return o.x>-40;});
+  // collision
+  for(var j=0;j<obs.length;j++){var o=obs[j];if(34+16>o.x&&34-16<o.x+o.w&&cat.y+16>GND-o.h){over=true;GK.tone(140,0.3,'sawtooth',0.12);GK.award(Math.floor(dist/20));window.__g.over=true;}}
+  GK.score(Math.floor(dist));window.__g.score=Math.floor(dist);
+}
+function draw(){
+  var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#141a30');g.addColorStop(1,'#0a0e1c');x.fillStyle=g;x.fillRect(0,0,W,H);
+  // ground
+  x.fillStyle='#2a3250';x.fillRect(0,GND+16,W,H);x.strokeStyle='#3ee08f';x.lineWidth=2;x.beginPath();x.moveTo(0,GND+16);x.lineTo(W,GND+16);x.stroke();
+  // obstacles
+  obs.forEach(function(o){x.fillStyle='#ff6b6b';x.fillRect(o.x,GND+16-o.h,o.w,o.h);});
+  // cat
+  x.save();x.translate(34,cat.y);if(!cat.on)x.rotate(-0.2);
+  if(img.complete&&img.naturalWidth){x.drawImage(img,-16,-16,32,32);}else{x.fillStyle='#f4a63b';x.beginPath();x.arc(0,0,16,0,7);x.fill();}
+  x.restore();
+  if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.textAlign='center';x.font='900 30px system-ui';x.fillText('GAME OVER',W/2,H/2-6);x.font='700 15px system-ui';x.fillText('Score '+Math.floor(dist)+' · tap to retry',W/2,H/2+22);}
+}
+function loop(t){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

@@ -1,0 +1,35 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Fish Slice</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🍣 Fish Slice</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Drag / swipe across the flying fish to slice them. Miss fish = lose a life. Don't hit 💣!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var W=440,H=460,c=GK.canvas(W,H),x=c.getContext('2d');
+var objs,trail,lives,over,t,spawnT;
+function R(){objs=[];trail=[];lives=3;over=false;t=0;spawnT=0;window.__g={score:0,over:false};GK.score(0);}
+function spawn(){var bomb=Math.random()<0.16;objs.push({x:40+Math.random()*(W-80),y:H+30,vx:(W/2-220+Math.random()*120)*0.012,vy:-(11+Math.random()*3.5),r:24,bomb:bomb,em:bomb?'💣':['🐟','🐠','🐡','🦈'][Math.random()*4|0],sliced:false,rot:Math.random()*6});}
+function pos(e){var r=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*W/r.width,y:(p.clientY-r.top)*H/r.height};}
+var down=false;
+function md(e){down=true;trail=[];if(over)R();}function mu(){down=false;}
+function mm(e){if(!down)return;var p=pos(e);trail.push({x:p.x,y:p.y,life:1});if(trail.length>12)trail.shift();
+  objs.forEach(function(o){if(o.sliced)return;if(Math.hypot(o.x-p.x,o.y-p.y)<o.r+6){o.sliced=true;if(o.bomb){lives=0;over=true;GK.tone(90,0.4,'sawtooth',0.14);window.__g.over=true;GK.award(Math.floor(window.__g.score/4));}else{window.__g.score+=1;GK.score(window.__g.score);GK.tone(500+Math.random()*300,0.06);o.vy=-2;o.vx*=0.3;}}});
+}
+c.addEventListener('pointerdown',md);window.addEventListener('pointerup',mu);c.addEventListener('pointermove',mm);
+c.addEventListener('touchstart',function(e){e.preventDefault();md(e);},{passive:false});c.addEventListener('touchmove',function(e){e.preventDefault();mm(e);},{passive:false});c.addEventListener('touchend',mu);
+function step(){
+  if(over)return;
+  t++;spawnT--;if(spawnT<=0){var n=1+(Math.random()<0.35?1:0);for(var i=0;i<n;i++)spawn();spawnT=46-Math.min(26,t/60);}
+  objs.forEach(function(o){o.x+=o.vx;o.y+=o.vy;o.vy+=0.22;o.rot+=0.04;});
+  objs=objs.filter(function(o){if(o.y>H+50){if(!o.sliced&&!o.bomb){lives--;if(lives<=0){over=true;window.__g.over=true;GK.award(Math.floor(window.__g.score/4));}}return false;}return true;});
+  trail.forEach(function(p){p.life-=0.08;});trail=trail.filter(function(p){return p.life>0;});
+}
+function draw(){
+  var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#10243a');g.addColorStop(1,'#061018');x.fillStyle=g;x.fillRect(0,0,W,H);
+  objs.forEach(function(o){x.save();x.translate(o.x,o.y);x.rotate(o.rot);x.font='40px serif';x.textAlign='center';x.textBaseline='middle';x.globalAlpha=o.sliced&&!o.bomb?0.4:1;x.fillText(o.em,0,0);x.restore();});
+  // slice trail
+  if(trail.length>1){x.strokeStyle='#fff';x.lineWidth=4;x.lineCap='round';x.beginPath();for(var i=1;i<trail.length;i++){x.globalAlpha=trail[i].life;x.beginPath();x.moveTo(trail[i-1].x,trail[i-1].y);x.lineTo(trail[i].x,trail[i].y);x.stroke();}x.globalAlpha=1;}
+  // lives
+  x.font='20px serif';x.textAlign='left';x.textBaseline='top';x.fillText('❤️'.repeat(Math.max(0,lives)),10,8);
+  if(over){x.fillStyle='rgba(0,0,0,.65)';x.fillRect(0,0,W,H);x.fillStyle='#ff6b6b';x.textAlign='center';x.font='900 28px system-ui';x.fillText('GAME OVER',W/2,H/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('Sliced '+window.__g.score+' · tap to retry',W/2,H/2+22);}
+}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

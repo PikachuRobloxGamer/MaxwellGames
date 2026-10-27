@@ -1,0 +1,34 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Stack</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🧱 Maxwell Stack</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>SPACE / tap to drop the block. Line it up — overhang gets chopped off!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var W=360,H=520,c=GK.canvas(W,H),x=c.getContext('2d');
+var blocks,cur,dir,speed,over,camY,n;
+function R(){var bw=200;blocks=[{x:(W-bw)/2,w:bw,y:H-40}];cur=null;speed=2.2;over=false;camY=0;n=0;nextBlock();window.__g={score:0,over:false};GK.score(0);}
+function nextBlock(){var prev=blocks[blocks.length-1];cur={x:0,w:prev.w,y:prev.y-32,dir:1};}
+function drop(){
+  if(over){R();return;}
+  var prev=blocks[blocks.length-1];
+  var left=Math.max(cur.x,prev.x),right=Math.min(cur.x+cur.w,prev.x+prev.w);var ov=right-left;
+  if(ov<=0){over=true;GK.tone(110,0.35,'sawtooth',0.12);window.__g.over=true;GK.award(n*3);return;}
+  cur.x=left;cur.w=ov;blocks.push({x:cur.x,w:cur.w,y:cur.y});n++;window.__g.score=n;GK.score(n);GK.tone(400+n*12,0.07);
+  camY+=32;speed=Math.min(6,speed+0.12);nextBlock();
+}
+GK.onKey(function(e){if(e.key===' '||e.key==='ArrowUp')drop();});
+c.addEventListener('pointerdown',drop);GK.pad({act:'⬇',onAct:drop});
+function step(){
+  if(over||!cur)return;
+  cur.x+=cur.dir*speed;if(cur.x+cur.w>W){cur.x=W-cur.w;cur.dir=-1;}if(cur.x<0){cur.x=0;cur.dir=1;}
+}
+function draw(){
+  var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#241a3f');g.addColorStop(1,'#0a0e1c');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.save();x.translate(0,camY);
+  blocks.forEach(function(b,i){var hue=(i*28)%360;x.fillStyle='hsl('+hue+' 70% 55%)';x.fillRect(b.x,b.y,b.w,30);x.fillStyle='rgba(255,255,255,.15)';x.fillRect(b.x,b.y,b.w,8);});
+  if(cur){var hue=(blocks.length*28)%360;x.fillStyle='hsl('+hue+' 80% 62%)';x.fillRect(cur.x,cur.y,cur.w,30);}
+  x.restore();
+  x.fillStyle='rgba(255,255,255,.9)';x.textAlign='center';x.font='900 40px system-ui';x.fillText(n,W/2,70);
+  if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.font='900 26px system-ui';x.fillText('TOPPLED!',W/2,H/2-6);x.font='700 14px system-ui';x.fillText('Height '+n+' · tap to retry',W/2,H/2+22);}
+}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

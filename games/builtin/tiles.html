@@ -1,0 +1,37 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Meow Tiles</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🎹 Meow Tiles</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Tap / click the black tiles (or keys A S K L) as they fall. Miss one and it's over — it speeds up!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var COLS=4,W=320,CELL=W/COLS,H=480,c=GK.canvas(W,H),x=c.getContext('2d');
+var tiles,speed,score,over,spawnGapRow,notes=[523,587,659,698];
+function R(){tiles=[];speed=2.4;score=0;over=false;for(var i=0;i<4;i++)tiles.push({col:(Math.random()*COLS)|0,y:-i*120,hit:false});GK.score(0);window.__g={score:0,over:false};}
+function hitCol(col){if(over){R();return;}
+  // find lowest unhit tile in that column within the board
+  var cand=null;tiles.forEach(function(t){if(t.col===col&&!t.hit&&t.y>-100&&t.y<H){if(!cand||t.y>cand.y)cand=t;}});
+  if(cand){cand.hit=true;score++;GK.score(score);window.__g.score=score;GK.tone(notes[col],0.09,'triangle',0.08);GK.award(1);speed=Math.min(8,speed+0.04);}
+  else{miss();}
+}
+function miss(){over=true;GK.tone(130,0.3,'sawtooth',0.12);window.__g.over=true;GK.award(Math.floor(score/3));}
+function pos(e){var r=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return Math.floor((p.clientX-r.left)*W/r.width/CELL);}
+c.addEventListener('pointerdown',function(e){var col=pos(e);if(col>=0&&col<COLS)hitCol(col);});
+GK.onKey(function(e){var m={a:0,s:1,k:2,l:3};var k=e.key.toLowerCase();if(k in m)hitCol(m[k]);});
+function step(){
+  if(over)return;
+  tiles.forEach(function(t){t.y+=speed;});
+  // a tile that passes the bottom unhit = game over
+  tiles.forEach(function(t){if(!t.hit&&t.y>H){miss();}});
+  // recycle hit/offscreen, keep ~4 active, spawn new at top
+  tiles=tiles.filter(function(t){return t.y<H+140&&!(t.hit&&t.y>H);});
+  var topY=Math.min.apply(null,tiles.map(function(t){return t.y;}));
+  if(tiles.length<5&&topY>-20){tiles.push({col:(Math.random()*COLS)|0,y:topY-120,hit:false});}
+}
+function draw(){
+  x.fillStyle='#f3f1fb';x.fillRect(0,0,W,H);
+  for(var q=1;q<COLS;q++){x.strokeStyle='#d8d4ea';x.beginPath();x.moveTo(q*CELL,0);x.lineTo(q*CELL,H);x.stroke();}
+  tiles.forEach(function(t){if(t.hit){x.fillStyle='#c7bdf0';}else{x.fillStyle='#1a1430';}x.fillRect(t.col*CELL+3,t.y+3,CELL-6,120-6);});
+  x.fillStyle='#6c5ce7';x.textAlign='center';x.font='900 30px system-ui';x.fillText(score,W/2,40);
+  if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.font='900 26px system-ui';x.fillText('MISSED!',W/2,H/2-6);x.font='700 14px system-ui';x.fillText('Score '+score+' · tap to retry',W/2,H/2+22);}
+}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

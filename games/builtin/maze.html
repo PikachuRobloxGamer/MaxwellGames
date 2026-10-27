@@ -1,0 +1,44 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Maze</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🧩 Maxwell Maze</span><span id=score>Level 1</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Arrows / WASD / swipe. Reach the fish 🐟 to clear the maze — it grows each level!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var c=GK.canvas(400,400),x=c.getContext('2d'),W=400,H=400;
+var N,CELL,cells,px,py,level,win,img=new Image();img.src='../../maxwell.png';
+function idx(r,q){return r*N+q;}
+function gen(){
+  cells=[];for(var i=0;i<N*N;i++)cells.push({n:1,e:1,s:1,w:1,v:0});
+  var stack=[0];cells[0].v=1;
+  while(stack.length){var cur=stack[stack.length-1];var r=Math.floor(cur/N),q=cur%N;var nb=[];
+    if(r>0&&!cells[idx(r-1,q)].v)nb.push(['n',idx(r-1,q)]);
+    if(r<N-1&&!cells[idx(r+1,q)].v)nb.push(['s',idx(r+1,q)]);
+    if(q>0&&!cells[idx(r,q-1)].v)nb.push(['w',idx(r,q-1)]);
+    if(q<N-1&&!cells[idx(r,q+1)].v)nb.push(['e',idx(r,q+1)]);
+    if(!nb.length){stack.pop();continue;}
+    var pick=nb[(Math.random()*nb.length)|0];var d=pick[0],ni=pick[1];
+    cells[cur][d]=0;cells[ni][{n:'s',s:'n',e:'w',w:'e'}[d]]=0;cells[ni].v=1;stack.push(ni);
+  }
+}
+function R(){level=1;newMaze();window.__g={score:0,over:false};}
+function newMaze(){N=7+level;CELL=Math.floor(W/N);gen();px=0;py=0;win=false;GK.score('Level '+level);}
+function tryMove(d){if(win){level++;newMaze();return;}var r=py,q=px,cell=cells[idx(r,q)];
+  if(d==='up'&&!cell.n)py--;else if(d==='down'&&!cell.s)py++;else if(d==='left'&&!cell.w)px--;else if(d==='right'&&!cell.e)px++;else{GK.tone(160,0.05);return;}
+  GK.tone(500,0.04);
+  if(px===N-1&&py===N-1){win=true;GK.tone(880,0.2);GK.award(30+level*10);window.__g.score=level;}
+}
+GK.onKey(function(e){var k=e.key.toLowerCase();if(k==='arrowup'||k==='w')tryMove('up');else if(k==='arrowdown'||k==='s')tryMove('down');else if(k==='arrowleft'||k==='a')tryMove('left');else if(k==='arrowright'||k==='d')tryMove('right');});
+GK.swipe(c,tryMove);GK.pad({dirs:true,onDir:function(d,dn){if(dn)tryMove(d);}});
+function draw(){
+  x.fillStyle='#0a0e1c';x.fillRect(0,0,W,H);
+  var ox=(W-N*CELL)/2,oy=(H-N*CELL)/2;
+  x.strokeStyle='#4db5ff';x.lineWidth=2;
+  for(var r=0;r<N;r++)for(var q=0;q<N;q++){var cell=cells[idx(r,q)];var X=ox+q*CELL,Y=oy+r*CELL;
+    x.beginPath();if(cell.n){x.moveTo(X,Y);x.lineTo(X+CELL,Y);}if(cell.s){x.moveTo(X,Y+CELL);x.lineTo(X+CELL,Y+CELL);}if(cell.w){x.moveTo(X,Y);x.lineTo(X,Y+CELL);}if(cell.e){x.moveTo(X+CELL,Y);x.lineTo(X+CELL,Y+CELL);}x.stroke();}
+  // goal
+  x.font=(CELL*0.7)+'px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🐟',ox+(N-1)*CELL+CELL/2,oy+(N-1)*CELL+CELL/2);
+  // player
+  if(img.complete&&img.naturalWidth)x.drawImage(img,ox+px*CELL+CELL*0.15,oy+py*CELL+CELL*0.15,CELL*0.7,CELL*0.7);else{x.fillStyle='#f4a63b';x.beginPath();x.arc(ox+px*CELL+CELL/2,oy+py*CELL+CELL/2,CELL*0.35,0,7);x.fill();}
+  if(win){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#3ee08f';x.textAlign='center';x.font='900 26px system-ui';x.fillText('LEVEL '+level+' DONE!',W/2,H/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('tap / move for next maze',W/2,H/2+22);}
+}
+function loop(){draw();requestAnimationFrame(loop);}
+GK.restart(function(){level=1;newMaze();});R();requestAnimationFrame(loop);
+</script></body></html>

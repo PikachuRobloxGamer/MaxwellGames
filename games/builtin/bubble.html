@@ -1,0 +1,46 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Bubble Pop</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🫧 Bubble Pop</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Aim with mouse / finger, tap to shoot. Match 3+ same-color bubbles to pop them!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var COLS=9,R0=11,CELL=40,W=COLS*CELL,H=440,c=GK.canvas(W,H),x=c.getContext('2d');
+var COL=['#ff6b6b','#ffd84a','#3ee08f','#4db5ff','#c06bff'];
+var grid,shooter,fly,aim,score,over,win;
+function R(){grid=[];for(var r=0;r<R0;r++){grid[r]=[];for(var q=0;q<COLS;q++)grid[r][q]=r<5?(Math.random()*COL.length|0):-1;}shooter={c:(Math.random()*COL.length)|0,next:(Math.random()*COL.length)|0};fly=null;aim={x:W/2,y:0};score=0;over=false;win=false;GK.score(0);window.__g={score:0,over:false};}
+function cx(r,q){return q*CELL+CELL/2+(r%2?CELL/2:0);}
+function cy(r){return r*CELL+CELL/2+10;}
+function pos(e){var rr=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{x:(p.clientX-rr.left)*W/rr.width,y:(p.clientY-rr.top)*H/rr.height};}
+function move(e){var p=pos(e);aim=p;}
+function shoot(e){if(over){R();return;}if(fly)return;var p=pos(e);var dx=p.x-W/2,dy=p.y-(H-24);var L=Math.hypot(dx,dy)||1;fly={x:W/2,y:H-24,vx:dx/L*9,vy:dy/L*9,c:shooter.c};GK.tone(500,0.05);}
+c.addEventListener('pointermove',move);c.addEventListener('pointerdown',shoot);
+c.addEventListener('touchmove',function(e){e.preventDefault();move(e);},{passive:false});
+function nearest(px,py){var best=null,bd=1e9;for(var r=0;r<R0;r++)for(var q=0;q<COLS;q++){if(grid[r][q]>=0)continue;var d=Math.hypot(px-cx(r,q),py-cy(r));if(d<bd){bd=d;best=[r,q];}}return best;}
+function neighbors(r,q){var odd=r%2;var list=[[r,q-1],[r,q+1],[r-1,q],[r+1,q],[r-1,q+(odd?1:-1)],[r+1,q+(odd?1:-1)]];return list.filter(function(p){return p[0]>=0&&p[0]<R0&&p[1]>=0&&p[1]<COLS;});}
+function popGroup(r,q){var col=grid[r][q];var seen={},stack=[[r,q]],grp=[];while(stack.length){var cu=stack.pop();var k=cu[0]+','+cu[1];if(seen[k])continue;seen[k]=1;if(grid[cu[0]][cu[1]]!==col)continue;grp.push(cu);neighbors(cu[0],cu[1]).forEach(function(nb){if(!seen[nb[0]+','+nb[1]]&&grid[nb[0]][nb[1]]===col)stack.push(nb);});}
+  if(grp.length>=3){grp.forEach(function(p){grid[p[0]][p[1]]=-1;});score+=grp.length*10;GK.score(score);window.__g.score=score;GK.award(grp.length);GK.tone(700,0.08);}
+}
+function step(){
+  if(over||win)return;
+  if(fly){fly.x+=fly.vx;fly.y+=fly.vy;if(fly.x<CELL/2){fly.x=CELL/2;fly.vx*=-1;}if(fly.x>W-CELL/2){fly.x=W-CELL/2;fly.vx*=-1;}
+    // hit top or a bubble
+    var hit=fly.y<CELL/2;if(!hit){for(var r=0;r<R0&&!hit;r++)for(var q=0;q<COLS;q++){if(grid[r][q]>=0&&Math.hypot(fly.x-cx(r,q),fly.y-cy(r))<CELL*0.9){hit=true;break;}}}
+    if(hit){var cell=nearest(fly.x,fly.y);if(cell){grid[cell[0]][cell[1]]=fly.c;popGroup(cell[0],cell[1]);}shooter.c=shooter.next;shooter.next=(Math.random()*COL.length)|0;fly=null;
+      // win/lose checks
+      var any=false,low=false;for(var rr=0;rr<R0;rr++)for(var qq=0;qq<COLS;qq++){if(grid[rr][qq]>=0){any=true;if(rr>=R0-1)low=true;}}
+      if(!any){win=true;GK.award(200);}if(low){over=true;window.__g.over=true;GK.award(Math.floor(score/5));}
+    }
+  }
+}
+function draw(){
+  x.fillStyle='#0a0e1c';x.fillRect(0,0,W,H);
+  for(var r=0;r<R0;r++)for(var q=0;q<COLS;q++){if(grid[r][q]<0)continue;ball(cx(r,q),cy(r),COL[grid[r][q]]);}
+  // aim line
+  if(!fly){x.strokeStyle='rgba(255,255,255,.25)';x.setLineDash([6,8]);x.beginPath();x.moveTo(W/2,H-24);x.lineTo(aim.x,aim.y);x.stroke();x.setLineDash([]);}
+  if(fly)ball(fly.x,fly.y,COL[fly.c]);
+  ball(W/2,H-24,COL[shooter.c]);ball(W/2+30,H-18,COL[shooter.next],0.6);
+  if(win){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#3ee08f';x.textAlign='center';x.font='900 26px system-ui';x.fillText('CLEARED! 🎉',W/2,H/2);}
+  if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#ff6b6b';x.textAlign='center';x.font='900 26px system-ui';x.fillText('BUBBLES REACHED BOTTOM',W/2,H/2-6);x.fillStyle='#fff';x.font='700 13px system-ui';x.fillText('Score '+score+' · tap to retry',W/2,H/2+20);}
+}
+function ball(px,py,col,a){x.globalAlpha=a||1;x.fillStyle=col;x.beginPath();x.arc(px,py,CELL/2-2,0,7);x.fill();x.fillStyle='rgba(255,255,255,.3)';x.beginPath();x.arc(px-5,py-5,5,0,7);x.fill();x.globalAlpha=1;}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

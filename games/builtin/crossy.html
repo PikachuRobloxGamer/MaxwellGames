@@ -1,0 +1,44 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Crossy</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🚗 Maxwell Crossy</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Arrows / WASD / swipe to hop. Cross the roads without getting hit!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var COLS=9,ROWS=11,CELL=40,W=COLS*CELL,H=ROWS*CELL;
+var c=GK.canvas(W,H),x=c.getContext('2d'),img=new Image();img.src='../../maxwell.png';
+var cat,lanes,offset,best,over,img_ok;
+function mkLane(row){ // row index in world (0=start safe). returns lane def
+  if(row%3===0)return{type:'safe'};
+  var dir=Math.random()<0.5?1:-1,sp=(0.7+Math.random()*1.6)*dir,cars=[];var n=1+(Math.random()*2|0);
+  for(var i=0;i<n;i++)cars.push(i*(W/n)+Math.random()*60);
+  return{type:'road',sp:sp,cars:cars,w:52,hue:(row*37)%360};
+}
+function R(){cat={col:4,row:0};offset=0;best=0;over=false;lanes={};for(var r=-2;r<ROWS+3;r++)lanes[r]=mkLane(r);GK.score(0);window.__g={score:0,over:false};}
+function hop(d){if(over){R();return;}if(d==='up'){cat.row++;best=Math.max(best,cat.row);GK.tone(620,0.06);}else if(d==='down'&&cat.row>0)cat.row--;else if(d==='left'&&cat.col>0)cat.col--;else if(d==='right'&&cat.col<COLS-1)cat.col++;ensure();GK.score(best);window.__g.score=best;}
+function ensure(){for(var r=cat.row-3;r<cat.row+ROWS;r++)if(!lanes[r])lanes[r]=mkLane(r);}
+GK.onKey(function(e){var k=e.key.toLowerCase();if(k==='arrowup'||k==='w')hop('up');else if(k==='arrowdown'||k==='s')hop('down');else if(k==='arrowleft'||k==='a')hop('left');else if(k==='arrowright'||k==='d')hop('right');});
+GK.swipe(c,hop);GK.pad({dirs:true,onDir:function(d,dn){if(dn)hop(d);}});
+c.addEventListener('pointerdown',function(){if(over)R();});
+function step(){
+  if(over)return;
+  for(var k in lanes){var L=lanes[k];if(L.type==='road'){for(var i=0;i<L.cars.length;i++){L.cars[i]+=L.sp;if(L.sp>0&&L.cars[i]>W+20)L.cars[i]=-L.w-Math.random()*40;if(L.sp<0&&L.cars[i]<-L.w-20)L.cars[i]=W+Math.random()*40;}}}
+  // collision on cat's lane
+  var L=lanes[cat.row];if(L&&L.type==='road'){var cxp=cat.col*CELL+CELL/2;for(var j=0;j<L.cars.length;j++){if(cxp>L.cars[j]&&cxp<L.cars[j]+L.w){over=true;GK.tone(130,0.3,'sawtooth',0.12);GK.award(best*2);window.__g.over=true;}}}
+  var tgt=(cat.row-2);if(offset<tgt)offset+=Math.min(0.25,tgt-offset);else if(offset>tgt)offset-=Math.min(0.25,offset-tgt);
+}
+function draw(){
+  x.fillStyle='#0a0e1c';x.fillRect(0,0,W,H);
+  for(var sr=-1;sr<ROWS+1;sr++){var wr=Math.round(offset)+ (ROWS-1-sr); /* world row for screen row sr from bottom */ }
+  // draw by screen rows: screen bottom = world row = offset; top = offset+ROWS
+  for(var s=0;s<ROWS;s++){var wrow=Math.floor(offset)+s;var L=lanes[wrow]||mkLane(wrow);var sy=H-(s+1)*CELL+ (offset-Math.floor(offset))*CELL;
+    if(L.type==='safe'){x.fillStyle=(wrow%2?'#17321f':'#1b3a24');}else{x.fillStyle='#20242e';}
+    x.fillRect(0,sy,W,CELL);
+    if(L.type==='road'){x.strokeStyle='rgba(255,255,255,.2)';x.setLineDash([8,8]);x.beginPath();x.moveTo(0,sy+CELL/2);x.lineTo(W,sy+CELL/2);x.stroke();x.setLineDash([]);
+      L.cars.forEach(function(cx){x.fillStyle='hsl('+L.hue+' 80% 55%)';x.fillRect(cx,sy+6,L.w,CELL-12);x.fillStyle='rgba(255,255,255,.4)';x.fillRect(cx+(L.sp>0?L.w-8:2),sy+9,6,CELL-18);});}
+  }
+  // cat
+  var cxp=cat.col*CELL+CELL/2,cyp=H-((cat.row-Math.floor(offset))+1)*CELL+CELL/2+(offset-Math.floor(offset))*CELL;
+  if(img.complete&&img.naturalWidth){x.drawImage(img,cxp-16,cyp-16,32,32);}else{x.fillStyle='#f4a63b';x.beginPath();x.arc(cxp,cyp,15,0,7);x.fill();}
+  if(over){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.textAlign='center';x.font='900 28px system-ui';x.fillText('SPLAT!',W/2,H/2-6);x.font='700 15px system-ui';x.fillText('Crossed '+best+' · tap to retry',W/2,H/2+22);}
+}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

@@ -1,0 +1,78 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Where's Maxwell</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🔍 Where's Maxwell</span><span id=score>Level 1</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Find the REAL Maxwell (shown top-left) hidden in the crowd and tap him! The copycats are the wrong color or wearing stuff. Each level adds more cats — beat the clock!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var W=460,H=600,c=GK.canvas(W,H),x=c.getContext('2d');
+var scene=document.createElement('canvas');scene.width=W;scene.height=H;var sx=scene.getContext('2d');
+var img=new Image();img.src='../../maxwell.png';
+var sprites,real,level,timeLeft,over,flash,foundFx,lastT;
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=(Math.random()*(i+1))|0;var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function buildLevel(){
+  var count=Math.min(80,6+level*2);
+  var size=Math.max(38,70-level*1.5);
+  var cols=Math.max(4,Math.round(Math.sqrt(count*W/(H-70))));
+  var rows=Math.ceil(count/cols);
+  var cw=W/cols,ch=(H-80)/rows;
+  var cells=[];for(var r=0;r<rows;r++)for(var q=0;q<cols;q++)cells.push([q,r]);
+  shuffle(cells);cells=cells.slice(0,count);
+  var realIdx=(Math.random()*cells.length)|0;
+  sprites=cells.map(function(cell,i){
+    var isReal=i===realIdx;
+    return {x:cell[0]*cw+cw/2+(Math.random()-0.5)*cw*0.45,
+            y:72+cell[1]*ch+ch/2+(Math.random()-0.5)*ch*0.45,
+            s:size*(0.82+Math.random()*0.28),
+            hue:isReal?0:40+Math.random()*280,
+            acc:isReal?0:(Math.random()<0.42?1+((Math.random()*3)|0):0),
+            real:isReal,rot:(Math.random()-0.5)*0.5};
+  });
+  real=sprites[realIdx];
+  renderScene();
+}
+function drawCat(s){
+  sx.save();sx.translate(s.x,s.y);sx.rotate(s.rot);
+  sx.save();sx.beginPath();sx.arc(0,0,s.s/2,0,7);sx.clip();
+  sx.filter=s.hue?('hue-rotate('+s.hue.toFixed(0)+'deg) saturate(1.5)'):'none';
+  if(img.complete&&img.naturalWidth)sx.drawImage(img,-s.s/2,-s.s/2,s.s,s.s);
+  else{sx.fillStyle='#f4a63b';sx.fillRect(-s.s/2,-s.s/2,s.s,s.s);}
+  sx.filter='none';sx.restore();
+  sx.lineWidth=2;sx.strokeStyle='rgba(0,0,0,.3)';sx.beginPath();sx.arc(0,0,s.s/2,0,7);sx.stroke();
+  if(s.acc===1){sx.fillStyle='#e74c3c';sx.beginPath();sx.moveTo(-s.s*0.26,-s.s*0.34);sx.lineTo(s.s*0.26,-s.s*0.34);sx.lineTo(0,-s.s*0.72);sx.closePath();sx.fill();sx.fillStyle='#fff';sx.beginPath();sx.arc(0,-s.s*0.72,s.s*0.07,0,7);sx.fill();}
+  else if(s.acc===2){sx.fillStyle='#111';sx.fillRect(-s.s*0.32,-s.s*0.08,s.s*0.64,s.s*0.15);sx.fillStyle='#4db5ff';sx.fillRect(-s.s*0.28,-s.s*0.05,s.s*0.2,s.s*0.09);sx.fillRect(s.s*0.08,-s.s*0.05,s.s*0.2,s.s*0.09);}
+  else if(s.acc===3){sx.fillStyle='#6c5ce7';sx.beginPath();sx.moveTo(-s.s*0.16,s.s*0.28);sx.lineTo(0,s.s*0.36);sx.lineTo(-s.s*0.16,s.s*0.44);sx.closePath();sx.moveTo(s.s*0.16,s.s*0.28);sx.lineTo(0,s.s*0.36);sx.lineTo(s.s*0.16,s.s*0.44);sx.closePath();sx.fill();}
+  sx.restore();
+}
+function renderScene(){sx.clearRect(0,0,W,H);var order=sprites.slice().sort(function(a,b){return (a.real?1:0)-(b.real?1:0);});order.forEach(drawCat);}
+function R(){level=1;timeLeft=60;over=false;flash=0;foundFx=null;buildLevel();GK.score('Level 1');window.__g={score:0,over:false};lastT=performance.now();}
+function pos(e){var r=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*W/r.width,y:(p.clientY-r.top)*H/r.height};}
+function tap(e){
+  if(over){R();return;}
+  var p=pos(e);if(p.y<66)return;
+  if(Math.hypot(p.x-real.x,p.y-real.y)<real.s/2+8){
+    level++;GK.score('Level '+level);window.__g.score=level-1;GK.award(15);GK.tone(880,0.12);GK.tone(1200,0.1);
+    foundFx={x:real.x,y:real.y,t:1};timeLeft=Math.min(99,timeLeft+8);buildLevel();
+  }else{timeLeft-=2;flash=1;GK.tone(150,0.14,'sawtooth',0.1);}
+}
+c.addEventListener('pointerdown',tap);
+c.addEventListener('touchstart',function(e){e.preventDefault();tap(e);},{passive:false});
+function draw(dt){
+  if(!over){timeLeft-=dt;if(timeLeft<=0){timeLeft=0;over=true;GK.tone(110,0.4,'sawtooth',0.12);window.__g.over=true;GK.award((level-1)*10);}}
+  x.fillStyle='#0a0e1c';x.fillRect(0,0,W,H);
+  x.drawImage(scene,0,0);
+  if(flash>0){x.fillStyle='rgba(255,80,80,'+(flash*0.3)+')';x.fillRect(0,0,W,H);flash-=dt*2.2;}
+  if(foundFx){x.strokeStyle='rgba(62,224,143,'+foundFx.t+')';x.lineWidth=5;x.beginPath();x.arc(foundFx.x,foundFx.y,(1-foundFx.t)*60+10,0,7);x.stroke();foundFx.t-=dt*1.6;if(foundFx.t<=0)foundFx=null;}
+  // HUD
+  x.fillStyle='#141a30';x.fillRect(0,0,W,64);x.strokeStyle='#2a3250';x.beginPath();x.moveTo(0,64);x.lineTo(W,64);x.stroke();
+  x.save();x.beginPath();x.arc(36,32,25,0,7);x.clip();x.fillStyle='#222';x.fillRect(11,7,50,50);if(img.complete&&img.naturalWidth)x.drawImage(img,11,7,50,50);x.restore();
+  x.strokeStyle='#ffd84a';x.lineWidth=3;x.beginPath();x.arc(36,32,25,0,7);x.stroke();
+  x.fillStyle='#fff';x.textAlign='left';x.font='800 15px system-ui';x.fillText('FIND THIS MAXWELL!',74,26);
+  x.fillStyle='#8b8fa3';x.font='700 12px system-ui';x.fillText('Level '+level+' · '+sprites.length+' cats',74,46);
+  x.textAlign='right';x.fillStyle=timeLeft<10?'#ff6b6b':'#3ee08f';x.font='900 24px system-ui';x.fillText(Math.ceil(timeLeft)+'s',W-14,40);
+  if(over){x.fillStyle='rgba(0,0,0,.72)';x.fillRect(0,0,W,H);x.fillStyle='#ffd84a';x.textAlign='center';x.font='900 32px system-ui';x.fillText('TIME!',W/2,H/2-30);
+    x.fillStyle='#fff';x.font='800 20px system-ui';x.fillText('You found '+(level-1)+' Maxwell'+(level-1===1?'':'s')+'!',W/2,H/2+4);
+    x.fillStyle='#8b8fa3';x.font='700 14px system-ui';x.fillText('tap to play again',W/2,H/2+34);
+    // reveal where Maxwell was
+    x.strokeStyle='#3ee08f';x.lineWidth=4;x.beginPath();x.arc(real.x,real.y,real.s/2+10,0,7);x.stroke();}
+}
+function loop(t){var dt=Math.min(0.05,(t-lastT)/1000);lastT=t;draw(dt);requestAnimationFrame(loop);}
+GK.restart(R);img.onload=R;R();requestAnimationFrame(loop);
+</script></body></html>

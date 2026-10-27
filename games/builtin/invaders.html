@@ -1,0 +1,44 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Invaders</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>👾 Maxwell Invaders</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>← → / A D to move · SPACE / tap to shoot. Clear the invaders!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var W=460,H=380,c=GK.canvas(W,H),x=c.getContext('2d');
+var ship,bullets,ebullets,inv,dir,dropT,over,win,wave,cool;
+function R(){ship={x:W/2,w:40};bullets=[];ebullets=[];inv=[];dir=1;dropT=0;over=false;win=false;wave=1;cool=0;makeWave();GK.score(0);window.__g={score:0,over:false};}
+function makeWave(){inv=[];for(var r=0;r<4;r++)for(var q=0;q<8;q++)inv.push({x:50+q*46,y:40+r*38,hue:(r*60)%360,alive:true});}
+function shoot(){if(over){R();return;}if(cool>0)return;cool=12;bullets.push({x:ship.x,y:H-44});GK.tone(880,0.05);}
+GK.onKey(function(e){if(e.key===' '||e.key==='ArrowUp')shoot();});
+c.addEventListener('pointerdown',shoot);
+GK.pad({dirs:'lr',act:'🔫',onAct:shoot});
+function step(){
+  if(over||win)return;
+  if(cool>0)cool--;
+  if(GK.keys.left)ship.x-=5;if(GK.keys.right)ship.x+=5;ship.x=Math.max(24,Math.min(W-24,ship.x));
+  // invaders move
+  var live=inv.filter(function(i){return i.alive;});if(!live.length){win=true;GK.award(200*wave);GK.tone(880,0.2);return;}
+  var minx=Math.min.apply(null,live.map(function(i){return i.x;})),maxx=Math.max.apply(null,live.map(function(i){return i.x;}));
+  var spd=0.5+ (32-live.length)*0.05 + wave*0.2;
+  if((maxx>W-30&&dir>0)||(minx<30&&dir<0)){dir*=-1;inv.forEach(function(i){i.y+=16;});}
+  inv.forEach(function(i){if(i.alive)i.x+=dir*spd;});
+  // enemy fire
+  if(Math.random()<0.03&&live.length){var s=live[(Math.random()*live.length)|0];ebullets.push({x:s.x,y:s.y});}
+  bullets.forEach(function(b){b.y-=8;});ebullets.forEach(function(b){b.y+=4.5;});
+  bullets=bullets.filter(function(b){return b.y>-10;});ebullets=ebullets.filter(function(b){return b.y<H+10;});
+  // collisions
+  bullets.forEach(function(b){inv.forEach(function(i){if(i.alive&&Math.abs(b.x-i.x)<20&&Math.abs(b.y-i.y)<16){i.alive=false;b.y=-99;window.__g.score+=10*wave;GK.score(window.__g.score);GK.tone(300,0.06);}});});
+  ebullets.forEach(function(b){if(Math.abs(b.x-ship.x)<22&&b.y>H-46){over=true;GK.tone(120,0.3,'sawtooth',0.12);GK.award(Math.floor(window.__g.score/5));window.__g.over=true;}});
+  inv.forEach(function(i){if(i.alive&&i.y>H-60){over=true;window.__g.over=true;}});
+}
+function draw(){
+  x.fillStyle='#05060f';x.fillRect(0,0,W,H);for(var i=0;i<40;i++){x.fillStyle='rgba(255,255,255,'+(0.05+(i%4)*0.05)+')';x.fillRect((i*83)%W,(i*57)%H,2,2);}
+  inv.forEach(function(i){if(!i.alive)return;x.font='24px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('👾',i.x,i.y);});
+  x.fillStyle='#3ee08f';bullets.forEach(function(b){x.fillRect(b.x-2,b.y-8,4,10);});
+  x.fillStyle='#ff6b6b';ebullets.forEach(function(b){x.fillRect(b.x-2,b.y,4,10);});
+  x.font='30px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🐱',ship.x,H-26);
+  if(win){x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#3ee08f';x.font='900 26px system-ui';x.fillText('WAVE '+wave+' CLEAR!',W/2,H/2-10);x.fillStyle='#fff';x.font='700 15px system-ui';x.fillText('tap to continue',W/2,H/2+20);}
+  if(over){x.fillStyle='rgba(0,0,0,.65)';x.fillRect(0,0,W,H);x.fillStyle='#ff6b6b';x.font='900 28px system-ui';x.fillText('GAME OVER',W/2,H/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('Score '+window.__g.score+' · tap to retry',W/2,H/2+22);}
+}
+c.addEventListener('pointerdown',function(){if(win){wave++;makeWave();win=false;}});
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

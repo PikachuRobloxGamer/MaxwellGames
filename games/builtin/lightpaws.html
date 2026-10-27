@@ -1,0 +1,37 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Light Paws</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🏍️ Light Paws</span><span id=score>Round: 1</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Arrows / WASD / swipe to turn. Don't hit the walls or trails. Outlast the CPU!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var N=41,CELL=11,W=N*CELL,H=N*CELL,c=GK.canvas(W,H),x=c.getContext('2d');
+var occ,you,cpu,over,msg,round,tick;
+function R(){occ={};you={x:8,y:20,dx:1,dy:0,alive:true,col:'#3ee08f',trail:[]};cpu={x:N-9,y:20,dx:-1,dy:0,alive:true,col:'#ff6b6b',trail:[]};over=false;msg='';round=1;tick=0;mark(you);mark(cpu);window.__g={score:0,over:false};GK.score('Round: '+round);}
+function key(k){return k.x+','+k.y;}
+function mark(p){occ[key(p)]=1;p.trail.push({x:p.x,y:p.y});}
+function turn(p,dx,dy){if(dx===-p.dx&&dy===-p.dy)return;p.dx=dx;p.dy=dy;}
+GK.onKey(function(e){var k=e.key.toLowerCase();if(k==='arrowup'||k==='w')turn(you,0,-1);else if(k==='arrowdown'||k==='s')turn(you,0,1);else if(k==='arrowleft'||k==='a')turn(you,-1,0);else if(k==='arrowright'||k==='d')turn(you,1,0);});
+GK.swipe(c,function(d){turn(you,d==='left'?-1:d==='right'?1:0,d==='up'?-1:d==='down'?1:0);});
+GK.pad({dirs:true,onDir:function(d,dn){if(dn)turn(you,d==='left'?-1:d==='right'?1:0,d==='up'?-1:d==='down'?1:0);}});
+c.addEventListener('pointerdown',function(){if(over)R();});
+function cpuThink(){
+  // avoid immediate death, prefer current dir
+  var opts=[[cpu.dx,cpu.dy],[cpu.dy,-cpu.dx],[-cpu.dy,cpu.dx]];
+  for(var i=0;i<opts.length;i++){var nx=cpu.x+opts[i][0],ny=cpu.y+opts[i][1];if(nx>=0&&nx<N&&ny>=0&&ny<N&&!occ[nx+','+ny]){if(i===0&&Math.random()<0.82){cpu.dx=opts[0][0];cpu.dy=opts[0][1];return;}cpu.dx=opts[i][0];cpu.dy=opts[i][1];return;}}
+}
+function advance(p){var nx=p.x+p.dx,ny=p.y+p.dy;if(nx<0||nx>=N||ny<0||ny>=N||occ[nx+','+ny]){p.alive=false;return;}p.x=nx;p.y=ny;mark(p);}
+function step(){
+  if(over)return;tick++;if(tick%4)return;
+  cpuThink();advance(you);advance(cpu);
+  if(!you.alive||!cpu.alive){over=true;GK.tone(you.alive?760:140,0.3,you.alive?'square':'sawtooth',0.1);
+    if(you.alive&&!cpu.alive){msg='YOU WIN! 🎉';GK.award(100);window.__g.score=1;}
+    else if(!you.alive&&cpu.alive){msg='CPU WINS';window.__g.over=true;}
+    else{msg='DRAW';}
+  }
+}
+function draw(){
+  x.fillStyle='#05060f';x.fillRect(0,0,W,H);x.strokeStyle='#1b2a4a';x.lineWidth=2;x.strokeRect(1,1,W-2,H-2);
+  [you,cpu].forEach(function(p){x.fillStyle=p.col;p.trail.forEach(function(t){x.fillRect(t.x*CELL+1,t.y*CELL+1,CELL-2,CELL-2);});x.fillStyle='#fff';x.fillRect(p.x*CELL+2,p.y*CELL+2,CELL-4,CELL-4);});
+  if(over){x.fillStyle='rgba(0,0,0,.65)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.textAlign='center';x.font='900 30px system-ui';x.fillText(msg,W/2,H/2-6);x.font='700 14px system-ui';x.fillText('tap to play again',W/2,H/2+22);}
+}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

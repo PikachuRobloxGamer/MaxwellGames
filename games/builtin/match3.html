@@ -1,0 +1,33 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Meow Match</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>😺 Meow Match</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Tap two side-by-side tiles to swap them. Match 3+ in a row to pop them!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var N=8,CELL=48,W=N*CELL,H=N*CELL,c=GK.canvas(W,H),x=c.getContext('2d');
+var EMO=['🐱','🐟','🐭','🧶','🐾','⭐'],grid,sel,anim,score,busy;
+function R(){grid=[];for(var r=0;r<N;r++){grid[r]=[];for(var q=0;q<N;q++)grid[r][q]=rnd();}while(findMatches().length){resolve();}score=0;sel=null;busy=false;GK.score(0);window.__g={score:0,over:false};}
+function rnd(){return (Math.random()*EMO.length)|0;}
+function findMatches(){var m=[];for(var r=0;r<N;r++)for(var q=0;q<N;q++){var v=grid[r][q];if(v<0)continue;
+  if(q<N-2&&grid[r][q+1]===v&&grid[r][q+2]===v){var k=q;while(k<N&&grid[r][k]===v){m.push([r,k]);k++;}}
+  if(r<N-2&&grid[r+1][q]===v&&grid[r+2][q]===v){var kk=r;while(kk<N&&grid[kk][q]===v){m.push([kk,q]);kk++;}}}
+  return m;}
+function resolve(){var m=findMatches();if(!m.length)return 0;var uniq={};m.forEach(function(p){uniq[p[0]+','+p[1]]=1;});var cnt=Object.keys(uniq).length;Object.keys(uniq).forEach(function(k){var p=k.split(',');grid[+p[0]][+p[1]]=-1;});
+  // collapse
+  for(var q=0;q<N;q++){var col=[];for(var r=N-1;r>=0;r--)if(grid[r][q]>=0)col.push(grid[r][q]);var r2=N-1;for(var i=0;i<col.length;i++){grid[r2][q]=col[i];r2--;}while(r2>=0){grid[r2][q]=rnd();r2--;}}
+  return cnt;}
+function pos(e){var r=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{q:Math.floor((p.clientX-r.left)*W/r.width/CELL),r:Math.floor((p.clientY-r.top)*H/r.height/CELL)};}
+function adj(a,b){return Math.abs(a.q-b.q)+Math.abs(a.r-b.r)===1;}
+function tap(e){if(busy)return;var p=pos(e);if(p.q<0||p.q>=N||p.r<0||p.r>=N)return;
+  if(!sel){sel=p;}else if(sel.q===p.q&&sel.r===p.r){sel=null;}else if(adj(sel,p)){swap(sel,p);sel=null;}else{sel=p;}}
+function swap(a,b){var tmp=grid[a.r][a.q];grid[a.r][a.q]=grid[b.r][b.q];grid[b.r][b.q]=tmp;
+  if(!findMatches().length){tmp=grid[a.r][a.q];grid[a.r][a.q]=grid[b.r][b.q];grid[b.r][b.q]=tmp;GK.tone(200,0.1);return;}
+  busy=true;var chain=1;function cyc(){var n=resolve();if(n){score+=n*10*chain;chain++;GK.score(score);window.__g.score=score;GK.tone(500+chain*60,0.07);GK.award(n);setTimeout(cyc,160);}else busy=false;}cyc();}
+c.addEventListener('pointerdown',tap);
+c.addEventListener('touchstart',function(e){e.preventDefault();tap(e);},{passive:false});
+function draw(){
+  x.fillStyle='#120e22';x.fillRect(0,0,W,H);
+  for(var r=0;r<N;r++)for(var q=0;q<N;q++){x.fillStyle=(r+q)%2?'#1c1733':'#231c3f';x.fillRect(q*CELL,r*CELL,CELL,CELL);var v=grid[r][q];if(v>=0){x.font='30px serif';x.textAlign='center';x.textBaseline='middle';x.fillText(EMO[v],q*CELL+CELL/2,r*CELL+CELL/2+1);}}
+  if(sel){x.strokeStyle='#ffd84a';x.lineWidth=3;x.strokeRect(sel.q*CELL+2,sel.r*CELL+2,CELL-4,CELL-4);}
+}
+function loop(){draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

@@ -1,0 +1,38 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Highway Maxwell</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🏎️ Highway Maxwell</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>← → / A D / swipe to switch lanes. Dodge the traffic — faster and faster!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var LANES=4,W=300,LW=W/LANES,H=480,c=GK.canvas(W,H),x=c.getContext('2d');
+var lane,carY,cars,spd,dist,over,road,img=new Image();img.src='../../maxwell.png';
+function R(){lane=1;cars=[];spd=5;dist=0;over=false;road=0;spawn();window.__g={score:0,over:false};GK.score(0);}
+function spawn(){var l=(Math.random()*LANES)|0;cars.push({lane:l,y:-80-Math.random()*120,hue:(Math.random()*360)|0});}
+function move(d){if(over){R();return;}if(d==='left'&&lane>0)lane--;else if(d==='right'&&lane<LANES-1)lane++;GK.tone(420,0.04);}
+GK.onKey(function(e){var k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')move('left');else if(k==='arrowright'||k==='d')move('right');});
+GK.swipe(c,function(d){if(d==='left'||d==='right')move(d);});
+GK.pad({dirs:'lr',onDir:function(d,dn){if(dn)move(d);}});
+c.addEventListener('pointerdown',function(e){if(over){R();return;}var r=c.getBoundingClientRect();var px=(e.clientX-r.left)*W/r.width;move(px<W/2?'left':'right');});
+function laneX(l){return l*LW+LW/2;}
+function step(){
+  if(over)return;
+  dist+=spd/12;spd+=0.0035;road=(road+spd)%40;
+  cars.forEach(function(cr){cr.y+=spd;});
+  var lowest=Math.min.apply(null,cars.map(function(cr){return cr.y;}));
+  if(H-lowest>150+Math.random()*120)spawn();
+  cars=cars.filter(function(cr){return cr.y<H+80;});
+  var px=laneX(lane),py=H-56;
+  cars.forEach(function(cr){if(cr.lane===lane&&Math.abs(cr.y-py)<58){over=true;GK.tone(120,0.35,'sawtooth',0.13);GK.award(Math.floor(dist/5));window.__g.over=true;}});
+  GK.score(Math.floor(dist));window.__g.score=Math.floor(dist);
+}
+function draw(){
+  x.fillStyle='#20242e';x.fillRect(0,0,W,H);
+  // lane dashes
+  x.strokeStyle='rgba(255,255,255,.4)';x.lineWidth=3;x.setLineDash([20,20]);for(var l=1;l<LANES;l++){x.beginPath();x.moveTo(l*LW,road-40);x.lineTo(l*LW,H);x.stroke();}x.setLineDash([]);
+  // traffic
+  cars.forEach(function(cr){var X=laneX(cr.lane);x.fillStyle='hsl('+cr.hue+' 75% 55%)';x.fillRect(X-18,cr.y-30,36,60);x.fillStyle='rgba(0,0,0,.35)';x.fillRect(X-18,cr.y-30,36,12);});
+  // player
+  var px=laneX(lane),py=H-56;if(img.complete&&img.naturalWidth)x.drawImage(img,px-20,py-24,40,48);else{x.fillStyle='#3ee08f';x.fillRect(px-18,py-24,36,56);}
+  if(over){x.fillStyle='rgba(0,0,0,.65)';x.fillRect(0,0,W,H);x.fillStyle='#ff6b6b';x.textAlign='center';x.font='900 26px system-ui';x.fillText('CRASH!',W/2,H/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('Score '+Math.floor(dist)+' · tap to retry',W/2,H/2+22);}
+}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>
