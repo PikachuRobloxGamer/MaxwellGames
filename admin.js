@@ -42,6 +42,25 @@
   const isAdmin = () => !!role;
   const isOwner = () => role === "owner";
 
+  // ---------- Live presence: accurate "who's online" + owner join alerts ----------
+  const ONLINE_MS = 32000;    // online if we heard from them within 32s (OUR clock — immune to device clock skew)
+  const PRES_EVERY = 10000;   // each client announces itself every 10s
+  const presence = new Map(); // who -> { nick, last }  (last = OUR Date.now() when last heard)
+  const presenceStart = Date.now();
+  let presIv = null, helloSent = false;
+  function isOnlineNow(who) { const r = presence.get(who); return !!r && (Date.now() - r.last) < ONLINE_MS; }
+  function onlineOthers() { const now = Date.now(), out = []; presence.forEach((r, who) => { if (who !== CLIENT_ID && now - r.last < ONLINE_MS) out.push([who, r.nick || "Player"]); }); return out; }
+  function broadcastPresence(kind) { if (!publishFn) return; send({ t: kind || "pres", who: CLIENT_ID, nick: nick }, false); }
+  function startPresence() {
+    if (presIv) return;
+    const kick = () => { if (publishFn && !helloSent) { helloSent = true; broadcastPresence("hello"); } };
+    kick(); const ki = setInterval(() => { kick(); if (helloSent) clearInterval(ki); }, 1500);
+    presIv = setInterval(() => { if (document.visibilityState !== "hidden") broadcastPresence("pres"); }, PRES_EVERY);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { broadcastPresence("hello"); } });
+    setInterval(liveWhoRefresh, 2000);
+    if (isOwner() && "Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(function () {}); } catch (e) {} }
+  }
+
   function updateLock() {
     const r = role && ROLES[role];
     $("lockBtn").textContent = r ? r.icon : "🔒";
@@ -403,10 +422,19 @@
       return;
     }
     if (msg.t === "abuse_end") { if (age < 600) endAbuse(); return; }
+    // ---- live presence (handled BEFORE the age gate so device clock skew never drops it) ----
+    if (msg.t === "pres" || msg.t === "hello" || msg.t === "rollping" || msg.t === "rollcall") {
+      if (msg.who && msg.who !== CLIENT_ID) {
+        const wasOn = isOnlineNow(msg.who);
+        const r = presence.get(msg.who) || {}; r.nick = msg.nick || r.nick || "Player"; r.last = Date.now(); presence.set(msg.who, r);
+        if (!wasOn && (msg.t === "pres" || msg.t === "hello")) onPlayerJoin(msg.who, r.nick);
+        liveWhoRefresh();
+      }
+      if ((msg.t === "rollping" || msg.t === "rollcall") && msg.who !== CLIENT_ID) broadcastPresence("pres"); // someone is scanning → announce ourselves
+      return;
+    }
     if (age > 12) return;
     if (msg.t === "announce") { announce(String(msg.text || "").slice(0, 100), msg.style, byName); return; }
-    if (msg.t === "rollcall") { if (msg.rid && !(rollcall && rollcall.rid === msg.rid)) setTimeout(() => post({ k: "mg1", id: Math.random().toString(36).slice(2), t: "here", rid: msg.rid, who: CLIENT_ID, nick: nick, at: Math.floor(nowSec()) }), Math.random() * 2500); return; }
-    if (msg.t === "here") { if (rollcall && msg.rid === rollcall.rid && msg.who !== CLIENT_ID) { rollcall.people.set(msg.who, msg.nick || "Player"); $("rollCount").textContent = rollcall.people.size; renderWho(); } return; }
     if (msg.t === "setsami") { setSamiOff(!msg.on); if (!msg.on && role === "sami") { role = null; try { localStorage.removeItem(ROLE_KEY); } catch (e) {} updateLock(); MG.setRole(null); MG.toast("⛔", "Admin powers turned off", "The owner turned off your GamesOn786 mode."); $("adminModal").classList.add("hidden"); } if ($("samiState")) $("samiState").textContent = msg.on ? "ON" : "OFF (turned off by owner)"; return; }
     if (msg.t === "freeze") { if (age < 20 && (!msg.target || msg.target === CLIENT_ID)) showFreeze(msg.text); return; }
     if (msg.t === "unfreeze") { if (!msg.target || msg.target === CLIENT_ID) hideFreeze(); return; }
@@ -651,30 +679,41 @@
     setTimeout(() => { o.remove(); frozen = false; }, 1500);
   }
 
-  // ---------- Who's online ----------
-  let rollcall = null;
-  function renderWho() {
-    const box = $("whoList");
-    if (!box || !rollcall) return;
+  // ---------- Who's online (live presence) ----------
+  function onPlayerJoin(who, nm) {
+    if (!isOwner()) return;
+    if (Date.now() - presenceStart < 4000) return; // don't flood for people already on when you first open the site
+    const n = onlineOthers().length;
+    MG.toast("👋", nm + " just joined!", n + " online now — open 📡 Who's playing to freeze them.");
+    try { MG.meow && MG.meow(); } catch (e) {}
+    if ("Notification" in window && Notification.permission === "granted") { try { new Notification("MaxwellGames", { body: nm + " just logged in! (" + n + " online now)", tag: "mg-join" }); } catch (e) {} }
+  }
+  function renderWhoList() {
+    const box = $("whoList"); if (!box) return;
+    const arr = onlineOthers();
+    if (!arr.length) { box.innerHTML = '<p class="panel-note">Nobody else is on the site right now. Make sure your friends picked the <b>same server</b> (💻 Chromebook <i>or</i> 🏠 Home) that you did — both of you have to match.</p>'; return; }
     box.innerHTML = "";
-    rollcall.people.forEach((nm, id) => {
-      const row = document.createElement("div");
-      row.className = "who-row";
-      row.innerHTML = `<span class="who-name">👤 </span><button class="btn who-freeze">🧊 Freeze</button>`;
+    arr.forEach(([id, nm]) => {
+      const row = document.createElement("div"); row.className = "who-row";
+      row.innerHTML = `<span class="who-name">🟢 </span><button class="btn who-freeze">🧊 Freeze</button>`;
       row.querySelector(".who-name").appendChild(document.createTextNode(nm));
       row.querySelector(".who-freeze").onclick = () => { send({ t: "freeze", target: id, text: FREEZE_MSG }, false); MG.toast("🧊", "Froze " + nm, "Maxwell is on their screen!"); };
       box.appendChild(row);
     });
-    if (!rollcall.people.size) box.innerHTML = '<p class="panel-note">Nobody else online yet (or they need to be on the site right now).</p>';
   }
-  $("rollBtn").onclick = () => {
+  function liveWhoRefresh() {
+    const arr = onlineOthers();
+    const rc = $("rollCount"); if (rc) rc.textContent = arr.length;
+    const rm = $("rollMsg"); if (rm) rm.textContent = arr.length + " " + (arr.length === 1 ? "person" : "people") + " online right now";
+    renderWhoList();
+  }
+  const rollBtnEl = $("rollBtn");
+  if (rollBtnEl) rollBtnEl.onclick = () => {
     if (!isAdmin()) return;
-    rollcall = { rid: Math.random().toString(36).slice(2), people: new Map() };
-    $("rollCount").textContent = "0";
-    $("rollMsg").textContent = "Counting... (takes about 5 seconds)";
-    renderWho();
-    send({ t: "rollcall", rid: rollcall.rid }, false);
-    setTimeout(() => { if (rollcall) $("rollMsg").textContent = `${rollcall.people.size} other ${rollcall.people.size === 1 ? "person" : "people"} online`; }, 5500);
+    broadcastPresence("rollping");          // ask everyone to announce themselves right now
+    broadcastPresence("hello");             // and announce ourselves
+    liveWhoRefresh();
+    MG.toast("📡", "Scanning...", "Showing everyone who's online right now — updates live.");
   };
   const unfreezeAllBtn = $("unfreezeAll"); if (unfreezeAllBtn) unfreezeAllBtn.onclick = () => { if (isAdmin()) send({ t: "unfreeze" }); };
   const samiToggle = $("samiToggle"); if (samiToggle) samiToggle.onclick = () => { if (!isOwner()) return; const turnOn = samiOff(); send({ t: "setsami", on: turnOn }); MG.toast(turnOn ? "✅" : "⛔", turnOn ? "Sami's powers ON" : "Sami's powers OFF", ""); if ($("samiState")) $("samiState").textContent = turnOn ? "ON" : "OFF (turned off by owner)"; };
@@ -775,4 +814,5 @@
   runLoader();
   setStatus("connecting...", false);
   connect();
+  startPresence();
 })();

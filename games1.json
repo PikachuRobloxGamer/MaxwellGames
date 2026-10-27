@@ -177,84 +177,108 @@
       "iframe": "games/builtin/colormatch.html"
     },
     {
-      "id": "hextris",
-      "title": "Hextris",
-      "category": "Puzzle",
+      "id": "maxwell-runner",
+      "title": "Maxwell Runner",
+      "category": "🐱 Maxwell Originals",
       "thumbnail": "",
-      "description": "Rotate the hexagon to match colored blocks. Arrow keys or tap sides.",
-      "iframe": "https://hextris.github.io/hextris/"
+      "description": "🏃 Endless runner — jump the obstacles, go the distance!",
+      "iframe": "games/builtin/runner.html"
     },
     {
-      "id": "clumsy-bird",
-      "title": "Clumsy Bird",
-      "category": "Arcade",
+      "id": "maxwell-crossy",
+      "title": "Maxwell Crossy",
+      "category": "🐱 Maxwell Originals",
       "thumbnail": "",
-      "description": "A Flappy Bird remake. Click, tap, or press Space to flap.",
-      "iframe": "https://ellisonleao.github.io/clumsy-bird/"
+      "description": "🚗 Frogger-style — hop across the busy roads!",
+      "iframe": "games/builtin/crossy.html"
     },
     {
-      "id": "tower-game",
-      "title": "Tower Blocks",
-      "category": "Arcade",
+      "id": "maxwell-muncher",
+      "title": "Maxwell Muncher",
+      "category": "🐱 Maxwell Originals",
       "thumbnail": "",
-      "description": "Drop blocks to build the tallest tower. Tap to drop.",
-      "iframe": "https://iamkun.github.io/tower_game/"
+      "description": "🐱 Eat all the fish in the maze, dodge the dogs!",
+      "iframe": "games/builtin/muncher.html"
     },
     {
-      "id": "t-rex-runner",
-      "title": "T-Rex Runner",
-      "category": "Arcade",
+      "id": "maxwell-invaders",
+      "title": "Maxwell Invaders",
+      "category": "🐱 Maxwell Originals",
       "thumbnail": "",
-      "description": "The offline dino game. Space to jump, Down to duck.",
-      "iframe": "https://wayou.github.io/t-rex-runner/"
+      "description": "👾 Blast the alien invaders before they land!",
+      "iframe": "games/builtin/invaders.html"
     },
     {
-      "id": "untrusted",
-      "title": "Untrusted",
-      "category": "Puzzle",
+      "id": "fish-slice",
+      "title": "Fish Slice",
+      "category": "🐱 Maxwell Originals",
       "thumbnail": "",
-      "description": "Hack the code of each level to escape. Uses real JavaScript.",
-      "iframe": "https://alexnisnevich.github.io/untrusted/"
+      "description": "🍣 Swipe to slice flying fish — don't hit the bombs!",
+      "iframe": "games/builtin/fishslice.html"
     },
     {
-      "id": "astray",
-      "title": "Astray",
-      "category": "Puzzle",
+      "id": "maxwell-stack",
+      "title": "Maxwell Stack",
+      "category": "🐱 Maxwell Originals",
       "thumbnail": "",
-      "description": "Roll a ball through a 3D maze. Arrow keys to move.",
-      "iframe": "https://wwwtyro.github.io/Astray/"
+      "description": "🧱 Drop blocks and build the tallest tower!",
+      "iframe": "games/builtin/stack.html"
     },
     {
-      "id": "cube-composer",
-      "title": "Cube Composer",
-      "category": "Puzzle",
+      "id": "meow-match",
+      "title": "Meow Match",
+      "category": "🐱 Maxwell Originals",
       "thumbnail": "",
-      "description": "Combine functions to transform cubes into the goal pattern.",
-      "iframe": "https://david-peter.de/cube-composer/"
+      "description": "😺 Match-3 — swap the cats to pop combos!",
+      "iframe": "games/builtin/match3.html"
     },
     {
-      "id": "hexgl",
-      "title": "HexGL",
-      "category": "Racing",
+      "id": "bubble-pop",
+      "title": "Bubble Pop",
+      "category": "🐱 Maxwell Originals",
       "thumbnail": "",
-      "description": "Futuristic 3D racing. Arrow keys to steer and boost.",
-      "iframe": "https://hexgl.bkcore.com/play/"
+      "description": "🫧 Bubble shooter — match 3+ colors to clear!",
+      "iframe": "games/builtin/bubble.html"
     },
     {
-      "id": "a-dark-room",
-      "title": "A Dark Room",
-      "category": "RPG",
+      "id": "light-paws",
+      "title": "Light Paws",
+      "category": "🐱 Maxwell Originals",
       "thumbnail": "",
-      "description": "A minimalist text adventure that grows into much more.",
-      "iframe": "https://adarkroom.doublespeakgames.com/"
+      "description": "🏍️ Light-cycle duel vs the CPU — don't crash!",
+      "iframe": "games/builtin/lightpaws.html"
     },
     {
-      "id": "2048-original",
-      "title": "2048 (Original)",
-      "category": "Puzzle",
+      "id": "maxwell-maze",
+      "title": "Maxwell Maze",
+      "category": "🐱 Maxwell Originals",
       "thumbnail": "",
-      "description": "The original 2048. Arrow keys to merge tiles.",
-      "iframe": "https://gabrielecirulli.github.io/2048/"
+      "description": "🧩 Find the fish through mazes that grow each level!",
+      "iframe": "games/builtin/maze.html"
+    },
+    {
+      "id": "meow-tiles",
+      "title": "Meow Tiles",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🎹 Tap the falling tiles — don't miss a beat!",
+      "iframe": "games/builtin/tiles.html"
+    },
+    {
+      "id": "highway-maxwell",
+      "title": "Highway Maxwell",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🏎️ Dodge traffic at top speed — how far can you go?",
+      "iframe": "games/builtin/highway.html"
+    },
+    {
+      "id": "wheres-maxwell",
+      "title": "Where's Maxwell",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🔍 A Where's-Waldo remix — spot the real Maxwell hidden in a crowd of copycats before time runs out!",
+      "iframe": "games/builtin/wheresmaxwell.html"
     }
   ]
 }

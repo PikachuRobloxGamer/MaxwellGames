@@ -1304,6 +1304,30 @@ html.strobe { animation: strobe 0.12s steps(2) infinite; }
 .boss-attack{font-size:1.2rem;padding:14px 40px;margin-top:6px}
 .boss-crit{position:absolute;left:50%;top:30%;transform:translateX(-50%);color:#ffd34a;font-weight:900;font-size:1.3rem;animation:bossCrit .6s ease-out forwards;pointer-events:none}
 @keyframes bossCrit{to{transform:translate(-50%,-30px);opacity:0}}
+.boss-tile.maxwell{background:linear-gradient(135deg,#3a1050,#5a0e1e);border-color:#ffd24a}
+.boss-tile .boss-nm{font-size:.78rem;line-height:1.1}
+/* boss progress + hero + final + pager */
+.boss-prog{margin:4px 0 12px}
+.boss-prog-bar{height:14px;background:#0d1020;border-radius:8px;overflow:hidden}
+.boss-prog-bar>span{display:block;height:100%;background:linear-gradient(90deg,#ff4d4d,#ffb04d);transition:width .4s}
+.boss-prog-txt{font-size:.78rem;color:var(--muted);text-align:center;margin-top:3px}
+.boss-hero{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:linear-gradient(135deg,#241a3f,#3a1430);border:2px solid rgba(255,255,255,.12);margin-bottom:10px}
+.boss-hero-ic{font-size:3rem;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))}
+.boss-hero-info{flex:1;min-width:0}
+.boss-hero-no{font-size:.7rem;font-weight:800;color:#ff9a6b;letter-spacing:1px}
+.boss-hero-nm{font-size:1.1rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.boss-hero-sub{font-size:.8rem;color:var(--muted)}
+.boss-hero-go{white-space:nowrap}
+.boss-final{display:flex;align-items:center;gap:12px;width:100%;padding:14px;border-radius:16px;border:2px solid #ffd24a;cursor:pointer;color:#fff;margin-bottom:12px;background:linear-gradient(135deg,#2a0740,#5a0e1e);box-shadow:0 0 22px rgba(255,80,40,.3);animation:bossFinalPulse 1.6s ease-in-out infinite}
+.boss-final.locked{opacity:.55;cursor:not-allowed;border-color:rgba(255,255,255,.2);box-shadow:none;animation:none;filter:grayscale(.5)}
+@keyframes bossFinalPulse{0%,100%{box-shadow:0 0 18px rgba(255,80,40,.25)}50%{box-shadow:0 0 30px rgba(255,120,40,.55)}}
+.boss-final-crown{font-size:2.3rem}
+.boss-final-txt{flex:1;text-align:left;display:flex;flex-direction:column}
+.boss-final-txt b{font-size:1.05rem;color:#ffd24a}
+.boss-final-txt small{font-size:.76rem;color:rgba(255,255,255,.8)}
+.boss-final-go{font-size:1.4rem}
+.boss-pager{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 10px;flex-wrap:wrap}
+.boss-pager #bpLbl{font-size:.82rem;color:var(--muted);min-width:110px;text-align:center}
 /* ===== Battle Pass ===== */
 .pass-prog{height:14px;background:#0d1020;border-radius:8px;overflow:hidden;margin:4px 0}
 .pass-prog-fill{height:100%;background:linear-gradient(90deg,#6c5ce7,#a06bff);transition:width .4s}

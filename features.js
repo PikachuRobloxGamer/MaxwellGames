@@ -501,16 +501,16 @@
     ov.className = "whack";
     ov.innerHTML = `
       <div class="whack-box">
-        <div class="whack-top"><span>🎯 Whack-a-Maxwell</span><span>Score: <b id="whackScore">0</b></span><span>⏱️ <b id="whackTime">20</b>s</span></div>
+        <div class="whack-top"><span>🎯 Whack-a-Maxwell</span><span>Score: <b id="whackScore">0</b></span><span>⏱️ <b id="whackTime">30</b>s</span></div>
         <div class="whack-grid" id="whackGrid"></div>
-        <p class="whack-hint">Click the Maxwells as they pop up! Each one = +2 🐟</p>
+        <p class="whack-hint">Click the Maxwells as they pop up — they stay up nice and long! Each one = +2 🐟</p>
         <button class="btn" id="whackQuit">Quit</button>
       </div>`;
     document.body.appendChild(ov);
     const grid = ov.querySelector("#whackGrid");
     const holes = [];
     for (let i = 0; i < 9; i++) { const d = document.createElement("div"); d.className = "hole"; const img = document.createElement("img"); img.src = maxwellImg.src; img.alt = "Maxwell"; d.appendChild(img); grid.appendChild(d); holes.push(d); }
-    let score = 0, time = 20, popT, timeT;
+    let score = 0, time = 30, popT, timeT;
     holes.forEach((h) => h.querySelector("img").onclick = () => {
       if (!h.classList.contains("up")) return;
       h.classList.remove("up"); score++; ov.querySelector("#whackScore").textContent = score;
@@ -518,8 +518,8 @@
     });
     function pop() {
       const free = holes.filter((h) => !h.classList.contains("up"));
-      if (free.length) { const h = free[Math.floor(Math.random() * free.length)]; h.classList.add("up"); setTimeout(() => h.classList.remove("up"), 650 + Math.random() * 450); }
-      popT = setTimeout(pop, 450 + Math.random() * 400);
+      if (free.length) { const h = free[Math.floor(Math.random() * free.length)]; h.classList.add("up"); setTimeout(() => h.classList.remove("up"), 1900 + Math.random() * 1100); }
+      popT = setTimeout(pop, 430 + Math.random() * 360);
     }
     function tick() { time--; ov.querySelector("#whackTime").textContent = time; if (time <= 0) end(); }
     function end() {
@@ -653,7 +653,7 @@
           <img src="${maxwellImg.src}" alt="" class="whack-cat">
           <h3>🎯 Whack-a-Maxwell</h3>
           <p>Maxwells pop up — click them fast for treats! Best: <b>${save.bestWhack}</b></p>
-          <button class="btn asc-btn" id="playWhack">▶ Play (20s)</button>
+          <button class="btn asc-btn" id="playWhack">▶ Play (30s)</button>
         </div>`;
       body.appendChild(d);
       $("playWhack").onclick = startWhack;
