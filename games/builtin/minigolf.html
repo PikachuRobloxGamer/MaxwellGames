@@ -1,0 +1,42 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Minigolf</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>⛳ Maxwell Minigolf</span><span id=score>Hole 1</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Drag from the ball to aim & set power, release to putt! Sink it in the fewest strokes. 🐱</p></div></div>
+<script src="kit.js"></script>
+<script>
+var W=440,H=520,c=GK.canvas(W,H),x=c.getContext('2d');
+var HOLES=[
+ {ball:[70,440],hole:[370,90],walls:[]},
+ {ball:[70,440],hole:[370,440],walls:[[210,120,20,300]]},
+ {ball:[70,80],hole:[370,440],walls:[[120,0,20,360],[300,160,20,360]]},
+ {ball:[220,470],hole:[220,70],walls:[[90,220,120,20],[230,220,120,20]]}
+];
+var hole,ball,vel,strokes,total,aiming,aim,idx,sunk,done;
+function R(){idx=0;total=0;done=false;load();window.__g={score:0,over:false};}
+function load(){var h=HOLES[idx];hole={x:h.hole[0],y:h.hole[1]};ball={x:h.ball[0],y:h.ball[1]};vel={x:0,y:0};strokes=0;aiming=false;sunk=false;GK.score('Hole '+(idx+1)+'/'+HOLES.length+' · Strokes '+total);}
+function walls(){return HOLES[idx].walls;}
+function pos(e){var r=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*W/r.width,y:(p.clientY-r.top)*H/r.height};}
+function moving(){return Math.hypot(vel.x,vel.y)>0.3;}
+c.addEventListener('pointerdown',function(e){ if(done){R();return;} if(sunk){nextHole();return;} if(moving())return; var p=pos(e); if(Math.hypot(p.x-ball.x,p.y-ball.y)<40){aiming=true;aim=p;} });
+c.addEventListener('pointermove',function(e){ if(aiming)aim=pos(e); });
+window.addEventListener('pointerup',function(){ if(!aiming)return; aiming=false; var dx=ball.x-aim.x,dy=ball.y-aim.y; var pw=Math.min(18,Math.hypot(dx,dy)/8); var a=Math.atan2(dy,dx); vel.x=Math.cos(a)*pw;vel.y=Math.sin(a)*pw; strokes++;total++;GK.score('Hole '+(idx+1)+'/'+HOLES.length+' · Strokes '+total);GK.tone(500,0.05); });
+function nextHole(){ idx++; if(idx>=HOLES.length){done=true;GK.award(Math.max(20,120-total*3));}else load(); }
+function step(){
+  if(sunk||done)return;
+  ball.x+=vel.x;ball.y+=vel.y;vel.x*=0.985;vel.y*=0.985;
+  if(ball.x<10){ball.x=10;vel.x=Math.abs(vel.x)*0.7;}if(ball.x>W-10){ball.x=W-10;vel.x=-Math.abs(vel.x)*0.7;}
+  if(ball.y<10){ball.y=10;vel.y=Math.abs(vel.y)*0.7;}if(ball.y>H-10){ball.y=H-10;vel.y=-Math.abs(vel.y)*0.7;}
+  walls().forEach(function(w){ if(ball.x>w[0]-10&&ball.x<w[0]+w[2]+10&&ball.y>w[1]-10&&ball.y<w[1]+w[3]+10){ var px=Math.max(w[0],Math.min(w[0]+w[2],ball.x)),py=Math.max(w[1],Math.min(w[1]+w[3],ball.y)); var dx=ball.x-px,dy=ball.y-py,d=Math.hypot(dx,dy)||0.001; if(d<10){var nx=dx/d,ny=dy/d;ball.x=px+nx*10;ball.y=py+ny*10;var dot=vel.x*nx+vel.y*ny;vel.x-=2*dot*nx*0.8;vel.y-=2*dot*ny*0.8;} } });
+  if(Math.hypot(ball.x-hole.x,ball.y-hole.y)<14 && Math.hypot(vel.x,vel.y)<6){ sunk=true;vel.x=vel.y=0;ball.x=hole.x;ball.y=hole.y;GK.tone(880,0.2);GK.award(3);window.__g.score++; }
+  if(Math.hypot(vel.x,vel.y)<0.3){vel.x=vel.y=0;}
+}
+function draw(){
+  x.fillStyle='#1f7a3d';x.fillRect(0,0,W,H);x.fillStyle='#246b38';for(var i=0;i<W;i+=22)x.fillRect(i,0,11,H);
+  walls().forEach(function(w){x.fillStyle='#5a3a1a';x.fillRect(w[0],w[1],w[2],w[3]);});
+  x.fillStyle='#061a0c';x.beginPath();x.arc(hole.x,hole.y,13,0,7);x.fill(); x.fillStyle='#ff4747';x.fillRect(hole.x,hole.y-30,3,30);x.fillStyle='#ffd84a';x.fillRect(hole.x+3,hole.y-30,14,9);
+  if(aiming){x.strokeStyle='rgba(255,255,255,.7)';x.lineWidth=3;x.setLineDash([6,6]);x.beginPath();x.moveTo(ball.x,ball.y);x.lineTo(ball.x+(ball.x-aim.x),ball.y+(ball.y-aim.y));x.stroke();x.setLineDash([]);}
+  x.font='22px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🐱',ball.x,ball.y);
+  if(sunk){x.fillStyle='rgba(0,0,0,.5)';x.fillRect(0,H/2-40,W,80);x.fillStyle='#fff';x.font='900 24px system-ui';x.fillText('🎉 Sunk in '+strokes+'! Tap for next',W/2,H/2);}
+  if(done){x.fillStyle='rgba(0,0,0,.7)';x.fillRect(0,0,W,H);x.fillStyle='#ffd84a';x.font='900 26px system-ui';x.fillText('COURSE DONE!',W/2,H/2-10);x.fillStyle='#fff';x.font='700 15px system-ui';x.fillText(total+' total strokes · tap to replay',W/2,H/2+20);}
+}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

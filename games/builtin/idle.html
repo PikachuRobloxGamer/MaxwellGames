@@ -1,0 +1,48 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Fish Empire</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🐟 Fish Empire</span><span id=score>0 fish</span><button id=restart>↻ Reset</button></div><div id=stage></div></div>
+<script src="kit.js"></script>
+<script>
+var GENS=[
+ {id:'kitten',name:'🐱 Kitten',base:15,rate:0.2},
+ {id:'net',name:'🥅 Fishing Net',base:100,rate:1.5},
+ {id:'boat',name:'🚤 Boat',base:1100,rate:9},
+ {id:'dock',name:'⚓ Dock',base:12000,rate:55},
+ {id:'factory',name:'🏭 Fish Factory',base:130000,rate:350},
+ {id:'lab',name:'🧪 Fish Lab',base:1400000,rate:2400},
+ {id:'rocket',name:'🚀 Space Trawler',base:20000000,rate:16000}
+];
+var S;
+function load(){try{S=JSON.parse(localStorage.getItem('mg-idle')||'null');}catch(e){} if(!S)S={fish:0,click:1,owned:{},pres:0};}
+function save(){try{localStorage.setItem('mg-idle',JSON.stringify(S));}catch(e){}}
+function cost(g){var n=S.owned[g.id]||0;return Math.ceil(g.base*Math.pow(1.15,n));}
+function perSec(){var t=0;GENS.forEach(function(g){t+=(S.owned[g.id]||0)*g.rate;});return t*(1+S.pres*0.1);}
+function clickVal(){return S.click*(1+S.pres*0.1);}
+function fmt(n){n=Math.floor(n);if(n<1000)return n+'';var u=['','K','M','B','T','Qa','Qi'];var i=0;while(n>=1000&&i<u.length-1){n/=1000;i++;}return n.toFixed(n<10?2:n<100?1:0)+u[i];}
+var stage=GK.stage();
+stage.innerHTML='<p class=hint>Tap the fish to catch fish! Buy helpers to earn automatically. Prestige to restart with a permanent boost. 🐟</p>'
+ +'<div style="text-align:center"><button id=bigfish style="font-size:90px;background:none;border:none;cursor:pointer;line-height:1;padding:6px;box-shadow:none">🐟</button>'
+ +'<div id=idleStats style="font-weight:800;margin:4px 0"></div>'
+ +'<button id=presBtn class=btn style="display:none"></button></div>'
+ +'<div id=shop style="display:grid;gap:8px;margin-top:10px"></div>';
+var pop=document.getElementById('bigfish');
+function addClick(e){S.fish+=clickVal();pulse();GK.tone(500+Math.random()*200,0.03);refresh();float('+'+fmt(clickVal()),e);}
+pop.addEventListener('pointerdown',addClick);
+function pulse(){pop.style.transform='scale(1.12)';setTimeout(function(){pop.style.transform='scale(1)';},80);}
+function float(t,e){try{var r=stage.getBoundingClientRect();var d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;pointer-events:none;color:#3ee08f;font-weight:900;z-index:99;left:'+(e?e.clientX:r.left+r.width/2)+'px;top:'+(e?e.clientY:r.top)+'px;transition:all .7s;font-size:18px';document.body.appendChild(d);requestAnimationFrame(function(){d.style.top=(parseFloat(d.style.top)-40)+'px';d.style.opacity='0';});setTimeout(function(){d.remove();},700);}catch(x){}}
+var shopEl=document.getElementById('shop');
+function buildShop(){shopEl.innerHTML='';GENS.forEach(function(g){var b=document.createElement('button');b.className='btn';b.dataset.id=g.id;b.style.cssText='text-align:left;display:flex;justify-content:space-between;gap:8px';b.onclick=function(){buy(g);};shopEl.appendChild(b);});}
+function buy(g){var cst=cost(g);if(S.fish<cst)return;S.fish-=cst;S.owned[g.id]=(S.owned[g.id]||0)+1;GK.tone(700,0.06);refresh();}
+function refresh(){
+  GK.score(fmt(S.fish)+' 🐟');window.__g={score:Math.floor(S.fish),over:false};
+  document.getElementById('idleStats').innerHTML=fmt(S.fish)+' fish &nbsp;·&nbsp; '+fmt(perSec())+'/sec'+(S.pres?' &nbsp;·&nbsp; ✨x'+(1+S.pres*0.1).toFixed(1):'');
+  shopEl.querySelectorAll('button').forEach(function(b){var g=GENS.find(function(x){return x.id===b.dataset.id;});var cst=cost(g),n=S.owned[g.id]||0;b.innerHTML='<span>'+g.name+' <b>x'+n+'</b><br><small style="color:var(--muted)">+'+g.rate+'/sec each</small></span><span style="white-space:nowrap">'+fmt(cst)+' 🐟</span>';b.disabled=S.fish<cst;});
+  var pb=document.getElementById('presBtn');var canPres=S.fish>=1000000;pb.style.display=canPres||S.pres? '':'none';pb.textContent='✨ Prestige (+10% forever) — need 1M, you have '+fmt(S.fish);if(canPres){pb.textContent='✨ PRESTIGE NOW! (+10% boost forever)';}pb.disabled=!canPres;
+}
+document.getElementById('presBtn').onclick=function(){if(S.fish<1000000)return;S.pres++;S.fish=0;S.owned={};GK.tone(900,0.2);GK.award(50);buildShop();refresh();};
+load();buildShop();refresh();
+var acc=0,last=performance.now();
+setInterval(function(){var now=performance.now();var dt=(now-last)/1000;last=now;S.fish+=perSec()*dt;refresh();},200);
+setInterval(save,3000);
+window.addEventListener('pagehide',save);
+GK.restart(function(){if(confirm&&!confirm('Reset your whole Fish Empire?'))return;try{localStorage.removeItem('mg-idle');}catch(e){}location.reload();});
+</script></body></html>

@@ -1,0 +1,59 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Tower Defense</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🏰 Maxwell Tower Defense</span><span id=score>Wave 1</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Tap an empty tile to place a 🐱 tower (50 gold). Towers auto-shoot the 🐶 dogs. Don't let them reach the end! Tap ▶ for the next wave.</p></div></div>
+<script src="kit.js"></script>
+<script>
+var CELL=40,COLS=12,ROWS=9,W=COLS*CELL,H=ROWS*CELL;
+var c=GK.canvas(W,H),x=c.getContext('2d');
+// path as grid waypoints (col,row)
+var WP=[[0,1],[9,1],[9,4],[2,4],[2,7],[11,7]];
+var pathCells={}; (function(){ for(var i=0;i<WP.length-1;i++){var a=WP[i],b=WP[i+1];var dx=Math.sign(b[0]-a[0]),dy=Math.sign(b[1]-a[1]);var cx=a[0],cy=a[1];pathCells[cx+','+cy]=1;while(cx!==b[0]||cy!==b[1]){cx+=dx;cy+=dy;pathCells[cx+','+cy]=1;}} })();
+var wpPx=WP.map(function(p){return {x:p[0]*CELL+CELL/2,y:p[1]*CELL+CELL/2};});
+var towers,enemies,bullets,gold,lives,wave,spawnLeft,spawnT,over,win,between;
+function R(){towers=[];enemies=[];bullets=[];gold=150;lives=10;wave=1;over=false;win=false;between=true;spawnLeft=0;spawnT=0;hud();window.__g={score:0,over:false};}
+function hud(){GK.score('Wave '+wave+' · 💰'+gold+' · ❤️'+lives);}
+function startWave(){between=false;spawnLeft=6+wave*2;spawnT=0;}
+function pos(e){var r=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{c:Math.floor((p.clientX-r.left)*W/r.width/CELL),r:Math.floor((p.clientY-r.top)*H/r.height/CELL)};}
+c.addEventListener('pointerdown',function(e){
+  if(over){R();return;}
+  var p=pos(e);
+  // if tapped the "next wave" button zone? handled by draw button hit
+  if(between && p.r===0 && p.c>=COLS-3){startWave();return;}
+  var key=p.c+','+p.r;
+  if(pathCells[key]||p.c<0||p.c>=COLS||p.r<0||p.r>=ROWS)return;
+  if(towers.some(function(t){return t.c===p.c&&t.r===p.r;}))return;
+  if(gold<50){GK.tone(160,0.1);return;}
+  gold-=50;towers.push({c:p.c,r:p.r,x:p.c*CELL+CELL/2,y:p.r*CELL+CELL/2,cd:0,range:95});GK.tone(600,0.06);hud();
+});
+function spawnEnemy(){var hp=18+wave*10;enemies.push({seg:0,t:0,x:wpPx[0].x,y:wpPx[0].y,hp:hp,max:hp,sp:0.6+wave*0.04});}
+function step(){
+  if(over||win)return;
+  if(!between){
+    spawnT--; if(spawnLeft>0 && spawnT<=0){spawnEnemy();spawnLeft--;spawnT=38;}
+  }
+  // move enemies along path
+  enemies.forEach(function(en){ if(en.seg>=wpPx.length-1)return; var a=wpPx[en.seg],b=wpPx[en.seg+1]; var dx=b.x-en.x,dy=b.y-en.y,d=Math.hypot(dx,dy); if(d<en.sp){en.x=b.x;en.y=b.y;en.seg++;}else{en.x+=dx/d*en.sp;en.y+=dy/d*en.sp;} });
+  // enemy reach end
+  enemies=enemies.filter(function(en){ if(en.seg>=wpPx.length-1){lives--;hud();GK.tone(140,0.15,'sawtooth',0.1);if(lives<=0){over=true;window.__g.over=true;GK.award(wave*10);}return false;} return en.hp>0; });
+  // towers shoot
+  towers.forEach(function(t){ if(t.cd>0){t.cd--;return;} var tgt=null,bd=t.range; enemies.forEach(function(en){var dd=Math.hypot(en.x-t.x,en.y-t.y);if(dd<bd){bd=dd;tgt=en;}}); if(tgt){bullets.push({x:t.x,y:t.y,tgt:tgt});t.cd=28;GK.tone(760,0.03);} });
+  bullets.forEach(function(bu){ if(!bu.tgt||bu.tgt.hp<=0){bu.dead=true;return;} var dx=bu.tgt.x-bu.x,dy=bu.tgt.y-bu.y,d=Math.hypot(dx,dy); if(d<8){bu.tgt.hp-=10; if(bu.tgt.hp<=0){gold+=8;window.__g.score+=1;hud();} bu.dead=true;}else{bu.x+=dx/d*7;bu.y+=dy/d*7;} });
+  bullets=bullets.filter(function(b){return !b.dead;});
+  // wave cleared?
+  if(!between && spawnLeft===0 && enemies.length===0){ if(wave>=10){win=true;GK.award(500);}else{wave++;between=true;gold+=40;hud();} }
+}
+function draw(){
+  x.fillStyle='#0c1420';x.fillRect(0,0,W,H);
+  // grid + path
+  for(var r=0;r<ROWS;r++)for(var q=0;q<COLS;q++){ x.fillStyle=pathCells[q+','+r]?'#3a2f1c':((q+r)%2?'#13203a':'#162647'); x.fillRect(q*CELL+1,r*CELL+1,CELL-2,CELL-2); }
+  // towers
+  towers.forEach(function(t){ x.font='26px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🐱',t.x,t.y); });
+  // enemies
+  enemies.forEach(function(en){ x.font='24px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🐶',en.x,en.y); x.fillStyle='#000';x.fillRect(en.x-14,en.y-18,28,4);x.fillStyle='#3ee08f';x.fillRect(en.x-14,en.y-18,28*en.hp/en.max,4); });
+  x.fillStyle='#ffd84a';bullets.forEach(function(b){x.beginPath();x.arc(b.x,b.y,3,0,7);x.fill();});
+  if(between&&!win){ x.fillStyle='#3ee08f';x.fillRect((COLS-3)*CELL,0,3*CELL,CELL); x.fillStyle='#063';x.font='900 16px system-ui';x.textAlign='center';x.textBaseline='middle';x.fillText('▶ WAVE '+wave,(COLS-1.5)*CELL,CELL/2); }
+  if(win){x.fillStyle='rgba(0,0,0,.65)';x.fillRect(0,0,W,H);x.fillStyle='#3ee08f';x.textAlign='center';x.font='900 28px system-ui';x.fillText('YOU WON! 🏆',W/2,H/2);}
+  if(over){x.fillStyle='rgba(0,0,0,.65)';x.fillRect(0,0,W,H);x.fillStyle='#ff6b6b';x.textAlign='center';x.font='900 26px system-ui';x.fillText('DEFEATED!',W/2,H/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('Reached wave '+wave+' · tap to retry',W/2,H/2+22);}
+}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

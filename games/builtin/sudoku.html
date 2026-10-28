@@ -1,0 +1,47 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Sudoku</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🔢 Maxwell Sudoku</span><span id=score>Easy</span><button id=restart>↻ New</button></div><div id=stage></div></div>
+<script src="kit.js"></script>
+<script>
+function solved(){ var g=Array.from({length:9},function(){return new Array(9).fill(0);});
+  function ok(r,c,n){for(var i=0;i<9;i++){if(g[r][i]===n||g[i][c]===n)return false;}var br=r-r%3,bc=c-c%3;for(var a=0;a<3;a++)for(var b=0;b<3;b++)if(g[br+a][bc+b]===n)return false;return true;}
+  function fill(p){if(p>=81)return true;var r=Math.floor(p/9),c=p%9;var nums=[1,2,3,4,5,6,7,8,9];for(var i=nums.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=nums[i];nums[i]=nums[j];nums[j]=t;}for(var k=0;k<9;k++){if(ok(r,c,nums[k])){g[r][c]=nums[k];if(fill(p+1))return true;g[r][c]=0;}}return false;}
+  fill(0);return g;}
+var sol,puzzle,given,sel,diff;
+function R(){ diff=42; sol=solved(); puzzle=sol.map(function(row){return row.slice();}); given=[];
+  var cells=[];for(var i=0;i<81;i++)cells.push(i);for(var i=cells.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=cells[i];cells[i]=cells[j];cells[j]=t;}
+  for(var k=0;k<diff;k++){var p=cells[k];puzzle[Math.floor(p/9)][p%9]=0;}
+  for(var r=0;r<9;r++){given[r]=[];for(var c=0;c<9;c++)given[r][c]=puzzle[r][c]!==0;}
+  sel=null;GK.score('Fill the grid!');build();window.__g={score:0,over:false};}
+var stage=GK.stage();
+function build(){
+  var html='<p class=hint>Tap a square, then tap a number. Fill every row, column and 3×3 box with 1–9. Wrong numbers glow red!</p>';
+  html+='<div id=sdk style="display:grid;grid-template-columns:repeat(9,1fr);gap:1px;background:#444;border:3px solid #6c5ce7;border-radius:8px;max-width:396px;margin:0 auto;aspect-ratio:1"></div>';
+  html+='<div id=pad style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:396px;margin:10px auto 0"></div>';
+  stage.innerHTML=html;
+  var sdk=document.getElementById('sdk');
+  for(var r=0;r<9;r++)for(var c=0;c<9;c++){var d=document.createElement('button');d.dataset.r=r;d.dataset.c=c;
+    d.style.cssText='aspect-ratio:1;border:none;font-size:1.1rem;font-weight:800;cursor:pointer;padding:0;'+
+      'border-right:'+((c%3===2&&c<8)?'2px solid #6c5ce7':'1px solid #2a2f44')+';border-bottom:'+((r%3===2&&r<8)?'2px solid #6c5ce7':'1px solid #2a2f44')+';';
+    d.onclick=(function(r,c){return function(){ if(given[r][c])return; sel=[r,c]; paint(); };})(r,c);
+    sdk.appendChild(d);
+  }
+  var pad=document.getElementById('pad');
+  for(var n=1;n<=9;n++){(function(n){var b=document.createElement('button');b.className='btn';b.textContent=n;b.style.fontSize='1.1rem';b.onclick=function(){place(n);};pad.appendChild(b);})(n);}
+  var er=document.createElement('button');er.className='btn';er.textContent='⌫';er.onclick=function(){place(0);};pad.appendChild(er);
+  paint();
+}
+function place(n){ if(!sel)return; var r=sel[0],c=sel[1]; if(given[r][c])return; puzzle[r][c]=n; GK.tone(n?560:300,0.04); paint(); checkWin(); }
+function paint(){
+  var sdk=document.getElementById('sdk');if(!sdk)return;
+  [].forEach.call(sdk.children,function(d){var r=+d.dataset.r,c=+d.dataset.c;var v=puzzle[r][c];
+    d.textContent=v||'';
+    var bad=v&&v!==sol[r][c];
+    var isSel=sel&&sel[0]===r&&sel[1]===c;
+    var box=(Math.floor(r/3)+Math.floor(c/3))%2;
+    d.style.background=isSel?'#6c5ce7':bad?'#5a1030':given[r][c]?(box?'#171c30':'#1c2238'):(box?'#101626':'#141b2e');
+    d.style.color=bad?'#ff8a8a':given[r][c]?'#fff':'#8ad0ff';
+  });
+}
+function checkWin(){ for(var r=0;r<9;r++)for(var c=0;c<9;c++)if(puzzle[r][c]!==sol[r][c])return; GK.score('SOLVED! 🎉');GK.tone(880,0.25);GK.award(60);window.__g.score=1;window.__g.over=true; var sdk=document.getElementById('sdk'); if(sdk){var d=document.createElement('div');d.style.cssText='text-align:center;font-weight:900;color:#3ee08f;margin-top:10px;font-size:1.2rem';d.textContent='🎉 Puzzle solved! +60 🐟';stage.appendChild(d);} }
+GK.restart(R);R();
+</script></body></html>

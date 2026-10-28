@@ -1,0 +1,32 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Typing Race</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>⌨️ Maxwell Typing Race</span><span id=score>Ready</span><button id=restart>↻ New Race</button></div><div id=stage></div></div>
+<script src="kit.js"></script>
+<script>
+var SENTENCES=[
+ "maxwell the cat is rolling across the table very slowly",
+ "every bounce makes a cute little meow sound effect",
+ "collect fish treats and ascend your maxwell to the next tier",
+ "the golden paw glows softly in the midnight arcade",
+ "type fast like a speedy kitten chasing a red laser dot",
+ "unblocked games are the best way to pass a boring class",
+ "a hundred tiny maxwells marched across the glowing screen",
+ "press start to begin your legendary journey through catland"
+];
+var stage=GK.stage();
+stage.innerHTML='<p class=hint>Type the sentence as fast and accurately as you can! Maxwell races across the track. 🏁</p>'
+ +'<div class="tr-track" style="position:relative;height:46px;background:#132040;border-radius:10px;margin:8px 0;overflow:hidden"><div id=trCat style="position:absolute;top:6px;left:0;font-size:28px;transition:left .15s">🐱</div><div style="position:absolute;right:6px;top:8px;font-size:24px">🏁</div></div>'
+ +'<div id=trText style="font-size:1.15rem;line-height:1.7;background:#0d1428;border-radius:10px;padding:12px;letter-spacing:.5px"></div>'
+ +'<input id=trInput class="sball-input" style="width:100%;margin-top:8px;font-size:1.05rem;padding:12px" placeholder="Click here and start typing…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">'
+ +'<div id=trStats style="margin-top:8px;font-weight:800;text-align:center"></div>';
+var textEl=document.getElementById('trText'),inp=document.getElementById('trInput'),cat=document.getElementById('trCat'),stats=document.getElementById('trStats');
+var target,start,done,errs;
+function R(){target=SENTENCES[Math.floor(Math.random()*SENTENCES.length)];start=0;done=false;errs=0;inp.value='';inp.disabled=false;render();GK.score('Go!');stats.textContent='Start typing to begin the timer…';cat.style.left='0';inp.focus();window.__g={score:0,over:false};}
+function render(){var v=inp.value;var html='';for(var i=0;i<target.length;i++){var ch=target[i];var cls='';if(i<v.length){cls=v[i]===ch?'c-ok':'c-bad';}else if(i===v.length){cls='c-cur';}html+='<span class="'+cls+'" style="'+(cls==='c-ok'?'color:#3ee08f':cls==='c-bad'?'color:#fff;background:#e0407a;border-radius:3px':cls==='c-cur'?'background:#6c5ce7;border-radius:3px;color:#fff':'color:var(--muted)')+'">'+(ch===' '?'&nbsp;':ch)+'</span>';}textEl.innerHTML=html;cat.style.left=Math.min(92,(v.length/target.length)*92)+'%';}
+inp.addEventListener('input',function(){ if(done)return; if(!start&&inp.value.length>0)start=performance.now(); var v=inp.value; render();
+  // accuracy count (chars currently wrong)
+  if(v.length>=target.length){ finish(); }
+  else { var elapsed=(performance.now()-start)/1000; var words=v.length/5; var wpm=elapsed>0?Math.round(words/(elapsed/60)):0; stats.textContent='⌨️ '+wpm+' WPM'; }
+});
+function finish(){ done=true;inp.disabled=true; var elapsed=(performance.now()-start)/1000; var v=inp.value.slice(0,target.length); var correct=0;for(var i=0;i<target.length;i++)if(v[i]===target[i])correct++; var acc=Math.round(correct/target.length*100); var wpm=Math.round((target.length/5)/(elapsed/60)); GK.score(wpm+' WPM'); stats.innerHTML='🏁 <b>'+wpm+' WPM</b> · '+acc+'% accuracy · '+elapsed.toFixed(1)+'s'; var rw=Math.round(wpm*acc/100/2);GK.award(rw);window.__g.score=wpm;window.__g.over=true; stats.innerHTML+=' · +'+rw+' 🐟'; GK.tone(880,0.2); }
+GK.restart(R);R();
+</script></body></html>

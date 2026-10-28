@@ -311,6 +311,46 @@
       "thumbnail": "",
       "description": "🃏 Chaos, chaos! Take on Jevil. Arrow keys to move, Z to confirm.",
       "iframe": "https://shadowcrystal.dev/DEVICE_JEVIL"
+    },
+    {
+      "id": "maxwell-td",
+      "title": "Maxwell Tower Defense",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🏰 Place cat towers to stop the waves of dogs!",
+      "iframe": "games/builtin/towerdef.html"
+    },
+    {
+      "id": "maxwell-golf",
+      "title": "Maxwell Minigolf",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "⛳ Drag to aim and sink it in the fewest strokes!",
+      "iframe": "games/builtin/minigolf.html"
+    },
+    {
+      "id": "fish-empire",
+      "title": "Fish Empire",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🐟 Idle clicker — tap for fish and build an empire!",
+      "iframe": "games/builtin/idle.html"
+    },
+    {
+      "id": "typing-race",
+      "title": "Maxwell Typing Race",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "⌨️ Type fast to race Maxwell to the finish line!",
+      "iframe": "games/builtin/typerace.html"
+    },
+    {
+      "id": "maxwell-sudoku",
+      "title": "Maxwell Sudoku",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🔢 Classic number puzzle, Maxwell style.",
+      "iframe": "games/builtin/sudoku.html"
     }
   ]
 }
