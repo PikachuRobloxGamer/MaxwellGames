@@ -279,6 +279,22 @@
       "thumbnail": "",
       "description": "🔍 A Where's-Waldo remix — spot the real Maxwell hidden in a crowd of copycats before time runs out!",
       "iframe": "games/builtin/wheresmaxwell.html"
+    },
+    {
+      "id": "duckmath",
+      "title": "DuckMath",
+      "category": "Game Sites",
+      "thumbnail": "",
+      "description": "🦆 A huge unblocked games portal — tons of games in one place.",
+      "iframe": "https://duckmath.org"
+    },
+    {
+      "id": "astra",
+      "title": "Astra",
+      "category": "Game Sites",
+      "thumbnail": "",
+      "description": "🌟 Astra games hub — browse and play loads of games.",
+      "iframe": "https://s3.amazonaws.com/learn-for-free/index.html"
     }
   ]
 }
