@@ -391,6 +391,14 @@
       "thumbnail": "",
       "description": "🃏 Classic Klondike solitaire, cat-styled.",
       "iframe": "games/builtin/solitaire.html"
+    },
+    {
+      "id": "deltarune-sim",
+      "title": "Deltarune Simulator",
+      "category": "Action",
+      "thumbnail": "",
+      "description": "⚔️ Deltarune fight sim. Arrow keys to move, Z to confirm, X to cancel.",
+      "iframe": "https://deltarunesim.com"
     }
   ]
 }
