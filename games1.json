@@ -295,6 +295,22 @@
       "thumbnail": "",
       "description": "🌟 Astra games hub — browse and play loads of games.",
       "iframe": "https://s3.amazonaws.com/learn-for-free/index.html"
+    },
+    {
+      "id": "roaring-knight",
+      "title": "Roaring Knight Simulator",
+      "category": "Action",
+      "thumbnail": "",
+      "description": "⚔️ Face the Roaring Knight! Arrow keys to move, Z to confirm.",
+      "iframe": "https://shadowcrystal.dev/DEVICE_KNIGHT"
+    },
+    {
+      "id": "jevil-sim",
+      "title": "Jevil Simulator",
+      "category": "Action",
+      "thumbnail": "",
+      "description": "🃏 Chaos, chaos! Take on Jevil. Arrow keys to move, Z to confirm.",
+      "iframe": "https://shadowcrystal.dev/DEVICE_JEVIL"
     }
   ]
 }
