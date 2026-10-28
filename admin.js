@@ -25,12 +25,20 @@
   }
   function samiOff() { try { return localStorage.getItem("mg-sami-off") === "1"; } catch (e) { return false; } }
   function setSamiOff(v) { try { v ? localStorage.setItem("mg-sami-off", "1") : localStorage.removeItem("mg-sami-off"); } catch (e) {} }
+  function aarushOff() { try { return localStorage.getItem("mg-aarush-off") === "1"; } catch (e) { return false; } }
+  function setAarushOff(v) { try { v ? localStorage.setItem("mg-aarush-off", "1") : localStorage.removeItem("mg-aarush-off"); } catch (e) {} }
+  // Firebase-backed control flags so a disable sticks even when the other person is offline
+  function fbCtlUrl() { return (window.MG_FIREBASE_CONFIG && window.MG_FIREBASE_CONFIG.databaseURL) || ""; }
+  function ctlGet(k) { const u = fbCtlUrl(); if (!u) return Promise.resolve(null); return fetch(u + "/control/" + k + ".json").then((r) => (r.ok ? r.json() : null)).catch(() => null); }
+  function ctlPut(k, v) { const u = fbCtlUrl(); if (!u) return Promise.resolve(false); return fetch(u + "/control/" + k + ".json", { method: "PUT", body: JSON.stringify(v) }).then((r) => r.ok).catch(() => false); }
+  function revokeAarush(reason) { if (role === "aarush") { role = null; try { localStorage.removeItem(ROLE_KEY); } catch (e) {} updateLock(); try { MG.setRole(null); } catch (e) {} const am = document.getElementById("aarushModal"); if (am) am.classList.add("hidden"); if (reason) try { MG.toast("⛔", "Aarush mode turned off", reason); } catch (e) {} } }
   let role = null;
   try {
     const stored = localStorage.getItem(ROLE_KEY);
     role = Object.keys(ROLES).find((r) => ROLES[r].hash === stored) || null;
   } catch (e) {}
   if (role === "sami" && samiOff()) { role = null; try { localStorage.removeItem(ROLE_KEY); } catch (e) {} }
+  if (role === "aarush" && aarushOff()) { role = null; try { localStorage.removeItem(ROLE_KEY); } catch (e) {} }
 
   // Everyone gets a fun nickname (never a real email).
   let nick;
@@ -86,6 +94,7 @@
     try { hash = await sha256(SALT + $("lockInput").value); } catch (err) { $("lockMsg").textContent = "This browser can't check codes here."; return; }
     const found = Object.keys(ROLES).find((r) => ROLES[r].hash === hash);
     if (found === "sami" && samiOff()) { $("lockMsg").textContent = "⛔ The owner turned off GamesOn786 mode."; $("lockInput").value = ""; return; }
+    if (found === "aarush") { let off = aarushOff(); if (!off) { const r = await ctlGet("aarushOff"); off = r === true; setAarushOff(off); } if (off) { $("lockMsg").textContent = "⛔ The owner turned off Aarush mode."; $("lockInput").value = ""; return; } }
     if (found) {
       role = found;
       try { localStorage.setItem(ROLE_KEY, hash); } catch (err) {}
@@ -441,6 +450,7 @@
     if (age > 12) return;
     if (msg.t === "announce") { announce(String(msg.text || "").slice(0, 100), msg.style, byName); return; }
     if (msg.t === "setsami") { setSamiOff(!msg.on); if (!msg.on && role === "sami") { role = null; try { localStorage.removeItem(ROLE_KEY); } catch (e) {} updateLock(); MG.setRole(null); MG.toast("⛔", "Admin powers turned off", "The owner turned off your GamesOn786 mode."); $("adminModal").classList.add("hidden"); } if ($("samiState")) $("samiState").textContent = msg.on ? "ON" : "OFF (turned off by owner)"; return; }
+    if (msg.t === "setaarush") { setAarushOff(!msg.on); if (!msg.on) revokeAarush("The owner disabled Aarush mode."); if ($("aarushState")) $("aarushState").textContent = msg.on ? "ON" : "OFF (turned off by owner)"; return; }
     if (msg.t === "freeze") { if (age < 20 && (!msg.target || msg.target === CLIENT_ID)) showFreeze(msg.text); return; }
     if (msg.t === "unfreeze") { if (!msg.target || msg.target === CLIENT_ID) hideFreeze(); return; }
     if (!abuseActive()) return;
@@ -722,9 +732,10 @@
   };
   const unfreezeAllBtn = $("unfreezeAll"); if (unfreezeAllBtn) unfreezeAllBtn.onclick = () => { if (isAdmin()) send({ t: "unfreeze" }); };
   const samiToggle = $("samiToggle"); if (samiToggle) samiToggle.onclick = () => { if (!isOwner()) return; const turnOn = samiOff(); send({ t: "setsami", on: turnOn }); MG.toast(turnOn ? "✅" : "⛔", turnOn ? "Sami's powers ON" : "Sami's powers OFF", ""); if ($("samiState")) $("samiState").textContent = turnOn ? "ON" : "OFF (turned off by owner)"; };
+  const aarushToggle = $("aarushToggle"); if (aarushToggle) aarushToggle.onclick = () => { if (!isOwner()) return; const turnOn = aarushOff(); setAarushOff(!turnOn); ctlPut("aarushOff", !turnOn); send({ t: "setaarush", on: turnOn }); MG.toast(turnOn ? "✅" : "⛔", turnOn ? "Aarush's powers ON" : "Aarush's powers OFF", turnOn ? "Aarush can use the soccer panel again." : "Aarush's soccer panel is disabled."); if ($("aarushState")) $("aarushState").textContent = turnOn ? "ON" : "OFF (turned off by owner)"; };
 
   // ---------- Admin panel ----------
-  function openAdmin() { $("adminModal").classList.remove("hidden"); renderPowers(); updateLock(); fillTierSel(); }
+  function openAdmin() { $("adminModal").classList.remove("hidden"); renderPowers(); updateLock(); fillTierSel(); if ($("aarushState")) { $("aarushState").textContent = aarushOff() ? "OFF (turned off by owner)" : "ON"; ctlGet("aarushOff").then((o) => { if ($("aarushState")) $("aarushState").textContent = (o === true) ? "OFF (turned off by owner)" : "ON"; }); } }
   $("adminClose").onclick = () => $("adminModal").classList.add("hidden");
   $("adminModal").addEventListener("click", (e) => { if (e.target.id === "adminModal") $("adminModal").classList.add("hidden"); });
   $("abuseStart").onclick = () => { if (isAdmin()) send({ t: "abuse", dur: Number($("abuseDur").value), mult: Number($("abuseMultSel").value) }); };
@@ -887,5 +898,5 @@
 
   connect();
   startPresence();
-  if (role === "aarush") updateLock();
+  if (role === "aarush") { updateLock(); ctlGet("aarushOff").then((off) => { if (off === true) { setAarushOff(true); revokeAarush(); } }); }
 })();
