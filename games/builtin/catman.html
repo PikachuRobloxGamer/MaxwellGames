@@ -1,0 +1,33 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Catman</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🐱 Catman (Hangman)</span><span id=score>Win Streak: 0</span><button id=restart>↻ New Word</button></div><div id=stage></div></div>
+<script src="kit.js"></script>
+<script>
+var WORDS=["maxwell","arcade","treats","golden","kitten","bounce","pixel","rainbow","tornado","jackpot","minigolf","sudoku","boss","ascend","companion","leaderboard","fireworks","platformer","deltarune","snowball","whisker","meow","confetti","tower","defense"];
+var faces=["😺","🙂","😮","😬","😟","😧","😵"];
+var stage=GK.stage(),word,guessed,wrong,streak=0,done;
+function R(){word=WORDS[Math.floor(Math.random()*WORDS.length)];guessed={};wrong=0;done=false;build();}
+function build(){
+  stage.innerHTML='<p class=hint>Guess the hidden word one letter at a time. 6 wrong guesses and Maxwell faints! 🙀</p>'
+   +'<div id=cmFace style="font-size:70px;text-align:center"></div>'
+   +'<div id=cmWord style="text-align:center;font-size:2rem;font-weight:900;letter-spacing:6px;margin:8px 0;min-height:2.4rem"></div>'
+   +'<div id=cmMsg style="text-align:center;font-weight:800;min-height:1.3rem;margin-bottom:6px"></div>'
+   +'<div id=cmKeys style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-width:420px;margin:0 auto"></div>';
+  var keys=document.getElementById('cmKeys');
+  "abcdefghijklmnopqrstuvwxyz".split("").forEach(function(ch){var b=document.createElement('button');b.className='btn';b.textContent=ch.toUpperCase();b.style.padding='10px 0';b.onclick=function(){guess(ch,b);};keys.appendChild(b);});
+  render();
+}
+function render(){
+  document.getElementById('cmFace').textContent=faces[Math.min(wrong,6)];
+  document.getElementById('cmWord').textContent=word.split("").map(function(ch){return guessed[ch]?ch.toUpperCase():"_";}).join(" ");
+  GK.score('Win Streak: '+streak);
+  window.__g={score:streak,over:done};
+}
+function guess(ch,btn){
+  if(done||guessed[ch])return; guessed[ch]=true; btn.disabled=true;
+  if(word.indexOf(ch)<0){wrong++;btn.style.background='#5a1030';GK.tone(180,0.1,'sawtooth',0.08);}else{btn.style.background='#1e7a46';GK.tone(620,0.06);}
+  render();
+  if(word.split("").every(function(c){return guessed[c];})){done=true;streak++;GK.award(25);GK.tone(880,0.2);document.getElementById('cmMsg').innerHTML='🎉 You got it! +25 🐟';render();}
+  else if(wrong>=6){done=true;streak=0;GK.tone(120,0.3,'sawtooth',0.12);document.getElementById('cmMsg').innerHTML='🙀 Maxwell fainted! The word was <b>'+word.toUpperCase()+'</b>';document.querySelectorAll('#cmKeys button').forEach(function(b){b.disabled=true;});render();}
+}
+GK.restart(R);R();
+</script></body></html>

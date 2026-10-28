@@ -1,0 +1,38 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Fish Merge</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🐟 Fish Merge</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Arrows / WASD / swipe to slide. Merge two of the same sea creature to grow it! Reach the 🐋 whale! 🐟🐠🦈…</p></div></div>
+<script src="kit.js"></script>
+<script>
+var N=4,CELL=86,GAP=8,W=N*CELL+(N+1)*GAP,c=GK.canvas(W,W),x=c.getContext('2d');
+var EMO=['🐟','🐠','🐡','🦐','🦀','🦑','🐙','🦈','🐬','🐳','🐋','👑'];
+var COL=['#2e5a8a','#2e7a8a','#3a8a6a','#8a7a2e','#8a4a2e','#6a2e8a','#8a2e6a','#2e8a4a','#2e6a8a','#4a2e8a','#8a2e2e','#8a7a1e'];
+var grid,score,over,won;
+function R(){grid=Array.from({length:N},function(){return new Array(N).fill(0);});score=0;over=false;won=false;add();add();GK.score(0);window.__g={score:0,over:false};draw();}
+function add(){var e=[];for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++)if(!grid[r][cc])e.push([r,cc]);if(!e.length)return;var p=e[Math.floor(Math.random()*e.length)];grid[p[0]][p[1]]=Math.random()<0.9?1:2;}
+function slide(line){var a=line.filter(function(v){return v;});for(var i=0;i<a.length-1;i++){if(a[i]===a[i+1]){a[i]++;score+=a[i]*2;a.splice(i+1,1);if(a[i]>=11)won=true;}}while(a.length<N)a.push(0);return a;}
+function move(dir){ if(over)return; var before=JSON.stringify(grid); var i,line;
+  if(dir==='left'){for(i=0;i<N;i++)grid[i]=slide(grid[i]);}
+  else if(dir==='right'){for(i=0;i<N;i++)grid[i]=slide(grid[i].slice().reverse()).reverse();}
+  else if(dir==='up'){for(i=0;i<N;i++){line=slide([grid[0][i],grid[1][i],grid[2][i],grid[3][i]]);for(var r=0;r<N;r++)grid[r][i]=line[r];}}
+  else if(dir==='down'){for(i=0;i<N;i++){line=slide([grid[3][i],grid[2][i],grid[1][i],grid[0][i]]);for(var r=0;r<N;r++)grid[N-1-r][i]=line[r];}}
+  if(JSON.stringify(grid)!==before){add();GK.tone(500,0.04);}
+  GK.score(score);window.__g.score=score;
+  if(!moves())over=true;
+  if(won)GK.award(300); else GK.award(0);
+  draw();
+}
+function moves(){for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){if(!grid[r][cc])return true;if(cc<N-1&&grid[r][cc]===grid[r][cc+1])return true;if(r<N-1&&grid[r][cc]===grid[r+1][cc])return true;}return false;}
+GK.onKey(function(e){var k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')move('left');else if(k==='arrowright'||k==='d')move('right');else if(k==='arrowup'||k==='w')move('up');else if(k==='arrowdown'||k==='s')move('down');});
+GK.swipe(c,move); GK.pad({dirs:true,onDir:function(d,dn){if(dn)move(d);}});
+function draw(){
+  x.fillStyle='#0a1830';x.fillRect(0,0,W,W);
+  for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){var px=GAP+cc*(CELL+GAP),py=GAP+r*(CELL+GAP);var v=grid[r][cc];
+    x.fillStyle=v?COL[Math.min(v-1,COL.length-1)]:'#13233f';roundRect(px,py,CELL,CELL,10);x.fill();
+    if(v){x.font=(CELL*0.6)+'px serif';x.textAlign='center';x.textBaseline='middle';x.fillText(EMO[Math.min(v-1,EMO.length-1)],px+CELL/2,py+CELL/2+2);}
+  }
+  if(won){overlay('🐋 YOU REACHED THE WHALE!','#3ee08f');}
+  else if(over){overlay('No moves left! Score '+score,'#ff6b6b');}
+}
+function overlay(t,col){x.fillStyle='rgba(0,0,0,.65)';x.fillRect(0,0,W,W);x.fillStyle=col;x.textAlign='center';x.font='900 24px system-ui';x.fillText(t,W/2,W/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('tap Restart to play again',W/2,W/2+22);}
+function roundRect(px,py,w,h,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath();}
+GK.restart(R);R();
+</script></body></html>

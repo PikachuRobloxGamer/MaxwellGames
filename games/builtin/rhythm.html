@@ -1,0 +1,43 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Rhythm Meow</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🎵 Rhythm Meow</span><span id=score>Score: 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Tap each lane (or keys D F J K) right when the note hits the glowing line! Build a combo. 🎶</p></div></div>
+<script src="kit.js"></script>
+<script>
+var LANES=4,W=360,LW=W/LANES,H=540,HIT=470,c=GK.canvas(W,H),x=c.getContext('2d');
+var MEL=[523,587,659,784,659,587,523,440,494,523,587,523,440,392,440,494];
+var notes,t0,score,combo,best,judge,judgeT,over,started,laneFlash;
+function chart(){var arr=[],time=1400;for(var i=0;i<60;i++){arr.push({lane:Math.floor(Math.random()*LANES),t:time,hit:false,note:MEL[i%MEL.length]});time+=320+(Math.random()<0.3?0:0);if(i%8===7)time+=160;}return arr;}
+function R(){notes=chart();score=0;combo=0;best=0;judge='';judgeT=0;over=false;started=false;laneFlash=[0,0,0,0];GK.score(0);window.__g={score:0,over:false};t0=0;}
+function now(){return performance.now()-t0;}
+function tap(lane){ if(over){R();return;} if(!started){started=true;t0=performance.now();} laneFlash[lane]=1;
+  var bestN=null,bd=9999;
+  notes.forEach(function(n){if(n.lane!==lane||n.hit)return;var d=Math.abs(n.t-now());if(d<bd){bd=d;bestN=n;}});
+  if(bestN&&bd<150){bestN.hit=true;var pts=bd<60?100:bd<110?60:30;score+=pts+combo;combo++;best=Math.max(best,combo);judge=bd<60?'PERFECT!':bd<110?'Great':'Good';judgeT=20;GK.tone(bestN.note,0.08,'triangle',0.08);}
+  else{combo=0;judge='Miss';judgeT=20;GK.tone(150,0.08,'sawtooth',0.06);}
+  GK.score(score);window.__g.score=score;
+}
+GK.onKey(function(e){var m={d:0,f:1,j:2,k:3};var k=e.key.toLowerCase();if(k in m)tap(m[k]);});
+c.addEventListener('pointerdown',function(e){var r=c.getBoundingClientRect();var px=(e.clientX-r.left)*W/r.width;tap(Math.max(0,Math.min(LANES-1,Math.floor(px/LW))));});
+function step(){
+  if(over)return;
+  if(started){ notes.forEach(function(n){ if(!n.hit && now()-n.t>170){n.hit=true;n.missed=true;combo=0;} });
+    if(notes.every(function(n){return n.hit;})&&now()>notes[notes.length-1].t+300){over=true;GK.award(Math.round(score/40));window.__g.over=true;} }
+  for(var i=0;i<LANES;i++)laneFlash[i]*=0.85;
+  if(judgeT>0)judgeT--;
+}
+function draw(){
+  x.fillStyle='#0a0a1a';x.fillRect(0,0,W,H);
+  for(var i=0;i<LANES;i++){x.fillStyle=i%2?'#10102a':'#141436';x.fillRect(i*LW,0,LW,H);if(laneFlash[i]>0.05){x.fillStyle='rgba(108,92,231,'+laneFlash[i]*0.5+')';x.fillRect(i*LW,0,LW,H);}}
+  // hit line
+  x.strokeStyle='#3ee08f';x.lineWidth=4;x.beginPath();x.moveTo(0,HIT);x.lineTo(W,HIT);x.stroke();
+  for(i=1;i<LANES;i++){x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.beginPath();x.moveTo(i*LW,0);x.lineTo(i*LW,H);x.stroke();}
+  if(started){ var tnow=now(); notes.forEach(function(n){ if(n.hit&&!n.missed)return; var y=HIT-(n.t-tnow)*0.33; if(y<-30||y>H+30)return; x.fillStyle=n.missed?'#55304a':'hsl('+(n.lane*70+200)+' 80% 60%)'; var px=n.lane*LW+6; roundRect(px,y-16,LW-12,32,8); x.fill(); }); }
+  var keys=['D','F','J','K'];x.fillStyle='rgba(255,255,255,.4)';x.font='900 18px system-ui';x.textAlign='center';for(i=0;i<LANES;i++)x.fillText(keys[i],i*LW+LW/2,HIT+34);
+  if(judgeT>0){x.fillStyle=judge==='Miss'?'#ff6b6b':judge==='PERFECT!'?'#ffd84a':'#3ee08f';x.font='900 30px system-ui';x.textAlign='center';x.fillText(judge,W/2,220);}
+  x.fillStyle='#fff';x.font='900 26px system-ui';x.textAlign='center';x.fillText(score,W/2,60);if(combo>1){x.fillStyle='#ffd84a';x.font='800 18px system-ui';x.fillText(combo+'x combo',W/2,90);}
+  if(!started){x.fillStyle='rgba(0,0,0,.4)';x.fillRect(0,H/2-30,W,60);x.fillStyle='#fff';x.font='800 18px system-ui';x.fillText('Tap a lane to start! 🎶',W/2,H/2+6);}
+  if(over){x.fillStyle='rgba(0,0,0,.7)';x.fillRect(0,0,W,H);x.fillStyle='#ffd84a';x.font='900 26px system-ui';x.fillText('SONG COMPLETE!',W/2,H/2-20);x.fillStyle='#fff';x.font='700 16px system-ui';x.fillText('Score '+score+' · Best combo '+best,W/2,H/2+10);x.fillText('tap to play again',W/2,H/2+34);}
+}
+function roundRect(px,py,w,h,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath();}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

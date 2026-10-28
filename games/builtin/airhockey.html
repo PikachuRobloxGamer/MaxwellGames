@@ -1,0 +1,42 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Air Hockey</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🏒 Maxwell Air Hockey</span><span id=score>0 - 0</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Move your paddle with your finger/mouse (bottom half). First to 7 goals wins! 🐱 vs 🐶</p></div></div>
+<script src="kit.js"></script>
+<script>
+var W=360,H=560,c=GK.canvas(W,H),x=c.getContext('2d');
+var you,cpu,puck,ys,cs,over,goalW=140;
+function R(){you={x:W/2,y:H-60,r:28};cpu={x:W/2,y:60,r:28};resetPuck(1);ys=0;cs=0;over=false;GK.score('0 - 0');window.__g={score:0,over:false};}
+function resetPuck(dir){puck={x:W/2,y:H/2,vx:(Math.random()-0.5)*3,vy:dir*4,r:14};}
+function pos(e){var r=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*W/r.width,y:(p.clientY-r.top)*H/r.height};}
+function moveYou(e){var p=pos(e);you.x=Math.max(you.r,Math.min(W-you.r,p.x));you.y=Math.max(H/2+you.r,Math.min(H-you.r,p.y));}
+c.addEventListener('pointermove',moveYou);
+c.addEventListener('touchmove',function(e){e.preventDefault();moveYou(e);},{passive:false});
+c.addEventListener('pointerdown',function(){if(over)R();});
+function hit(pad){var dx=puck.x-pad.x,dy=puck.y-pad.y,d=Math.hypot(dx,dy);if(d<puck.r+pad.r){var nx=dx/d,ny=dy/d;puck.x=pad.x+nx*(puck.r+pad.r);puck.y=pad.y+ny*(puck.r+pad.r);var sp=Math.max(5,Math.hypot(puck.vx,puck.vy));puck.vx=nx*sp*1.08;puck.vy=ny*sp*1.08;GK.tone(500,0.04);}}
+function step(){
+  if(over)return;
+  // CPU AI: track puck when in its half, else drift to center
+  var tx=(puck.y<H/2)?puck.x:W/2, ty=(puck.y<H/2)?Math.min(H/2-cpu.r,puck.y):70;
+  cpu.x+=(tx-cpu.x)*0.08;cpu.y+=(ty-cpu.y)*0.08;cpu.x=Math.max(cpu.r,Math.min(W-cpu.r,cpu.x));
+  puck.x+=puck.vx;puck.y+=puck.vy;puck.vx*=0.995;puck.vy*=0.995;
+  if(puck.x<puck.r){puck.x=puck.r;puck.vx=Math.abs(puck.vx);}if(puck.x>W-puck.r){puck.x=W-puck.r;puck.vx=-Math.abs(puck.vx);}
+  // goals (gaps top & bottom)
+  if(puck.y<puck.r){ if(Math.abs(puck.x-W/2)<goalW/2){ys++;score();resetPuck(1);} else {puck.y=puck.r;puck.vy=Math.abs(puck.vy);} }
+  if(puck.y>H-puck.r){ if(Math.abs(puck.x-W/2)<goalW/2){cs++;score();resetPuck(-1);} else {puck.y=H-puck.r;puck.vy=-Math.abs(puck.vy);} }
+  hit(you);hit(cpu);
+  var sp=Math.hypot(puck.vx,puck.vy);if(sp>11){puck.vx*=11/sp;puck.vy*=11/sp;}
+}
+function score(){GK.score(ys+' - '+cs);window.__g.score=ys;GK.tone(ys>cs?760:200,0.15);if(ys>=7||cs>=7){over=true;if(ys>=7)GK.award(120);}}
+function draw(){
+  x.fillStyle='#0a2a3a';x.fillRect(0,0,W,H);
+  x.strokeStyle='rgba(255,255,255,.25)';x.lineWidth=3;x.beginPath();x.moveTo(0,H/2);x.lineTo(W,H/2);x.stroke();x.beginPath();x.arc(W/2,H/2,50,0,7);x.stroke();
+  // goals
+  x.fillStyle='rgba(62,224,143,.35)';x.fillRect(W/2-goalW/2,0,goalW,6);x.fillStyle='rgba(255,107,107,.35)';x.fillRect(W/2-goalW/2,H-6,goalW,6);
+  x.fillStyle='#fff';x.font='28px serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillText('🐶',cpu.x,cpu.y);x.fillText('🐱',you.x,you.y);
+  x.fillStyle='#ffd84a';x.beginPath();x.arc(puck.x,puck.y,puck.r,0,7);x.fill();
+  x.fillStyle='rgba(255,255,255,.6)';x.font='900 20px system-ui';x.fillText(cs,W-24,H/2-20);x.fillText(ys,W-24,H/2+28);
+  if(over){x.fillStyle='rgba(0,0,0,.7)';x.fillRect(0,0,W,H);x.fillStyle=ys>=7?'#3ee08f':'#ff6b6b';x.font='900 30px system-ui';x.fillText(ys>=7?'YOU WIN! 🏆':'CPU WINS',W/2,H/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('tap to play again',W/2,H/2+24);}
+}
+function loop(){step();draw();requestAnimationFrame(loop);}
+GK.restart(R);R();requestAnimationFrame(loop);
+</script></body></html>

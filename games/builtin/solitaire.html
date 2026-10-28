@@ -1,0 +1,84 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Solitaire</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🃏 Maxwell Solitaire</span><span id=score>Moves: 0</span><button id=restart>↻ New Deal</button></div><div id=stage></div></div>
+<script src="kit.js"></script>
+<script>
+var SUIT=['♠','♥','♦','♣']; // red = 1,2
+function red(s){return s===1||s===2;}
+function rk(r){return r===1?'A':r===11?'J':r===12?'Q':r===13?'K':''+r;}
+var stock,waste,found,tab,sel,moves,won;
+function R(){
+  var deck=[];for(var s=0;s<4;s++)for(var r=1;r<=13;r++)deck.push({r:r,s:s,up:false});
+  for(var i=deck.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=deck[i];deck[i]=deck[j];deck[j]=t;}
+  tab=[[],[],[],[],[],[],[]];
+  for(var cst=0;cst<7;cst++){for(var k=0;k<=cst;k++){var cd=deck.pop();cd.up=(k===cst);tab[cst].push(cd);}}
+  stock=deck;stock.forEach(function(cd){cd.up=false;});waste=[];found=[[],[],[],[]];sel=null;moves=0;won=false;
+  css();render();window.__g={score:0,over:false};
+}
+function css(){ if(document.getElementById('sol-css'))return; var s=document.createElement('style');s.id='sol-css';
+  s.textContent='.sol-board{max-width:460px;margin:0 auto}.sol-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px}'
+   +'.pile{position:relative;min-height:58px;border-radius:6px}'
+   +'.slot{border:2px dashed rgba(255,255,255,.18);border-radius:6px;min-height:58px}'
+   +'.card{height:54px;border-radius:6px;background:#fff;color:#111;border:1px solid #999;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;line-height:1;font-size:1rem;user-select:none}'
+   +'.card.red{color:#d8213a}.card.down{background:linear-gradient(135deg,#6c5ce7,#3a2d80);color:#fff;border-color:#2a2060}.card.sel{outline:3px solid #ffd84a;outline-offset:-1px}'
+   +'.tabcol{position:relative}.tabcol .card{position:absolute;left:0;right:0}';
+  document.head.appendChild(s);
+}
+var stage=GK.stage();
+function cardHTML(cd,extra){ if(!cd.up)return '<div class="card down'+(extra||'')+'">🐱</div>'; return '<div class="card'+(red(cd.s)?' red':'')+(extra||'')+'">'+rk(cd.r)+'<span>'+SUIT[cd.s]+'</span></div>'; }
+function render(){
+  var topRow='<div class="sol-row">';
+  // stock
+  topRow+='<div class="pile" id="pStock">'+(stock.length?'<div class="card down">🐱</div>':'<div class="slot">↻</div>')+'</div>';
+  // waste
+  topRow+='<div class="pile" id="pWaste">'+(waste.length?cardHTML(waste[waste.length-1], sel&&sel.from==='waste'?' sel':''):'<div class="slot"></div>')+'</div>';
+  topRow+='<div></div>';
+  for(var f=0;f<4;f++){var fp=found[f];topRow+='<div class="pile fnd" data-f="'+f+'">'+(fp.length?cardHTML(fp[fp.length-1]):'<div class="slot">'+SUIT[f]+'</div>')+'</div>';}
+  topRow+='</div>';
+  var tabRow='<div class="sol-row">';
+  for(var col=0;col<7;col++){ tabRow+='<div class="pile tabcol" data-col="'+col+'" style="min-height:'+(70+tab[col].length*18)+'px">';
+    if(!tab[col].length)tabRow+='<div class="slot"></div>';
+    for(var i=0;i<tab[col].length;i++){var cd=tab[col][i];var seld=sel&&sel.from==='tab'&&sel.col===col&&i>=sel.idx;tabRow+='<div style="position:absolute;top:'+(i*18)+'px;left:0;right:0" data-col="'+col+'" data-idx="'+i+'">'+cardHTML(cd,seld?' sel':'')+'</div>';}
+    tabRow+='</div>';
+  }
+  tabRow+='</div>';
+  stage.innerHTML='<div class="sol-board">'+topRow+tabRow+'</div><p class=hint style="text-align:center">Tap the deck to flip. Tap a card to pick it up, then tap where it goes. Build the 4 piles up by suit from A to K!</p>';
+  GK.score('Moves: '+moves);
+  // wire
+  document.getElementById('pStock').onclick=deal;
+  var pw=document.getElementById('pWaste');if(pw)pw.onclick=function(){ if(waste.length){ if(sel&&sel.from==='waste')sel=null; else sel={from:'waste'}; render(); } };
+  stage.querySelectorAll('.fnd').forEach(function(el){el.onclick=function(){toFound(+el.dataset.f);};});
+  stage.querySelectorAll('.tabcol').forEach(function(el){el.onclick=function(ev){ var cardEl=ev.target.closest('[data-idx]'); if(cardEl){ onTabCard(+cardEl.dataset.col,+cardEl.dataset.idx); } else { onTabCol(+el.dataset.col); } };});
+}
+function deal(){ sel=null; if(stock.length){var cd=stock.pop();cd.up=true;waste.push(cd);moves++;GK.tone(440,0.04);} else if(waste.length){ while(waste.length){var c2=waste.pop();c2.up=false;stock.push(c2);} GK.tone(300,0.05);} render(); }
+function selCard(){ if(!sel)return null; if(sel.from==='waste')return waste[waste.length-1]; return tab[sel.col][sel.idx]; }
+function isRun(col,idx){ for(var i=idx;i<tab[col].length-1;i++){var a=tab[col][i],b=tab[col][i+1];if(!a.up||red(a.s)===red(b.s)||a.r!==b.r+1)return false;} return tab[col][idx].up; }
+function onTabCard(col,idx){ var cd=tab[col][idx];
+  if(sel){ // try move selected onto this column
+    moveSelTo('tab',col); return;
+  }
+  if(!cd.up){ if(idx===tab[col].length-1){cd.up=true;moves++;GK.tone(500,0.04);render();} return; }
+  if(isRun(col,idx)){ sel={from:'tab',col:col,idx:idx}; render(); }
+}
+function onTabCol(col){ if(sel)moveSelTo('tab',col); }
+function canToTab(card,col){ var p=tab[col]; if(!p.length)return card.r===13; var top=p[p.length-1]; return top.up && red(top.s)!==red(card.s) && top.r===card.r+1; }
+function moveSelTo(dest,col){
+  if(!sel){return;}
+  if(dest==='tab'){ var bottom=selCard(); if(sel.from==='tab')bottom=tab[sel.col][sel.idx];
+    if(canToTab(bottom,col)){ var group= sel.from==='waste'?[waste.pop()]:tab[sel.col].splice(sel.idx); group.forEach(function(g){tab[col].push(g);}); afterMove(sel.from==='tab'?sel.col:-1); }
+    else { GK.tone(170,0.08); sel=null; render(); }
+  }
+}
+function toFound(f){
+  if(!sel){ return; }
+  if(sel.from==='tab' && sel.idx!==tab[sel.col].length-1){ GK.tone(170,0.08); sel=null; render(); return; }
+  var cd=selCard(); var fp=found[f];
+  var ok = fp.length? (cd.s===fp[fp.length-1].s && cd.r===fp[fp.length-1].r+1) : (cd.r===1 && f===cd.s);
+  if(!fp.length && cd.r===1){ ok=true; f=cd.s; } // route Ace to its own suit foundation
+  else if(fp.length){ ok=(cd.s===fp[fp.length-1].s && cd.r===fp[fp.length-1].r+1); }
+  if(ok){ if(sel.from==='waste')waste.pop(); else tab[sel.col].pop(); found[cd.s].push(cd); afterMove(sel.from==='tab'?sel.col:-1); checkWin(); }
+  else { GK.tone(170,0.08); sel=null; render(); }
+}
+function afterMove(flipCol){ moves++; sel=null; if(flipCol>=0){var p=tab[flipCol];if(p.length&&!p[p.length-1].up){p[p.length-1].up=true;}} GK.tone(640,0.05); render(); }
+function checkWin(){ if(found.every(function(f){return f.length===13;})){ won=true; GK.award(150); window.__g.score=1; window.__g.over=true; var d=document.createElement('div');d.style.cssText='text-align:center;font-weight:900;color:#3ee08f;font-size:1.3rem;margin-top:8px';d.textContent='🎉 You won! +150 🐟';stage.appendChild(d); GK.tone(880,0.3); } }
+GK.restart(R);R();
+</script></body></html>

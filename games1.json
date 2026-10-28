@@ -351,6 +351,46 @@
       "thumbnail": "",
       "description": "🔢 Classic number puzzle, Maxwell style.",
       "iframe": "games/builtin/sudoku.html"
+    },
+    {
+      "id": "catman",
+      "title": "Catman",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🐱 Hangman — guess the word before Maxwell faints!",
+      "iframe": "games/builtin/catman.html"
+    },
+    {
+      "id": "fish-merge",
+      "title": "Fish Merge",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🐟 2048-style — merge sea creatures up to the whale!",
+      "iframe": "games/builtin/fishmerge.html"
+    },
+    {
+      "id": "maxwell-airhockey",
+      "title": "Maxwell Air Hockey",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🏒 Fast 1v1 vs the CPU — first to 7 wins!",
+      "iframe": "games/builtin/airhockey.html"
+    },
+    {
+      "id": "rhythm-meow",
+      "title": "Rhythm Meow",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🎵 Tap to the beat across 4 lanes — chase the combo!",
+      "iframe": "games/builtin/rhythm.html"
+    },
+    {
+      "id": "maxwell-solitaire",
+      "title": "Maxwell Solitaire",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🃏 Classic Klondike solitaire, cat-styled.",
+      "iframe": "games/builtin/solitaire.html"
     }
   ]
 }
