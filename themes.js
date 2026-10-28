@@ -46,7 +46,12 @@
   }
   function decoForCurrent() { var t = theme(equipped()); if (t.deco === "snow") return "snow"; if (t.deco === "spooky") return "spooky"; return seasonDeco(); }
 
-  function apply() { applyVars(theme(equipped())); setDeco(decoForCurrent()); }
+  function applyCustomCursor() {
+    var cc = ls("mg-custom-cursor"), root = document.documentElement;
+    if (cc) { root.style.setProperty("--mg-cc", 'url("' + cc + '") 6 3, auto'); root.classList.add("mg-cc-on"); }
+    else { root.classList.remove("mg-cc-on"); root.style.removeProperty("--mg-cc"); }
+  }
+  function apply() { applyVars(theme(equipped())); setDeco(decoForCurrent()); applyCustomCursor(); }
 
   function css() {
     if (document.getElementById("mg-theme-css")) return;
@@ -55,7 +60,9 @@
       + ".mgth-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:8px}"
       + ".mgth-tile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:14px;border:2px solid rgba(255,255,255,.12);background:var(--panel-hover);color:var(--text);cursor:pointer;text-align:center}"
       + ".mgth-tile.on{border-color:#3ee08f}.mgth-ic{font-size:2rem}.mgth-nm{font-weight:800;font-size:.9rem}.mgth-sub{font-size:.72rem;color:var(--muted)}"
-      + ".mgth-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel-hover);border-radius:14px;padding:12px 14px;margin-top:12px}";
+      + ".mgth-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel-hover);border-radius:14px;padding:12px 14px;margin-top:12px}"
+      + ".mgth-cc{background:var(--panel-hover);border-radius:14px;padding:12px 14px;margin-top:12px}.mgth-cc h3{margin:0 0 4px;font-size:1rem}.mgth-cc input{width:100%}.mgth-ccmsg{font-size:.76rem;color:var(--muted);margin-top:6px}"
+      + "html.mg-cc-on,html.mg-cc-on body,html.mg-cc-on body *:not(iframe){cursor:var(--mg-cc)!important}";
     document.head.appendChild(s);
   }
 
@@ -72,6 +79,11 @@
       html += "</div>";
       var compOn = !window.MG_COMPANION || window.MG_COMPANION.on;
       html += '<div class="mgth-row"><span>🐱 <b>Buddy companion</b> that follows you around</span><button class="btn" id="mgCompToggle">' + (compOn ? "ON" : "OFF") + "</button></div>";
+      html += '<div class="mgth-cc"><h3>🖱️ Custom Cursor</h3>'
+        + '<p class="ar-hint" style="margin:0 0 6px">Find a cursor you love on <b>sweezy-cursors.com</b>, copy its image link (right-click → Copy image address) or upload a .png/.cur, paste it below, and hit Use it!</p>'
+        + '<div style="display:flex;gap:6px"><input id="ccUrl" class="sball-input" placeholder="Paste cursor image URL…" autocomplete="off"><button class="btn" id="ccUpload" title="Upload an image">📁</button></div>'
+        + '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn asc-btn" id="ccUse">🖱️ Use it</button><button class="btn" id="ccReset">↺ Default</button></div>'
+        + '<p class="mgth-ccmsg" id="ccMsg">' + (ls("mg-custom-cursor") ? "✅ A custom cursor is active." : "") + '</p></div>';
       p.body.innerHTML = html;
       p.body.querySelectorAll(".mgth-tile").forEach(function (b) {
         b.onclick = function () {
@@ -86,6 +98,18 @@
       });
       var ct = p.body.querySelector("#mgCompToggle");
       if (ct) ct.onclick = function () { if (!window.MG_COMPANION) return; if (window.MG_COMPANION.on) window.MG_COMPANION.disable(); else window.MG_COMPANION.enable(); render(); };
+      // custom cursor
+      var ccMsg = p.body.querySelector("#ccMsg");
+      var fileIn = document.createElement("input"); fileIn.type = "file"; fileIn.accept = "image/png,image/x-icon,image/vnd.microsoft.icon,.cur,.ani,image/*"; fileIn.style.display = "none"; p.body.appendChild(fileIn);
+      p.body.querySelector("#ccUpload").onclick = function () { fileIn.click(); };
+      fileIn.onchange = function () { var f = fileIn.files && fileIn.files[0]; if (!f) return; if (f.size > 400000) { ccMsg.textContent = "That image is too big — pick one under ~400KB (cursors are tiny!)."; return; } var rd = new FileReader(); rd.onload = function () { p.body.querySelector("#ccUrl").value = rd.result; ccMsg.textContent = "Loaded — now hit 🖱️ Use it!"; }; rd.readAsDataURL(f); };
+      p.body.querySelector("#ccUse").onclick = function () {
+        var v = (p.body.querySelector("#ccUrl").value || "").trim();
+        if (!/^https:\/\/|^data:image\//i.test(v)) { ccMsg.textContent = "Paste a valid https:// image link or upload a file."; return; }
+        ls("mg-custom-cursor", v); applyCustomCursor();
+        ccMsg.textContent = "✅ Custom cursor set! If you don't see it, the image link may be blocked — try uploading the file instead.";
+      };
+      p.body.querySelector("#ccReset").onclick = function () { try { localStorage.removeItem("mg-custom-cursor"); } catch (e) {} applyCustomCursor(); p.body.querySelector("#ccUrl").value = ""; ccMsg.textContent = "Back to the default cursor."; };
     }
     render();
   }

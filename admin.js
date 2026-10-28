@@ -332,19 +332,21 @@
 
   function startAbuse(endsAt, mult, by) {
     const fresh = !abuseActive();
-    abuseEnd = endsAt; abuseMult = mult; abuseBy = by === "sami" ? "sami" : "owner";
+    abuseEnd = endsAt; abuseMult = mult; abuseBy = by === "sami" ? "sami" : by === "auto" ? "auto" : "owner";
+    const nm = abuseBy === "auto" ? "the Daily Schedule 🎉" : ROLES[abuseBy].name;
     MG.setEventMult(mult);
     $("abuseMult").textContent = mult + "x";
-    $("abuseBy").textContent = ROLES[abuseBy].name;
-    $("abuseBar").className = "abuse-bar by-" + abuseBy;
+    $("abuseBy").textContent = nm;
+    $("abuseBar").className = "abuse-bar by-" + (abuseBy === "auto" ? "owner" : abuseBy);
     document.documentElement.classList.add("party", "abuse");
     MG.particles.partyMode(99999);
     refreshMusic();
     if (fresh) {
       MG.particles.burst(60);
-      MG.toast("🚨", `ADMIN ABUSE by ${ROLES[abuseBy].name}!`, `${mult}x treats! +10 🐟 just for being here.`);
+      MG.toast("🚨", `ADMIN ABUSE by ${nm}!`, `${mult}x treats! +10 🐟 just for being here.`);
       MG.addTreats(10);
       MG.sawAbuse();
+      if (isOwner()) notifyOwner("🚨 Admin Abuse is happening!", nm + " · " + mult + "x treats");
     }
     clearInterval(abuseTimer);
     abuseTimer = setInterval(tickAbuse, 250);
@@ -432,7 +434,7 @@
     const byName = (ROLES[msg.by] && ROLES[msg.by].name) || ROLES.owner.name;
     if (msg.t === "abuse") {
       const endsAt = msg.at + Math.min(Number(msg.dur) || 60, 900);
-      if (nowSec() < endsAt) startAbuse(endsAt, Math.min(Number(msg.mult) || 2, 10), msg.by);
+      if (nowSec() < endsAt) startAbuse(endsAt, Math.min(Number(msg.mult) || 2, 10), msg.auto ? "auto" : msg.by);
       return;
     }
     if (msg.t === "abuse_end") { if (age < 600) endAbuse(); return; }
@@ -895,6 +897,52 @@
     }
     m.classList.remove("hidden");
   }
+
+  // ---------- 🚨 Daily auto Admin Abuse + countdown ----------
+  function lsg(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function notifyOwner(title, body) {
+    try { MG.toast("🔔", title, body); } catch (e) {}
+    try { if ("Notification" in window && Notification.permission === "granted") new Notification("MaxwellGames", { body: title + " — " + body, tag: "mg-abuse" }); } catch (e) {}
+  }
+  const AUTO_SLOTS = [8, 10]; // 8:00 AM & 10:00 AM Central
+  function centralParts() {
+    try {
+      const f = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour12: false, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      const o = {}; f.formatToParts(new Date()).forEach((p) => o[p.type] = p.value); let h = parseInt(o.hour, 10); if (h === 24) h = 0;
+      return { y: o.year, mo: o.month, d: o.day, h: h, mi: parseInt(o.minute, 10), s: parseInt(o.second, 10) };
+    } catch (e) { const n = new Date(); return { y: "" + n.getFullYear(), mo: "0", d: "0", h: n.getHours(), mi: n.getMinutes(), s: n.getSeconds() }; }
+  }
+  function centralSOD() { const c = centralParts(); return c.h * 3600 + c.mi * 60 + c.s; }
+  function nextSlotDelta() { const n = centralSOD(); let best = Infinity; AUTO_SLOTS.forEach((h) => { let d = h * 3600 - n; if (d <= 0) d += 86400; best = Math.min(best, d); }); return best; }
+  function slotKey(h) { const c = centralParts(); return c.y + "-" + c.mo + "-" + c.d + "-" + String(h).padStart(2, "0"); }
+  function cdFmt(s) { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = Math.floor(s % 60); return (h ? h + ":" : "") + String(m).padStart(2, "0") + ":" + String(ss).padStart(2, "0"); }
+  (function cdCss() { if (document.getElementById("abuse-cd-css")) return; const s = document.createElement("style"); s.id = "abuse-cd-css"; s.textContent = ".abuse-cd{margin:10px auto 4px;max-width:520px;text-align:center;background:linear-gradient(135deg,#2a1150,#5a0e2e);border:3px solid #ffd84a;border-radius:18px;padding:12px 16px;box-shadow:0 6px 24px rgba(255,80,40,.25)}.acd-label{font-weight:800;color:#ffd84a;font-size:.8rem;letter-spacing:2px}.acd-time{font-weight:900;font-size:2.7rem;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 2px 10px rgba(0,0,0,.5)}.acd-sub{font-size:.75rem;color:rgba(255,255,255,.78);margin-top:2px}@media(max-width:600px){.acd-time{font-size:2.1rem}}"; document.head.appendChild(s); })();
+  function buildCountdown() { const host = document.getElementById("libraryView"); if (!host || document.getElementById("abuseCountdown")) return; const el = document.createElement("div"); el.id = "abuseCountdown"; el.className = "abuse-cd"; host.insertBefore(el, host.firstChild); }
+  function tickCountdown() {
+    const el = document.getElementById("abuseCountdown"); if (!el) return;
+    if (abuseActive()) { el.style.display = "none"; return; }
+    el.style.display = "";
+    el.innerHTML = '<div class="acd-label">⏰ NEXT ADMIN ABUSE IN</div><div class="acd-time">' + cdFmt(nextSlotDelta()) + '</div><div class="acd-sub">Every day at 8:00 &amp; 10:00 AM (Central) — be here for free treats &amp; chaos! 🎉</div>';
+  }
+  function hostAutoAbuse() {
+    const dur = 120, mult = [2, 3, 5][Math.floor(Math.random() * 3)];
+    send({ t: "abuse", dur: dur, mult: mult, auto: 1 });
+    const pool = POWERS.filter((p) => !p.role && p.t !== "freezeall"); let fired = 0, max = 16;
+    const iv = setInterval(() => { if (!abuseActive() || fired >= max) { clearInterval(iv); return; } send({ t: pool[Math.floor(Math.random() * pool.length)].t }); fired++; }, 6500);
+  }
+  async function tryClaim(h) {
+    const key = slotKey(h); if (lsg("mg-auto-" + key)) return; lss("mg-auto-" + key, "1"); if (abuseActive()) return;
+    if (!fbCtlUrl()) { hostAutoAbuse(); return; }
+    try {
+      const cur = await ctlGet("autoAbuse"); if (typeof cur === "string" && cur.indexOf(key) === 0) return;
+      await ctlPut("autoAbuse", key + "|" + CLIENT_ID);
+      await new Promise((r) => setTimeout(r, 900));
+      const cf = await ctlGet("autoAbuse"); if (typeof cf === "string" && cf.indexOf(CLIENT_ID) >= 0) hostAutoAbuse();
+    } catch (e) { hostAutoAbuse(); }
+  }
+  function schedulerTick() { tickCountdown(); const sod = centralSOD(); AUTO_SLOTS.forEach((h) => { const start = h * 3600; if (sod >= start && sod < start + 150) tryClaim(h); }); }
+  buildCountdown(); setInterval(schedulerTick, 1000); schedulerTick();
 
   connect();
   startPresence();
