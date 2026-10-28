@@ -18,6 +18,10 @@
   function authUser() { return ls.get("mg-auth") || ""; }
   function uname(s) { return (s || "").trim().toLowerCase().replace(/[^a-z0-9_]/g, ""); }
   async function sha(s) { const b = new TextEncoder().encode(s); const h = await crypto.subtle.digest("SHA-256", b); return Array.from(new Uint8Array(h)).map((x) => x.toString(16).padStart(2, "0")).join(""); }
+  function normEmail(e) { return (e || "").trim().toLowerCase(); }
+  function validEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normEmail(e)); }
+  // we store only a scrambled fingerprint of the email (never the real address) — the DB is public, so this keeps players' emails private
+  async function emailHash(e) { return (await sha("email:" + normEmail(e) + ":" + SALT)).slice(0, 40); }
   function fbGet(path) { var FB = fbUrl(); if (!FB) return Promise.resolve(null); return fetch(FB + "/" + path + ".json").then((r) => (r.ok ? r.json() : null)).catch(() => null); }
   function fbPut(path, data) { var FB = fbUrl(); if (!FB) return Promise.resolve(false); return fetch(FB + "/" + path + ".json", { method: "PUT", body: JSON.stringify(data) }).then((r) => r.ok).catch(() => false); }
 
@@ -56,6 +60,13 @@
       .mga-acct{background:#f3f0ff;border-radius:16px;padding:14px;margin-bottom:12px}
       .mga-acct b{color:#3a2d80;font-size:1.15rem}
       .mga-close{position:absolute;top:10px;right:14px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#b7b2cf;line-height:1}
+      .mga-back{position:absolute;top:10px;left:14px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#b7b2cf;line-height:1}
+      .mga-link{background:none;border:none;color:#8b7fd6;font-weight:700;cursor:pointer;font-size:.82rem;text-decoration:underline;margin-top:4px}
+      .mga-pick{display:block;width:100%;text-align:left;background:#f3f0ff;border:2px solid #e0dcf5;border-radius:12px;padding:12px 14px;margin:7px 0;cursor:pointer;font-weight:800;color:#3a2d80;font-size:.95rem}
+      .mga-pick:active,.mga-pick:hover{border-color:#6c5ce7;background:#ece8ff}
+      .mga-hello{display:flex;align-items:center;gap:7px;background:linear-gradient(90deg,#6c5ce7,#a06bff);color:#fff;border:none;border-radius:20px;padding:5px 13px 5px 6px;font-weight:800;font-size:.85rem;cursor:pointer;box-shadow:0 3px 10px rgba(108,92,231,.35);white-space:nowrap}
+      .mga-hello img{width:24px;height:24px;border-radius:50%;border:2px solid #fff;object-fit:cover;background:#fff}
+      .mga-hello:hover{filter:brightness(1.08)}
     `;
     document.head.appendChild(s);
   })();
@@ -86,27 +97,119 @@
       body.innerHTML = `
         <p class="mga-sub">You're signed in — your progress is saved to the cloud! ☁️</p>
         <div class="mga-acct">Signed in as <b>${esc(displayName(u))}</b> 🐾</div>
+        <div id="mgaEmailBox"><p class="mga-note">Checking recovery…</p></div>
         <button class="mga-go" id="mgaClose2">🎮 Keep Playing</button>
         <button class="mga-guest" id="mgaLogout">🚪 Log out</button>
         <p class="mga-note">Log in with the same username on any device to bring your Maxwell with you.</p>`;
       body.querySelector("#mgaClose2").onclick = hide;
       body.querySelector("#mgaLogout").onclick = () => { ls.del("mg-auth"); ls.del("mg-profile"); ls.set("mg-guest", "1"); location.reload(); };
+      renderEmailBox(u);
       return;
     }
+    const emailField = mode === "signup"
+      ? `<div class="mga-field"><span class="mga-ic">📧</span><input id="mgaEmail" placeholder="Gmail (optional — for recovery)" autocomplete="off" maxlength="60" inputmode="email" autocapitalize="off"></div>`
+      : "";
+    const forgotLink = mode === "login" ? `<button type="button" class="mga-link" id="mgaForgot">😿 Forgot password or username?</button>` : "";
     body.innerHTML = `
       <p class="mga-sub">Make an account so your Maxwell follows you to any device! 🐾✨</p>
       <div class="mga-tabs"><button data-tab="login" class="${mode === "login" ? "on" : ""}">🔑 Log In</button><button data-tab="signup" class="${mode === "signup" ? "on" : ""}">✨ Sign Up</button></div>
       <form id="mgaForm">
         <div class="mga-field"><span class="mga-ic">🐱</span><input id="mgaUser" placeholder="Username" autocomplete="off" maxlength="16" autocapitalize="off"></div>
         <div class="mga-field"><span class="mga-ic">🔒</span><input id="mgaPass" type="password" placeholder="Password" autocomplete="off" maxlength="40"></div>
+        ${emailField}
         <button class="mga-go" id="mgaGo" type="submit">${mode === "login" ? "🔑 Log In" : "✨ Create My Account"}</button>
       </form>
+      ${forgotLink}
       <p class="mga-msg" id="mgaMsg"></p>
       <button class="mga-guest" id="mgaGuest">🐱 Just play as Guest</button>
       <p class="mga-note">🔒 Fun game login only — please don't use a real/important password.</p>`;
     body.querySelectorAll(".mga-tabs button").forEach((b) => b.onclick = () => { mode = b.dataset.tab; authView(); setTimeout(() => { const i = $("mgaUser"); if (i) i.focus(); }, 30); });
     body.querySelector("#mgaForm").onsubmit = (e) => { e.preventDefault(); go(); };
     body.querySelector("#mgaGuest").onclick = () => { ls.set("mg-guest", "1"); hide(); };
+    const fb = body.querySelector("#mgaForgot"); if (fb) fb.onclick = () => forgotView();
+  }
+
+  // recovery-email box inside the signed-in view
+  function renderEmailBox(u) {
+    const box = ov.querySelector("#mgaEmailBox"); if (!box) return;
+    fbGet("accounts/" + u + "/eh").then((eh) => {
+      if (eh) { box.innerHTML = '<p class="mga-note">📧 A recovery Gmail is connected ✅ — you can reset your password if you forget it.</p>'; return; }
+      box.innerHTML = `<div class="mga-field"><span class="mga-ic">📧</span><input id="mgaAddEmail" placeholder="Connect a Gmail (for recovery)" inputmode="email" autocapitalize="off" maxlength="60"></div><button class="mga-link" id="mgaSaveEmail">🔗 Connect this Gmail</button><p class="mga-note" id="mgaEmailMsg"></p>`;
+      box.querySelector("#mgaSaveEmail").onclick = async () => {
+        const e = (box.querySelector("#mgaAddEmail") || {}).value || "";
+        const mm = box.querySelector("#mgaEmailMsg");
+        if (!validEmail(e)) { if (mm) { mm.textContent = "That doesn't look like a Gmail."; mm.style.color = "#e0407a"; } return; }
+        const eh2 = await emailHash(e);
+        await fbPut("accounts/" + u + "/eh", eh2); await fbPut("emailIndex/" + eh2 + "/" + u, 1);
+        box.innerHTML = '<p class="mga-note">📧 Gmail connected! ✅ You can recover this account now.</p>';
+      };
+    });
+  }
+
+  // ---------- forgot-password / recovery flow ----------
+  function forgotView() {
+    const body = ov.querySelector("#mgaBody");
+    body.innerHTML = `
+      <button class="mga-back" id="mgaBack" title="Back">←</button>
+      <p class="mga-sub">Forgot your password or username? Type the Gmail you connected and we'll find your accounts! 🔎</p>
+      <form id="mgaFForm">
+        <div class="mga-field"><span class="mga-ic">📧</span><input id="mgaFEmail" placeholder="Your connected Gmail" inputmode="email" autocapitalize="off" maxlength="60"></div>
+        <button class="mga-go" id="mgaFGo" type="submit">🔎 Find my accounts</button>
+      </form>
+      <p class="mga-msg" id="mgaMsg"></p>
+      <p class="mga-note">Note: a free game site like this can't actually send emails by itself, so instead of mailing you a link, it finds your accounts right here once you enter the matching Gmail.</p>`;
+    body.querySelector("#mgaBack").onclick = () => { mode = "login"; authView(); };
+    body.querySelector("#mgaFForm").onsubmit = (e) => { e.preventDefault(); findAccounts(); };
+    setTimeout(() => { const i = $("mgaFEmail"); if (i) i.focus(); }, 40);
+  }
+  async function findAccounts() {
+    const e = (($("mgaFEmail") || {}).value || "");
+    if (!validEmail(e)) return msg("Type the Gmail you connected to your account.", "err");
+    if (!fbUrl()) return msg("Can't reach the account server right now.", "err");
+    const go = $("mgaFGo"); if (go) { go.disabled = true; go.textContent = "⏳ Searching…"; }
+    const eh = await emailHash(e);
+    const idx = await fbGet("emailIndex/" + eh);
+    if (go) { go.disabled = false; go.textContent = "🔎 Find my accounts"; }
+    const users = idx ? Object.keys(idx) : [];
+    if (!users.length) return msg("No accounts are connected to that Gmail. 😿 Check the spelling, or Sign Up for a new one.", "err");
+    pickView(users);
+  }
+  function pickView(users) {
+    const body = ov.querySelector("#mgaBody");
+    const rows = users.map((u) => `<button class="mga-pick" data-u="${esc(u)}">👤 ${esc(displayName(u))}</button>`).join("");
+    body.innerHTML = `
+      <button class="mga-back" id="mgaBack" title="Back">←</button>
+      <p class="mga-sub">We found these accounts for that Gmail. Pick the one to reset: ✅</p>
+      ${rows}
+      <p class="mga-msg" id="mgaMsg"></p>`;
+    body.querySelector("#mgaBack").onclick = () => forgotView();
+    body.querySelectorAll(".mga-pick").forEach((b) => b.onclick = () => newPassView(b.dataset.u));
+  }
+  function newPassView(u) {
+    const body = ov.querySelector("#mgaBody");
+    body.innerHTML = `
+      <button class="mga-back" id="mgaBack" title="Back">←</button>
+      <p class="mga-sub">Make a new password for <b>${esc(displayName(u))}</b> 🔑</p>
+      <form id="mgaNPForm">
+        <div class="mga-field"><span class="mga-ic">🔒</span><input id="mgaNP" type="password" placeholder="New password" maxlength="40"></div>
+        <div class="mga-field"><span class="mga-ic">🔒</span><input id="mgaNP2" type="password" placeholder="Type it again" maxlength="40"></div>
+        <button class="mga-go" id="mgaNPGo" type="submit">✅ Set new password</button>
+      </form>
+      <p class="mga-msg" id="mgaMsg"></p>`;
+    body.querySelector("#mgaBack").onclick = () => forgotView();
+    body.querySelector("#mgaNPForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const p1 = ($("mgaNP") || {}).value || "", p2 = ($("mgaNP2") || {}).value || "";
+      if (p1.length < 4) return msg("Password must be at least 4 characters.", "err");
+      if (p1 !== p2) return msg("The two passwords don't match.", "err");
+      const go = $("mgaNPGo"); if (go) { go.disabled = true; go.textContent = "⏳ ..."; }
+      const pass = await sha(u + ":" + p1 + ":" + SALT);
+      const ok = await fbPut("accounts/" + u + "/pass", pass);
+      if (!ok) { if (go) { go.disabled = false; go.textContent = "✅ Set new password"; } return msg("Couldn't update the password. Try again.", "err"); }
+      msg("🎉 Password changed! Signing you in…", "ok");
+      const rec = await fbGet("accounts/" + u);
+      finish(u, (rec && rec.name) || u, (rec && rec.save) || {}, "🎉 Welcome back!");
+    };
   }
 
   function displayName(u) { return (window.__mgaName && window.__mgaName[u]) || u; }
@@ -126,9 +229,14 @@
       const pass = await sha(u + ":" + pw + ":" + SALT);
       if (mode === "signup") {
         if (rec) { busy(false); return msg("That username is taken — try another! 😺", "err"); }
+        const emailRaw = ($("mgaEmail") || {}).value || "";
+        if (emailRaw && !validEmail(emailRaw)) { busy(false); return msg("That Gmail doesn't look right — fix it or leave it blank.", "err"); }
         let cur = {}; try { cur = JSON.parse(ls.get(saveKey(profile())) || ls.get(SAVE_BASE) || "{}"); } catch (e) {}
         cur._ts = Date.now();
-        const ok = await fbPut("accounts/" + u, { name: uRaw.trim().slice(0, 16), pass: pass, created: Date.now(), save: cur });
+        const acct = { name: uRaw.trim().slice(0, 16), pass: pass, created: Date.now(), save: cur };
+        let eh = null; if (emailRaw) { eh = await emailHash(emailRaw); acct.eh = eh; }
+        const ok = await fbPut("accounts/" + u, acct);
+        if (eh) await fbPut("emailIndex/" + eh + "/" + u, 1);
         busy(false);
         if (!ok) return msg("Couldn't create the account. Check your connection.", "err");
         finish(u, uRaw.trim().slice(0, 16), cur, "🎉 Account created! Welcome, " + esc(uRaw.trim()) + "!");
@@ -149,8 +257,30 @@
     setTimeout(() => location.reload(), 950);
   }
 
-  function show() { if (!ov) build(); authView(); ov.classList.remove("hidden"); setTimeout(() => { const i = $("mgaUser"); if (i) i.focus(); }, 60); }
+  function show() {
+    if (!ov) build();
+    const wasHidden = ov.classList.contains("hidden");
+    ov.classList.remove("hidden");
+    if (wasHidden) { if (!authUser()) mode = "login"; authView(); setTimeout(() => { const i = $("mgaUser"); if (i) i.focus(); }, 60); }
+  }
   function hide() { if (ov) ov.classList.add("hidden"); }
+
+  // ---------- "Hello! [Username]" greeting, top-right ----------
+  function renderHello() {
+    const bar = document.querySelector(".topbar"); if (!bar) return;
+    let el = document.getElementById("mgaHello");
+    const u = authUser();
+    if (!u) { if (el) el.style.display = "none"; return; }
+    if (!el) {
+      el = document.createElement("button"); el.id = "mgaHello"; el.className = "mga-hello"; el.title = "Your account";
+      const ref = document.getElementById("accountBtn");
+      if (ref && ref.parentNode) ref.parentNode.insertBefore(el, ref); else bar.appendChild(el);
+      el.onclick = show;
+    }
+    el.style.display = "";
+    const img = (document.querySelector(".logo-img") || {}).src || "maxwell.png";
+    el.innerHTML = '<img src="' + img + '" alt=""> Hello! ' + esc(displayName(u));
+  }
 
   // ---------- cloud save sync (only when logged in) ----------
   function startSync() {
@@ -179,6 +309,7 @@
     // Override the account button (👤) to open the cute screen
     const btn = $("accountBtn");
     if (btn) { btn.title = authUser() ? "Your account" : "Log in / Sign up"; btn.onclick = (e) => { e && e.stopPropagation && e.stopPropagation(); show(); }; btn.classList.toggle("logged", !!authUser()); }
+    renderHello();
     startSync();
     // Auto-welcome on a device that isn't signed in (and hasn't chosen guest yet)
     if (!authUser() && !ls.get("mg-guest")) {
