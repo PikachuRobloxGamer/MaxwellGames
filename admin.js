@@ -10,7 +10,8 @@
   const SALT = "maxwellgames-owner-v1:";
   const ROLES = {
     owner: { hash: "03187c39b7ed90e6ad2efde77f3061ecb4ee920316ce29414fb281d31e8b9b55", name: "Pikachu Roblox Gamer", icon: "👑", title: "OWNER" },
-    sami:  { hash: "62e6b6aa467740b2ba6e22844434c13e1086489c776310cebd213d64d71b5fe4", name: "GamesOn786",           icon: "💎", title: "GamesOn786" }
+    sami:  { hash: "62e6b6aa467740b2ba6e22844434c13e1086489c776310cebd213d64d71b5fe4", name: "GamesOn786",           icon: "💎", title: "GamesOn786" },
+    aarush:{ hash: "44d4df5969cda0087fbef2a28b1602b05bf95ce61728f88ade9de1f1efdac413", name: "Aarush",               icon: "⚽", title: "AARUSH" }
   };
   const TOPIC = "maxwellgames-prg-c3fba596c229d851";
   const NTFY = "https://ntfy.sh/" + TOPIC;
@@ -74,7 +75,8 @@
     $("adminIcon").textContent = r ? r.icon : "👑";
   }
   $("lockBtn").onclick = () => {
-    if (isAdmin()) openAdmin();
+    if (role === "aarush") openAarush();
+    else if (isAdmin()) openAdmin();
     else { $("lockModal").classList.remove("hidden"); $("lockMsg").textContent = ""; $("lockInput").value = ""; setTimeout(() => $("lockInput").focus(), 50); }
   };
   $("lockCancel").onclick = () => $("lockModal").classList.add("hidden");
@@ -91,7 +93,7 @@
       updateLock();
       MG.setRole(role);
       welcome(true);
-      openAdmin();
+      if (role === "aarush") openAarush(); else openAdmin();
     } else {
       $("lockMsg").textContent = "❌ Wrong code.";
       $("lockInput").value = "";
@@ -113,10 +115,13 @@
     const r = ROLES[role];
     MG.particles.burst(40);
     if (big) {
-      MG.floatText(`${r.icon} WELCOME BACK, ${role === "owner" ? "OWNER" : "GAMESON786"} ${r.icon}`, innerWidth / 2, innerHeight / 2, "big");
+      MG.floatText(`${r.icon} WELCOME, ${r.title} ${r.icon}`, innerWidth / 2, innerHeight / 2, "big");
       MG.meow();
     }
-    MG.toast(r.icon, role === "owner" ? "Owner mode ON" : "GamesOn786 mode ON", role === "owner" ? "You own everything. Check the shop for owner-only stuff!" : "Admin powers unlocked. Abuses will say GamesOn786!");
+    const blurb = role === "owner" ? "You own everything. Check the shop for owner-only stuff!"
+      : role === "aarush" ? "⚽ Soccer panel unlocked! Spawn balls on your screen & announce to everyone."
+        : "Admin powers unlocked. Abuses will say GamesOn786!";
+    MG.toast(r.icon, r.title + " mode ON", blurb);
   }
 
   // ---------- Live connection (Firebase if set up, else ntfy.sh) ----------
@@ -415,7 +420,7 @@
   }
 
   function handle(msg, age) {
-    const byName = msg.by === "sami" ? ROLES.sami.name : ROLES.owner.name;
+    const byName = (ROLES[msg.by] && ROLES[msg.by].name) || ROLES.owner.name;
     if (msg.t === "abuse") {
       const endsAt = msg.at + Math.min(Number(msg.dur) || 60, 900);
       if (nowSec() < endsAt) startAbuse(endsAt, Math.min(Number(msg.mult) || 2, 10), msg.by);
@@ -813,6 +818,74 @@
   if (role) MG.setRole(role);
   runLoader();
   setStatus("connecting...", false);
+  // ---------- ⚽ AARUSH MODE: soccer panel ----------
+  function aarushCSS() {
+    if (document.getElementById("aarush-css")) return;
+    const s = document.createElement("style"); s.id = "aarush-css";
+    s.textContent = ".aar-ball{position:fixed;z-index:98;pointer-events:none;user-select:none;filter:drop-shadow(0 3px 5px rgba(0,0,0,.4))}"
+      + "#aarushModal .panel-box{max-width:440px}"
+      + ".aar-head{display:flex;align-items:center;gap:10px}"
+      + ".aar-big{font-size:2.4rem}"
+      + ".aar-btn{width:100%;padding:16px;border:none;border-radius:16px;background:linear-gradient(90deg,#3ee08f,#2bbd6e);color:#063;font-size:1.15rem;font-weight:900;cursor:pointer;box-shadow:0 5px 0 #1e8f52;margin:6px 0}"
+      + ".aar-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #1e8f52}"
+      + ".aar-row{display:flex;gap:8px;margin-top:8px}.aar-row input{flex:1}"
+      + ".aar-note{font-size:.76rem;color:var(--muted);margin-top:10px;text-align:center}";
+    document.head.appendChild(s);
+  }
+  function spawnSoccerLocal(n) {
+    for (let i = 0; i < (n || 7); i++) {
+      const size = 30 + Math.random() * 26;
+      const b = document.createElement("div"); b.className = "aar-ball"; b.textContent = "⚽";
+      b.style.fontSize = size + "px";
+      let px = 20 + Math.random() * (innerWidth - 60), py = -40,
+        vx = (Math.random() - 0.5) * 8, vy = 2 + Math.random() * 3, life = 0;
+      document.body.appendChild(b);
+      (function fall() {
+        life++; vy += 0.4; px += vx; py += vy;
+        if (py > innerHeight - size) { py = innerHeight - size; vy *= -0.62; if (Math.abs(vy) < 2) vy = -(7 + Math.random() * 4); }
+        if (px < 0) { px = 0; vx = Math.abs(vx); } else if (px > innerWidth - size) { px = innerWidth - size; vx = -Math.abs(vx); }
+        b.style.left = px + "px"; b.style.top = py + "px"; b.style.transform = "rotate(" + (life * 9) + "deg)";
+        if (life < 520 && b.isConnected) requestAnimationFrame(fall); else b.remove();
+      })();
+    }
+    try { MG.meow(); } catch (e) {}
+  }
+  function openAarush() {
+    aarushCSS();
+    let m = document.getElementById("aarushModal");
+    if (!m) {
+      m = document.createElement("div"); m.id = "aarushModal"; m.className = "panel hidden"; m.setAttribute("role", "dialog");
+      m.innerHTML = '<div class="panel-box admin-box">'
+        + '<div class="panel-head"><div class="lock-big aar-big">⚽</div><div><h2>Aarush\'s Soccer Panel</h2>'
+        + '<p class="panel-sub">Spawn soccer balls on YOUR screen, and announce to everyone!</p></div>'
+        + '<button class="btn panel-x" id="aarClose" aria-label="Close">✕</button></div>'
+        + '<h3>⚽ Soccer balls <small>(only on your screen)</small></h3>'
+        + '<button class="aar-btn" id="aarSpawn">⚽ SPAWN SOCCER BALLS</button>'
+        + '<button class="btn" id="aarSpawnLots">🌧️ Rain a bunch!</button>'
+        + '<h3 style="margin-top:16px">📢 Announcement <small>(everyone sees it, signed — Aarush)</small></h3>'
+        + '<div class="aar-row"><input id="aarText" class="sball-input" maxlength="100" placeholder="Type your announcement…">'
+        + '<select id="aarStyle" aria-label="Style"><option value="gold">Gold</option><option value="red">Red</option><option value="blue">Blue</option><option value="rainbow">Rainbow</option></select></div>'
+        + '<button class="aar-btn" id="aarSend" style="background:linear-gradient(90deg,#ffd84a,#ffb02e);color:#5a3a00;box-shadow:0 5px 0 #b57e12">📢 ANNOUNCE TO EVERYONE</button>'
+        + '<p class="aar-note">⚽ Soccer balls appear only on your own screen. 📢 Announcements go out to everyone playing, signed <b>— Aarush</b>.</p>'
+        + '<div class="admin-row" style="margin-top:12px"><button class="btn" id="aarLogout">🔒 Log out of Aarush mode</button></div>'
+        + '</div>';
+      document.body.appendChild(m);
+      m.addEventListener("click", (e) => { if (e.target.id === "aarushModal") m.classList.add("hidden"); });
+      m.querySelector("#aarClose").onclick = () => m.classList.add("hidden");
+      m.querySelector("#aarSpawn").onclick = () => spawnSoccerLocal(7);
+      m.querySelector("#aarSpawnLots").onclick = () => spawnSoccerLocal(22);
+      m.querySelector("#aarSend").onclick = () => {
+        const t = m.querySelector("#aarText").value.trim(); if (!t) return;
+        send({ t: "announce", text: t, style: m.querySelector("#aarStyle").value });
+        m.querySelector("#aarText").value = "";
+        MG.toast("📢", "Announcement sent!", "Everyone sees it, signed — Aarush.");
+      };
+      m.querySelector("#aarLogout").onclick = () => { role = null; try { localStorage.removeItem(ROLE_KEY); } catch (e) {} m.classList.add("hidden"); updateLock(); MG.setRole(null); MG.toast("🔒", "Aarush mode locked", ""); };
+    }
+    m.classList.remove("hidden");
+  }
+
   connect();
   startPresence();
+  if (role === "aarush") updateLock();
 })();
