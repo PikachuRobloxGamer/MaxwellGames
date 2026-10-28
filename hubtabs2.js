@@ -1,4 +1,4 @@
-// ===== MaxwellGames extra tabs: Catdle (Wordle), Maxwell AI, Jukebox =====
+// ===== MaxwellGames extra tabs: Catdle (Wordle), Maxwell AI =====
 (function () {
   const U = window.MGUI;
 
@@ -108,26 +108,6 @@
     };
   }
 
-  // ---------------- JUKEBOX (procedural chiptune) ----------------
-  function openJukebox() {
-    const p = U.panel("jukeOv", "🎵 Maxwell Jukebox", "juke-head");
-    const TRACKS = [
-      { name: "🐱 Meow March", notes: [392, 392, 440, 392, 523, 494, 392, 392, 440, 392, 587, 523], tempo: 300, type: "square" },
-      { name: "✨ Treat Town", notes: [523, 587, 659, 784, 659, 587, 523, 587, 659, 523], tempo: 260, type: "triangle" },
-      { name: "👾 Pixel Party", notes: [330, 392, 494, 392, 330, 294, 330, 392, 494, 587, 494, 392], tempo: 200, type: "square" },
-      { name: "🌙 Night Nap", notes: [262, 294, 330, 294, 262, 247, 262, 294, 330, 349, 330], tempo: 420, type: "sine" }
-    ];
-    let timer = null, playingIdx = -1, step = 0;
-    p.body.innerHTML = '<p class="ar-hint">Chill chiptunes made right in your browser 🎶</p><div class="juke-list" id="jukeList"></div><button class="btn" id="jukeStop">⏹ Stop</button>';
-    const list = p.body.querySelector("#jukeList");
-    TRACKS.forEach((tr, i) => { const b = document.createElement("button"); b.className = "btn juke-track"; b.textContent = tr.name; b.onclick = () => play(i); list.appendChild(b); });
-    p.body.querySelector("#jukeStop").onclick = stop;
-    function stop() { if (timer) clearInterval(timer); timer = null; playingIdx = -1; list.querySelectorAll(".juke-track").forEach((b) => b.classList.remove("on")); }
-    function play(i) { stop(); playingIdx = i; step = 0; list.querySelectorAll(".juke-track")[i].classList.add("on"); const tr = TRACKS[i]; timer = setInterval(() => { U.tone(tr.notes[step % tr.notes.length], tr.tempo / 1000 * 0.9, tr.type, 0.08); step++; }, tr.tempo); }
-    p.onClean(stop);
-  }
-
   U.wire("catdleBtn", openCatdle);
   U.wire("aiBtn", openAI);
-  U.wire("jukeBtn", openJukebox);
 })();

@@ -26,7 +26,7 @@
     ["v47", "🐱 14 new games in the Games tab, new admin powers"],
     ["v45", "🕹️ 8 new arcade games + categories"],
     ["v44", "🔮 Satisfying Balls rebuilt — AI chat, fullscreen, better physics"],
-    ["NEW", "🎯 Quests, 🎰 Casino, 🧠 Trivia, 🟩 Catdle, 🎁 Codes, 🤖 Maxwell AI, 🎵 Jukebox & more!"]
+    ["NEW", "🎯 Quests, 🎰 Casino, 🧠 Trivia, 🟩 Catdle, 🎁 Codes, 🤖 Maxwell AI & more!"]
   ];
   function openUpdates() {
     const p = U.panel("updatesOv", "📰 Updates", "updates-head");
