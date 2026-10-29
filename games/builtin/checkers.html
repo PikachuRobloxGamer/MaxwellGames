@@ -1,0 +1,31 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Checkers</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🔴 Maxwell Checkers</span><span id=score>Your move</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>You're 🔴 (bottom). Tap a piece, then tap where to move. Jump over 🔵 to capture — chain jumps allowed! Kings move any way.</p></div></div>
+<script src="kit.js"></script>
+<script>
+var N=8,CELL=48,W=N*CELL,c=GK.canvas(W,W),x=c.getContext('2d');
+var bd,sel,turn,over,msg;
+function R(){bd=Array.from({length:N},function(){return new Array(N).fill(0);});for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){if((r+cc)%2===1){if(r<3)bd[r][cc]=-1;else if(r>4)bd[r][cc]=1;}}sel=null;turn=1;over=false;msg='Your move';GK.score(msg);window.__g={score:0,over:false};draw();}
+function own(v,side){return side>0?v>0:v<0;}
+function king(v){return Math.abs(v)===2;}
+function dirs(v){var d=[];if(v>0||king(v))d.push([-1,-1],[-1,1]);if(v<0||king(v))d.push([1,-1],[1,1]);return d;}
+function jumps(r,cc,v){var res=[];dirs(v).forEach(function(d){var mr=r+d[0],mc=cc+d[1],lr=r+2*d[0],lc=cc+2*d[1];if(lr>=0&&lr<N&&lc>=0&&lc<N&&bd[lr][lc]===0&&bd[mr][mc]!==0&&!own(bd[mr][mc],v>0?1:-1)){res.push({r:lr,c:lc,cap:{r:mr,c:cc+d[1]}});}});return res;}
+function steps(r,cc,v){var res=[];dirs(v).forEach(function(d){var nr=r+d[0],nc=cc+d[1];if(nr>=0&&nr<N&&nc>=0&&nc<N&&bd[nr][nc]===0)res.push({r:nr,c:nc});});return res;}
+function allMoves(side){var caps=[],mv=[];for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){var v=bd[r][cc];if(v===0||!own(v,side))continue;jumps(r,cc,v).forEach(function(j){caps.push({from:{r:r,c:cc},to:j,cap:j.cap});});steps(r,cc,v).forEach(function(s){mv.push({from:{r:r,c:cc},to:s});});}return caps.length?caps:mv;}
+function doMove(m){var v=bd[m.from.r][m.from.c];bd[m.from.r][m.from.c]=0;bd[m.to.r][m.to.c]=v;if(m.cap)bd[m.cap.r][m.cap.c]=0;if(v===1&&m.to.r===0)bd[m.to.r][m.to.c]=2;if(v===-1&&m.to.r===N-1)bd[m.to.r][m.to.c]=-2;}
+function pos(e){var rr=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{c:Math.floor((p.clientX-rr.left)*W/rr.width/CELL),r:Math.floor((p.clientY-rr.top)*W/rr.height/CELL)};}
+c.addEventListener('pointerdown',function(e){ if(over){R();return;} if(turn!==1)return; var p=pos(e);
+  var legal=allMoves(1);
+  if(sel){ var m=legal.find(function(z){return z.from.r===sel.r&&z.from.c===sel.c&&z.to.r===p.r&&z.to.c===p.c;}); if(m){ doMove(m); GK.tone(m.cap?760:480,0.06); if(m.cap&&jumps(m.to.r,m.to.c,bd[m.to.r][m.to.c]).length){ sel={r:m.to.r,c:m.to.c}; draw(); return; } sel=null; endTurn(); return; } }
+  if(bd[p.r]&&own(bd[p.r][p.c],1)){sel={r:p.r,c:p.c};} else sel=null; draw();
+});
+function endTurn(){ if(!allMoves(-1).length){win(1);return;} turn=2;msg='CPU thinking…';GK.score(msg);draw();setTimeout(cpu,450); }
+function cpu(){ var mv=allMoves(-1); if(!mv.length){win(1);return;} var m=mv[Math.floor(Math.random()*mv.length)]; doMove(m); GK.tone(400,0.05); while(m.cap){var more=jumps(m.to.r,m.to.c,bd[m.to.r][m.to.c]);if(!more.length)break;var j=more[0];doMove({from:{r:m.to.r,c:m.to.c},to:j,cap:j.cap});m={to:j,cap:j.cap};} if(!allMoves(1).length){win(-1);return;} turn=1;msg='Your move';GK.score(msg);draw(); }
+function win(s){over=true;msg=s>0?'🏆 You win!':'💀 CPU wins';GK.score(msg);if(s>0)GK.award(90);draw();}
+function draw(){
+  for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){x.fillStyle=(r+cc)%2?'#7a4a28':'#e8c89a';x.fillRect(cc*CELL,r*CELL,CELL,CELL);}
+  if(sel){x.fillStyle='rgba(255,216,74,.5)';x.fillRect(sel.c*CELL,sel.r*CELL,CELL,CELL);allMoves(1).filter(function(z){return z.from.r===sel.r&&z.from.c===sel.c;}).forEach(function(z){x.fillStyle='rgba(62,224,143,.5)';x.beginPath();x.arc(z.to.c*CELL+CELL/2,z.to.r*CELL+CELL/2,8,0,7);x.fill();});}
+  for(r=0;r<N;r++)for(cc=0;cc<N;cc++){var v=bd[r][cc];if(!v)continue;x.fillStyle=v>0?'#e8303a':'#2a2a3a';x.beginPath();x.arc(cc*CELL+CELL/2,r*CELL+CELL/2,CELL/2-6,0,7);x.fill();x.strokeStyle='rgba(255,255,255,.4)';x.lineWidth=2;x.stroke();if(king(v)){x.fillStyle='#ffd84a';x.font='18px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('♔',cc*CELL+CELL/2,r*CELL+CELL/2);}}
+  if(over){x.fillStyle='rgba(0,0,0,.7)';x.fillRect(0,0,W,W);x.fillStyle=msg[0]==='🏆'?'#3ee08f':'#ff6b6b';x.textAlign='center';x.font='900 26px system-ui';x.fillText(msg,W/2,W/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('tap to restart',W/2,W/2+22);}
+}
+GK.restart(R);R();
+</script></body></html>

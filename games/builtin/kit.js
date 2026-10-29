@@ -38,7 +38,8 @@
   };
   // track held keys (normalized)
   function norm(e) { var k = e.key; if (k === " ") return "space"; k = k.toLowerCase(); if (k === "arrowup" || k === "w") return "up"; if (k === "arrowdown" || k === "s") return "down"; if (k === "arrowleft" || k === "a") return "left"; if (k === "arrowright" || k === "d") return "right"; return k; }
-  document.addEventListener("keydown", function (e) { var n = norm(e); if (["up", "down", "left", "right", "space"].indexOf(n) >= 0) e.preventDefault(); GK.keys[n] = true; });
+  function typingInField(e) { var t = e.target; if (!t) return false; var tag = (t.tagName || "").toUpperCase(); return tag === "INPUT" || tag === "TEXTAREA" || t.isContentEditable; }
+  document.addEventListener("keydown", function (e) { if (typingInField(e)) return; var n = norm(e); if (["up", "down", "left", "right", "space"].indexOf(n) >= 0) e.preventDefault(); GK.keys[n] = true; });
   document.addEventListener("keyup", function (e) { GK.keys[norm(e)] = false; });
 
   // on-screen controls for touch. opts: {dirs:true, act:"🗡️"|false, onDir(dir), onAct()}

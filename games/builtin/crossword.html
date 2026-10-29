@@ -1,0 +1,46 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Crossword</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>📰 Maxwell Crossword</span><span id=score>0 / 6</span><button id=restart>↻ New</button></div><div id=stage></div></div>
+<script src="kit.js"></script>
+<script>
+// build a reliable interlocking puzzle at runtime
+function makePuzzle(){
+ var words=[
+  {w:"MAXWELL",r:0,c:0,dir:'A',clue:"The star of this site"},
+  {w:"MEOW",r:0,c:0,dir:'D',clue:"A cat's sound"},
+  {w:"ARCADE",r:0,c:1,dir:'D',clue:"Where the minigames live"},
+  {w:"WALK",r:0,c:3,dir:'D',clue:"Take a cat for a ___ (he won't like it)"},
+  {w:"EAR",r:0,c:4,dir:'D',clue:"A cat has two of these, they twitch"}
+ ];
+ return words;
+}
+var N=8,CELL=40,words,grid,nums,cells,sel,dir;
+function R(){
+  words=makePuzzle();
+  grid=Array.from({length:N},function(){return new Array(N).fill(null);});
+  // place: each cell = {sol, cur, num}
+  words.forEach(function(wd){ for(var i=0;i<wd.w.length;i++){var r=wd.r+(wd.dir==='D'?i:0),cc=wd.c+(wd.dir==='A'?i:0); if(!grid[r][cc])grid[r][cc]={sol:wd.w[i],cur:''}; else grid[r][cc].sol=wd.w[i]; } });
+  // numbers
+  var n=1;nums={};words.forEach(function(wd){var key=wd.r+','+wd.c;if(!nums[key])nums[key]=n++;wd.num=nums[key];});
+  sel=null;dir='A';render();window.__g={score:0,over:false};
+}
+function render(){
+  var st=GK.stage();
+  var html='<p class=hint>Tap a square and type letters (or use the keys below). Fill every word!</p>';
+  html+='<div style="display:flex;gap:12px;flex-wrap:wrap"><div><div id=cwGrid style="display:grid;grid-template-columns:repeat('+N+',1fr);gap:1px;background:#333;width:'+(N*CELL)+'px;max-width:92vw"></div></div>';
+  html+='<div style="flex:1;min-width:150px;font-size:.82rem"><b>Across</b><br>'+words.filter(function(w){return w.dir==='A';}).map(function(w){return w.num+'. '+w.clue;}).join('<br>')+'<br><br><b>Down</b><br>'+words.filter(function(w){return w.dir==='D';}).map(function(w){return w.num+'. '+w.clue;}).join('<br>')+'</div></div>';
+  html+='<input id=cwHidden style="position:absolute;opacity:0;height:0" autocapitalize=characters>';
+  st.innerHTML=html;
+  var g=document.getElementById('cwGrid');
+  for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){var cell=grid[r][cc];var d=document.createElement('div');d.style.cssText='position:relative;aspect-ratio:1;background:'+(cell?'#fff':'#0a0e1c')+';color:#111;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;cursor:'+(cell?'pointer':'default');
+    if(cell){var num=nums[r+','+cc];d.innerHTML=(num?'<span style="position:absolute;top:1px;left:2px;font-size:.5rem;color:#555">'+num+'</span>':'')+'<span class=cwl>'+(cell.cur||'')+'</span>';d.dataset.r=r;d.dataset.c=cc;d.onclick=(function(r,cc){return function(){ if(sel&&sel.r===r&&sel.c===cc)dir=dir==='A'?'D':'A'; sel={r:r,c:cc}; paint(); var h=document.getElementById('cwHidden'); h.focus();};})(r,cc);}
+    g.appendChild(d);}
+  var hid=document.getElementById('cwHidden');
+  hid.oninput=function(){var v=hid.value.toUpperCase().replace(/[^A-Z]/g,'');hid.value='';if(!sel||!v)return;for(var i=0;i<v.length;i++){if(!sel||!grid[sel.r]||!grid[sel.r][sel.c])break;grid[sel.r][sel.c].cur=v[i];advance();}GK.tone(500,0.03);check();paint();};
+  hid.onkeydown=function(e){if(e.key==='Backspace'){if(sel&&grid[sel.r][sel.c]){grid[sel.r][sel.c].cur='';paint();}}};
+  paint();
+}
+function advance(){if(!sel)return;var r=sel.r+(dir==='D'?1:0),cc=sel.c+(dir==='A'?1:0);if(r<N&&cc<N&&grid[r][cc])sel={r:r,c:cc};}
+function paint(){var g=document.getElementById('cwGrid');if(!g)return;[].forEach.call(g.children,function(d){if(!d.dataset.r)return;var r=+d.dataset.r,cc=+d.dataset.c;var cell=grid[r][cc];d.querySelector('.cwl').textContent=cell.cur||'';d.style.background=(sel&&sel.r===r&&sel.c===cc)?'#ffe08a':'#fff';});}
+function check(){var done=0,total=0;for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){if(grid[r][cc]){total++;if(grid[r][cc].cur===grid[r][cc].sol)done++;}}GK.score(done+' / '+total);window.__g.score=done;if(done===total){GK.tone(900,0.25);GK.award(70);window.__g.over=true;var st=GK.stage();var d=document.createElement('div');d.style.cssText='text-align:center;font-weight:900;color:#3ee08f;font-size:1.2rem;margin-top:8px';d.textContent='🎉 Solved! +70 🐟';st.appendChild(d);}}
+GK.restart(R);R();
+</script></body></html>

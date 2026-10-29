@@ -2,7 +2,7 @@
 // Caches the whole Maxwell site so the Arcade, Duels, Battles, Sims, AI Lab,
 // Platformer and Kart 3D all work with NO internet once you've loaded them once.
 // (External linked games on other websites still need internet.)
-const CACHE = "maxwellgames-v106";
+const CACHE = "maxwellgames-v107";
 const PRECACHE = [
   "admin.js",
   "account.js",
@@ -41,6 +41,11 @@ const PRECACHE = [
   "games/builtin/stack.html",
   "games/builtin/tiles.html",
   "games/builtin/battleship.html",
+  "games/builtin/checkers.html",
+  "games/builtin/othello.html",
+  "games/builtin/chess.html",
+  "games/builtin/jigsaw.html",
+  "games/builtin/crossword.html",
   "games/builtin/mahjong.html",
   "games/builtin/dotsboxes.html",
   "games/builtin/spotdiff.html",

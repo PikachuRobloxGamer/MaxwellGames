@@ -1,0 +1,29 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Jigsaw</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🧩 Maxwell Jigsaw</span><span id=score>Moves: 0</span><button id=restart>↻ Shuffle</button></div><div id=stage><p class=hint>Tap two pieces to swap them. Put Maxwell back together! Pick a size below. 🐱</p></div></div>
+<script src="kit.js"></script>
+<script>
+var SZ=3,W=360,c=GK.canvas(W,W),x=c.getContext('2d');
+var img=new Image();img.src='../../maxwell.png';
+var order,sel,moves,done,cell;
+function R(){cell=W/SZ;order=[];for(var i=0;i<SZ*SZ;i++)order.push(i);do{for(var j=order.length-1;j>0;j--){var k=Math.floor(Math.random()*(j+1));var t=order[j];order[j]=order[k];order[k]=t;}}while(solved());sel=-1;moves=0;done=false;GK.score('Moves: 0');window.__g={score:0,over:false};draw();}
+function solved(){return order.every(function(v,i){return v===i;});}
+function pos(e){var r=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;var cx=(p.clientX-r.left)*W/r.width,cy=(p.clientY-r.top)*W/r.height;return Math.floor(cy/cell)*SZ+Math.floor(cx/cell);}
+c.addEventListener('pointerdown',function(e){ if(done){R();return;} var idx=pos(e); if(idx<0||idx>=SZ*SZ)return;
+  if(sel<0){sel=idx;}else if(sel===idx){sel=-1;}else{var t=order[sel];order[sel]=order[idx];order[idx]=t;sel=-1;moves++;GK.tone(500,0.04);GK.score('Moves: '+moves);if(solved()){done=true;GK.tone(900,0.25);GK.award(40);window.__g.over=true;}}
+  draw();
+});
+function draw(){
+  x.fillStyle='#0a0e1c';x.fillRect(0,0,W,W);
+  if(!(img.complete&&img.naturalWidth)){x.fillStyle='#fff';x.fillText('loading…',20,20);return;}
+  var sw=img.naturalWidth/SZ,sh=img.naturalHeight/SZ;
+  for(var i=0;i<SZ*SZ;i++){var piece=order[i];var dr=Math.floor(i/SZ),dc=i%SZ;var pr=Math.floor(piece/SZ),pc=piece%SZ;
+    x.drawImage(img,pc*sw,pr*sh,sw,sh,dc*cell,dr*cell,cell,cell);
+    x.strokeStyle='rgba(0,0,0,.4)';x.lineWidth=2;x.strokeRect(dc*cell,dr*cell,cell,cell);
+    if(sel===i){x.strokeStyle='#ffd84a';x.lineWidth=4;x.strokeRect(dc*cell+2,dr*cell+2,cell-4,cell-4);}
+  }
+  if(done){x.fillStyle='rgba(0,0,0,.4)';x.fillRect(0,W/2-28,W,56);x.fillStyle='#3ee08f';x.textAlign='center';x.font='900 26px system-ui';x.fillText('SOLVED! 🎉 +40🐟',W/2,W/2+8);}
+}
+function sizer(){var st=GK.stage();var old=document.getElementById('jzSize');if(old)old.remove();var d=document.createElement('div');d.id='jzSize';d.style.cssText='text-align:center;margin-top:8px';[3,4,5].forEach(function(n){var b=document.createElement('button');b.className='btn';b.textContent=n+'×'+n;b.style.margin='0 4px';if(n===SZ)b.style.background='#3ee08f';b.onclick=function(){SZ=n;R();sizer();};d.appendChild(b);});st.appendChild(d);}
+img.onload=function(){draw();};
+GK.restart(R);R();sizer();
+</script></body></html>

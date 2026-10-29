@@ -1,444 +1,484 @@
 {
-  "games": [
-    {
-      "id": "undertale",
-      "title": "Undertale",
-      "category": "RPG",
-      "thumbnail": "images/undertale.png",
-      "description": "The classic RPG where nobody has to die. Arrow keys to move, Z to confirm, X to cancel.",
-      "iframe": "https://pluhmath.github.io/undertale.html"
-    },
-    {
-      "id": "deltarune",
-      "title": "Deltarune",
-      "category": "RPG",
-      "thumbnail": "images/deltarune.png",
-      "description": "",
-      "iframe": "https://nite.games/embed/deltarune"
-    },
-    {
-      "id": "bad-time-simulator",
-      "title": "Bad Time Simulator",
-      "category": "Action",
-      "thumbnail": "images/bad-time-simulator.png",
-      "description": "The Sans fight. Arrow keys to move, Z to confirm.",
-      "iframe": "https://jcw87.github.io/c2-sans-fight/"
-    },
-    {
-      "id": "bee-sans-fight",
-      "title": "Bee Sans Fight Simulator",
-      "category": "Action",
-      "thumbnail": "images/bee-sans.png",
-      "description": "Arrow keys to move, Z to confirm.",
-      "iframe": "https://hyzq.github.io/Bee-Sans-fight3/"
-    },
-    {
-      "id": "last-breath",
-      "title": "Undertale: Last Breath",
-      "category": "Action",
-      "thumbnail": "images/last-breath.png",
-      "description": "",
-      "iframe": "https://caijiqaq.github.io/LAST-BREATH/"
-    },
-    {
-      "id": "gn-math",
-      "title": "GN-Math",
-      "category": "Game Sites",
-      "thumbnail": "images/gn-math.png",
-      "description": "",
-      "iframe": "https://codepen.io/Atharva_Dinesh7/embed/emZWzVo?default-tab=result"
-    },
-    {
-      "id": "lumin",
-      "title": "LuminSDK",
-      "category": "Game Sites",
-      "thumbnail": "images/lumin.png",
-      "description": "",
-      "iframe": "games/lumin/index.html"
-    },
-    {
-      "id": "maxwell-platformer",
-      "title": "Maxwell Platformer",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/platformer/thumb.png",
-      "description": "A full platformer adventure! 4 worlds, 20 tricky levels. Arrow keys / WASD to move, Space to jump, R to retry.",
-      "iframe": "games/platformer/index.html"
-    },
-    {
-      "id": "builtin-snake",
-      "title": "Maxwell Snake",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/snake.svg",
-      "description": "",
-      "iframe": "games/builtin/snake.html"
-    },
-    {
-      "id": "builtin-tetris",
-      "title": "Maxwell Blocks",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/tetris.svg",
-      "description": "",
-      "iframe": "games/builtin/tetris.html"
-    },
-    {
-      "id": "builtin-flappy",
-      "title": "Flappy Maxwell",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/flappy.svg",
-      "description": "",
-      "iframe": "games/builtin/flappy.html"
-    },
-    {
-      "id": "builtin-breakout",
-      "title": "Breakout",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/breakout.svg",
-      "description": "",
-      "iframe": "games/builtin/breakout.html"
-    },
-    {
-      "id": "builtin-pong",
-      "title": "Maxwell Pong",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/pong.svg",
-      "description": "",
-      "iframe": "games/builtin/pong.html"
-    },
-    {
-      "id": "builtin-g2048",
-      "title": "Maxwell 2048",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/g2048.svg",
-      "description": "",
-      "iframe": "games/builtin/g2048.html"
-    },
-    {
-      "id": "builtin-memory",
-      "title": "Meow-mory",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/memory.svg",
-      "description": "",
-      "iframe": "games/builtin/memory.html"
-    },
-    {
-      "id": "builtin-minesweeper",
-      "title": "Maxwell Mines",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/minesweeper.svg",
-      "description": "",
-      "iframe": "games/builtin/minesweeper.html"
-    },
-    {
-      "id": "builtin-tictactoe",
-      "title": "Tic-Tac-Maxwell",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/tictactoe.svg",
-      "description": "",
-      "iframe": "games/builtin/tictactoe.html"
-    },
-    {
-      "id": "builtin-connect4",
-      "title": "Connect Four",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/connect4.svg",
-      "description": "",
-      "iframe": "games/builtin/connect4.html"
-    },
-    {
-      "id": "builtin-doodle",
-      "title": "Maxwell Jump",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/doodle.svg",
-      "description": "",
-      "iframe": "games/builtin/doodle.html"
-    },
-    {
-      "id": "builtin-shooter",
-      "title": "Maxwell Blaster",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/shooter.svg",
-      "description": "",
-      "iframe": "games/builtin/shooter.html"
-    },
-    {
-      "id": "builtin-simon",
-      "title": "Simon Meows",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/simon.svg",
-      "description": "",
-      "iframe": "games/builtin/simon.html"
-    },
-    {
-      "id": "builtin-colormatch",
-      "title": "Color Match",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "games/builtin/thumbs/colormatch.svg",
-      "description": "",
-      "iframe": "games/builtin/colormatch.html"
-    },
-    {
-      "id": "maxwell-runner",
-      "title": "Maxwell Runner",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🏃 Endless runner — jump the obstacles, go the distance!",
-      "iframe": "games/builtin/runner.html"
-    },
-    {
-      "id": "maxwell-crossy",
-      "title": "Maxwell Crossy",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🚗 Frogger-style — hop across the busy roads!",
-      "iframe": "games/builtin/crossy.html"
-    },
-    {
-      "id": "maxwell-muncher",
-      "title": "Maxwell Muncher",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🐱 Eat all the fish in the maze, dodge the dogs!",
-      "iframe": "games/builtin/muncher.html"
-    },
-    {
-      "id": "maxwell-invaders",
-      "title": "Maxwell Invaders",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "👾 Blast the alien invaders before they land!",
-      "iframe": "games/builtin/invaders.html"
-    },
-    {
-      "id": "fish-slice",
-      "title": "Fish Slice",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🍣 Swipe to slice flying fish — don't hit the bombs!",
-      "iframe": "games/builtin/fishslice.html"
-    },
-    {
-      "id": "maxwell-stack",
-      "title": "Maxwell Stack",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🧱 Drop blocks and build the tallest tower!",
-      "iframe": "games/builtin/stack.html"
-    },
-    {
-      "id": "meow-match",
-      "title": "Meow Match",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "😺 Match-3 — swap the cats to pop combos!",
-      "iframe": "games/builtin/match3.html"
-    },
-    {
-      "id": "bubble-pop",
-      "title": "Bubble Pop",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🫧 Bubble shooter — match 3+ colors to clear!",
-      "iframe": "games/builtin/bubble.html"
-    },
-    {
-      "id": "light-paws",
-      "title": "Light Paws",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🏍️ Light-cycle duel vs the CPU — don't crash!",
-      "iframe": "games/builtin/lightpaws.html"
-    },
-    {
-      "id": "maxwell-maze",
-      "title": "Maxwell Maze",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🧩 Find the fish through mazes that grow each level!",
-      "iframe": "games/builtin/maze.html"
-    },
-    {
-      "id": "meow-tiles",
-      "title": "Meow Tiles",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🎹 Tap the falling tiles — don't miss a beat!",
-      "iframe": "games/builtin/tiles.html"
-    },
-    {
-      "id": "highway-maxwell",
-      "title": "Highway Maxwell",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🏎️ Dodge traffic at top speed — how far can you go?",
-      "iframe": "games/builtin/highway.html"
-    },
-    {
-      "id": "wheres-maxwell",
-      "title": "Where's Maxwell",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🔍 A Where's-Waldo remix — spot the real Maxwell hidden in a crowd of copycats before time runs out!",
-      "iframe": "games/builtin/wheresmaxwell.html"
-    },
-    {
-      "id": "duckmath",
-      "title": "DuckMath",
-      "category": "Game Sites",
-      "thumbnail": "",
-      "description": "🦆 A huge unblocked games portal — tons of games in one place.",
-      "iframe": "https://duckmath.org"
-    },
-    {
-      "id": "astra",
-      "title": "Astra",
-      "category": "Game Sites",
-      "thumbnail": "",
-      "description": "🌟 Astra games hub — browse and play loads of games.",
-      "iframe": "https://s3.amazonaws.com/learn-for-free/index.html"
-    },
-    {
-      "id": "roaring-knight",
-      "title": "Roaring Knight Simulator",
-      "category": "Action",
-      "thumbnail": "",
-      "description": "⚔️ Face the Roaring Knight! Arrow keys to move, Z to confirm.",
-      "iframe": "https://shadowcrystal.dev/DEVICE_KNIGHT"
-    },
-    {
-      "id": "jevil-sim",
-      "title": "Jevil Simulator",
-      "category": "Action",
-      "thumbnail": "",
-      "description": "🃏 Chaos, chaos! Take on Jevil. Arrow keys to move, Z to confirm.",
-      "iframe": "https://shadowcrystal.dev/DEVICE_JEVIL"
-    },
-    {
-      "id": "maxwell-td",
-      "title": "Maxwell Tower Defense",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🏰 Place cat towers to stop the waves of dogs!",
-      "iframe": "games/builtin/towerdef.html"
-    },
-    {
-      "id": "maxwell-golf",
-      "title": "Maxwell Minigolf",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "⛳ Drag to aim and sink it in the fewest strokes!",
-      "iframe": "games/builtin/minigolf.html"
-    },
-    {
-      "id": "fish-empire",
-      "title": "Fish Empire",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🐟 Idle clicker — tap for fish and build an empire!",
-      "iframe": "games/builtin/idle.html"
-    },
-    {
-      "id": "typing-race",
-      "title": "Maxwell Typing Race",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "⌨️ Type fast to race Maxwell to the finish line!",
-      "iframe": "games/builtin/typerace.html"
-    },
-    {
-      "id": "maxwell-sudoku",
-      "title": "Maxwell Sudoku",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🔢 Classic number puzzle, Maxwell style.",
-      "iframe": "games/builtin/sudoku.html"
-    },
-    {
-      "id": "catman",
-      "title": "Catman",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🐱 Hangman — guess the word before Maxwell faints!",
-      "iframe": "games/builtin/catman.html"
-    },
-    {
-      "id": "fish-merge",
-      "title": "Fish Merge",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🐟 2048-style — merge sea creatures up to the whale!",
-      "iframe": "games/builtin/fishmerge.html"
-    },
-    {
-      "id": "maxwell-airhockey",
-      "title": "Maxwell Air Hockey",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🏒 Fast 1v1 vs the CPU — first to 7 wins!",
-      "iframe": "games/builtin/airhockey.html"
-    },
-    {
-      "id": "rhythm-meow",
-      "title": "Rhythm Meow",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🎵 Tap to the beat across 4 lanes — chase the combo!",
-      "iframe": "games/builtin/rhythm.html"
-    },
-    {
-      "id": "maxwell-solitaire",
-      "title": "Maxwell Solitaire",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🃏 Classic Klondike solitaire, cat-styled.",
-      "iframe": "games/builtin/solitaire.html"
-    },
-    {
-      "id": "deltarune-sim",
-      "title": "Deltarune Simulator",
-      "category": "Action",
-      "thumbnail": "",
-      "description": "⚔️ Deltarune fight sim. Arrow keys to move, Z to confirm, X to cancel.",
-      "iframe": "https://deltarunesim.com"
-    },
-    {
-      "id": "word-search",
-      "title": "Maxwell Word Search",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🔎 Find the hidden cat words in the letter grid!",
-      "iframe": "games/builtin/wordsearch.html"
-    },
-    {
-      "id": "spot-diff",
-      "title": "Spot the Difference",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🔍 Find all 5 differences between the two grids!",
-      "iframe": "games/builtin/spotdiff.html"
-    },
-    {
-      "id": "dots-boxes",
-      "title": "Dots and Boxes",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "⬛ Claim boxes vs the CPU — most wins!",
-      "iframe": "games/builtin/dotsboxes.html"
-    },
-    {
-      "id": "maxwell-mahjong",
-      "title": "Maxwell Mahjong",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🀄 Match free tile pairs to clear the board!",
-      "iframe": "games/builtin/mahjong.html"
-    },
-    {
-      "id": "battleship",
-      "title": "Maxwell Battleship",
-      "category": "🐱 Maxwell Originals",
-      "thumbnail": "",
-      "description": "🚢 Sink the CPU's fleet before they sink yours!",
-      "iframe": "games/builtin/battleship.html"
-    }
-  ]
+ "games": [
+  {
+   "id": "undertale",
+   "title": "Undertale",
+   "category": "RPG",
+   "thumbnail": "images/undertale.png",
+   "description": "The classic RPG where nobody has to die. Arrow keys to move, Z to confirm, X to cancel.",
+   "iframe": "https://pluhmath.github.io/undertale.html"
+  },
+  {
+   "id": "deltarune",
+   "title": "Deltarune",
+   "category": "RPG",
+   "thumbnail": "images/deltarune.png",
+   "description": "",
+   "iframe": "https://nite.games/embed/deltarune"
+  },
+  {
+   "id": "bad-time-simulator",
+   "title": "Bad Time Simulator",
+   "category": "Action",
+   "thumbnail": "images/bad-time-simulator.png",
+   "description": "The Sans fight. Arrow keys to move, Z to confirm.",
+   "iframe": "https://jcw87.github.io/c2-sans-fight/"
+  },
+  {
+   "id": "bee-sans-fight",
+   "title": "Bee Sans Fight Simulator",
+   "category": "Action",
+   "thumbnail": "images/bee-sans.png",
+   "description": "Arrow keys to move, Z to confirm.",
+   "iframe": "https://hyzq.github.io/Bee-Sans-fight3/"
+  },
+  {
+   "id": "last-breath",
+   "title": "Undertale: Last Breath",
+   "category": "Action",
+   "thumbnail": "images/last-breath.png",
+   "description": "",
+   "iframe": "https://caijiqaq.github.io/LAST-BREATH/"
+  },
+  {
+   "id": "gn-math",
+   "title": "GN-Math",
+   "category": "Game Sites",
+   "thumbnail": "images/gn-math.png",
+   "description": "",
+   "iframe": "https://codepen.io/Atharva_Dinesh7/embed/emZWzVo?default-tab=result"
+  },
+  {
+   "id": "lumin",
+   "title": "LuminSDK",
+   "category": "Game Sites",
+   "thumbnail": "images/lumin.png",
+   "description": "",
+   "iframe": "games/lumin/index.html"
+  },
+  {
+   "id": "maxwell-platformer",
+   "title": "Maxwell Platformer",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/platformer/thumb.png",
+   "description": "A full platformer adventure! 4 worlds, 20 tricky levels. Arrow keys / WASD to move, Space to jump, R to retry.",
+   "iframe": "games/platformer/index.html"
+  },
+  {
+   "id": "builtin-snake",
+   "title": "Maxwell Snake",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/snake.svg",
+   "description": "",
+   "iframe": "games/builtin/snake.html"
+  },
+  {
+   "id": "builtin-tetris",
+   "title": "Maxwell Blocks",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/tetris.svg",
+   "description": "",
+   "iframe": "games/builtin/tetris.html"
+  },
+  {
+   "id": "builtin-flappy",
+   "title": "Flappy Maxwell",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/flappy.svg",
+   "description": "",
+   "iframe": "games/builtin/flappy.html"
+  },
+  {
+   "id": "builtin-breakout",
+   "title": "Breakout",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/breakout.svg",
+   "description": "",
+   "iframe": "games/builtin/breakout.html"
+  },
+  {
+   "id": "builtin-pong",
+   "title": "Maxwell Pong",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/pong.svg",
+   "description": "",
+   "iframe": "games/builtin/pong.html"
+  },
+  {
+   "id": "builtin-g2048",
+   "title": "Maxwell 2048",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/g2048.svg",
+   "description": "",
+   "iframe": "games/builtin/g2048.html"
+  },
+  {
+   "id": "builtin-memory",
+   "title": "Meow-mory",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/memory.svg",
+   "description": "",
+   "iframe": "games/builtin/memory.html"
+  },
+  {
+   "id": "builtin-minesweeper",
+   "title": "Maxwell Mines",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/minesweeper.svg",
+   "description": "",
+   "iframe": "games/builtin/minesweeper.html"
+  },
+  {
+   "id": "builtin-tictactoe",
+   "title": "Tic-Tac-Maxwell",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/tictactoe.svg",
+   "description": "",
+   "iframe": "games/builtin/tictactoe.html"
+  },
+  {
+   "id": "builtin-connect4",
+   "title": "Connect Four",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/connect4.svg",
+   "description": "",
+   "iframe": "games/builtin/connect4.html"
+  },
+  {
+   "id": "builtin-doodle",
+   "title": "Maxwell Jump",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/doodle.svg",
+   "description": "",
+   "iframe": "games/builtin/doodle.html"
+  },
+  {
+   "id": "builtin-shooter",
+   "title": "Maxwell Blaster",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/shooter.svg",
+   "description": "",
+   "iframe": "games/builtin/shooter.html"
+  },
+  {
+   "id": "builtin-simon",
+   "title": "Simon Meows",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/simon.svg",
+   "description": "",
+   "iframe": "games/builtin/simon.html"
+  },
+  {
+   "id": "builtin-colormatch",
+   "title": "Color Match",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "games/builtin/thumbs/colormatch.svg",
+   "description": "",
+   "iframe": "games/builtin/colormatch.html"
+  },
+  {
+   "id": "maxwell-runner",
+   "title": "Maxwell Runner",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🏃 Endless runner — jump the obstacles, go the distance!",
+   "iframe": "games/builtin/runner.html"
+  },
+  {
+   "id": "maxwell-crossy",
+   "title": "Maxwell Crossy",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🚗 Frogger-style — hop across the busy roads!",
+   "iframe": "games/builtin/crossy.html"
+  },
+  {
+   "id": "maxwell-muncher",
+   "title": "Maxwell Muncher",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🐱 Eat all the fish in the maze, dodge the dogs!",
+   "iframe": "games/builtin/muncher.html"
+  },
+  {
+   "id": "maxwell-invaders",
+   "title": "Maxwell Invaders",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "👾 Blast the alien invaders before they land!",
+   "iframe": "games/builtin/invaders.html"
+  },
+  {
+   "id": "fish-slice",
+   "title": "Fish Slice",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🍣 Swipe to slice flying fish — don't hit the bombs!",
+   "iframe": "games/builtin/fishslice.html"
+  },
+  {
+   "id": "maxwell-stack",
+   "title": "Maxwell Stack",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🧱 Drop blocks and build the tallest tower!",
+   "iframe": "games/builtin/stack.html"
+  },
+  {
+   "id": "meow-match",
+   "title": "Meow Match",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "😺 Match-3 — swap the cats to pop combos!",
+   "iframe": "games/builtin/match3.html"
+  },
+  {
+   "id": "bubble-pop",
+   "title": "Bubble Pop",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🫧 Bubble shooter — match 3+ colors to clear!",
+   "iframe": "games/builtin/bubble.html"
+  },
+  {
+   "id": "light-paws",
+   "title": "Light Paws",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🏍️ Light-cycle duel vs the CPU — don't crash!",
+   "iframe": "games/builtin/lightpaws.html"
+  },
+  {
+   "id": "maxwell-maze",
+   "title": "Maxwell Maze",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🧩 Find the fish through mazes that grow each level!",
+   "iframe": "games/builtin/maze.html"
+  },
+  {
+   "id": "meow-tiles",
+   "title": "Meow Tiles",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🎹 Tap the falling tiles — don't miss a beat!",
+   "iframe": "games/builtin/tiles.html"
+  },
+  {
+   "id": "highway-maxwell",
+   "title": "Highway Maxwell",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🏎️ Dodge traffic at top speed — how far can you go?",
+   "iframe": "games/builtin/highway.html"
+  },
+  {
+   "id": "wheres-maxwell",
+   "title": "Where's Maxwell",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🔍 A Where's-Waldo remix — spot the real Maxwell hidden in a crowd of copycats before time runs out!",
+   "iframe": "games/builtin/wheresmaxwell.html"
+  },
+  {
+   "id": "duckmath",
+   "title": "DuckMath",
+   "category": "Game Sites",
+   "thumbnail": "",
+   "description": "🦆 A huge unblocked games portal — tons of games in one place.",
+   "iframe": "https://duckmath.org"
+  },
+  {
+   "id": "astra",
+   "title": "Astra",
+   "category": "Game Sites",
+   "thumbnail": "",
+   "description": "🌟 Astra games hub — browse and play loads of games.",
+   "iframe": "https://s3.amazonaws.com/learn-for-free/index.html"
+  },
+  {
+   "id": "roaring-knight",
+   "title": "Roaring Knight Simulator",
+   "category": "Action",
+   "thumbnail": "",
+   "description": "⚔️ Face the Roaring Knight! Arrow keys to move, Z to confirm.",
+   "iframe": "https://shadowcrystal.dev/DEVICE_KNIGHT"
+  },
+  {
+   "id": "jevil-sim",
+   "title": "Jevil Simulator",
+   "category": "Action",
+   "thumbnail": "",
+   "description": "🃏 Chaos, chaos! Take on Jevil. Arrow keys to move, Z to confirm.",
+   "iframe": "https://shadowcrystal.dev/DEVICE_JEVIL"
+  },
+  {
+   "id": "maxwell-td",
+   "title": "Maxwell Tower Defense",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🏰 Place cat towers to stop the waves of dogs!",
+   "iframe": "games/builtin/towerdef.html"
+  },
+  {
+   "id": "maxwell-golf",
+   "title": "Maxwell Minigolf",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "⛳ Drag to aim and sink it in the fewest strokes!",
+   "iframe": "games/builtin/minigolf.html"
+  },
+  {
+   "id": "fish-empire",
+   "title": "Fish Empire",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🐟 Idle clicker — tap for fish and build an empire!",
+   "iframe": "games/builtin/idle.html"
+  },
+  {
+   "id": "typing-race",
+   "title": "Maxwell Typing Race",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "⌨️ Type fast to race Maxwell to the finish line!",
+   "iframe": "games/builtin/typerace.html"
+  },
+  {
+   "id": "maxwell-sudoku",
+   "title": "Maxwell Sudoku",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🔢 Classic number puzzle, Maxwell style.",
+   "iframe": "games/builtin/sudoku.html"
+  },
+  {
+   "id": "catman",
+   "title": "Catman",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🐱 Hangman — guess the word before Maxwell faints!",
+   "iframe": "games/builtin/catman.html"
+  },
+  {
+   "id": "fish-merge",
+   "title": "Fish Merge",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🐟 2048-style — merge sea creatures up to the whale!",
+   "iframe": "games/builtin/fishmerge.html"
+  },
+  {
+   "id": "maxwell-airhockey",
+   "title": "Maxwell Air Hockey",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🏒 Fast 1v1 vs the CPU — first to 7 wins!",
+   "iframe": "games/builtin/airhockey.html"
+  },
+  {
+   "id": "rhythm-meow",
+   "title": "Rhythm Meow",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🎵 Tap to the beat across 4 lanes — chase the combo!",
+   "iframe": "games/builtin/rhythm.html"
+  },
+  {
+   "id": "maxwell-solitaire",
+   "title": "Maxwell Solitaire",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🃏 Classic Klondike solitaire, cat-styled.",
+   "iframe": "games/builtin/solitaire.html"
+  },
+  {
+   "id": "deltarune-sim",
+   "title": "Deltarune Simulator",
+   "category": "Action",
+   "thumbnail": "",
+   "description": "⚔️ Deltarune fight sim. Arrow keys to move, Z to confirm, X to cancel.",
+   "iframe": "https://deltarunesim.com"
+  },
+  {
+   "id": "word-search",
+   "title": "Maxwell Word Search",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🔎 Find the hidden cat words in the letter grid!",
+   "iframe": "games/builtin/wordsearch.html"
+  },
+  {
+   "id": "spot-diff",
+   "title": "Spot the Difference",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🔍 Find all 5 differences between the two grids!",
+   "iframe": "games/builtin/spotdiff.html"
+  },
+  {
+   "id": "dots-boxes",
+   "title": "Dots and Boxes",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "⬛ Claim boxes vs the CPU — most wins!",
+   "iframe": "games/builtin/dotsboxes.html"
+  },
+  {
+   "id": "maxwell-mahjong",
+   "title": "Maxwell Mahjong",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🀄 Match free tile pairs to clear the board!",
+   "iframe": "games/builtin/mahjong.html"
+  },
+  {
+   "id": "battleship",
+   "title": "Maxwell Battleship",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🚢 Sink the CPU's fleet before they sink yours!",
+   "iframe": "games/builtin/battleship.html"
+  },
+  {
+   "id": "checkers",
+   "title": "Maxwell Checkers",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🔴 Jump and chain-capture the CPU. Kings move any way!",
+   "iframe": "games/builtin/checkers.html"
+  },
+  {
+   "id": "othello",
+   "title": "Maxwell Othello",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "⚫ Flip the board and own the most discs!",
+   "iframe": "games/builtin/othello.html"
+  },
+  {
+   "id": "chess",
+   "title": "Maxwell Chess",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "♟️ Full chess vs the CPU — checkmate the kitty king!",
+   "iframe": "games/builtin/chess.html"
+  },
+  {
+   "id": "jigsaw",
+   "title": "Maxwell Jigsaw",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "🧩 Swap the pieces and rebuild Maxwell!",
+   "iframe": "games/builtin/jigsaw.html"
+  },
+  {
+   "id": "crossword",
+   "title": "Maxwell Crossword",
+   "category": "🐱 Maxwell Originals",
+   "thumbnail": "",
+   "description": "📰 A cozy daily mini-crossword, all about Maxwell.",
+   "iframe": "games/builtin/crossword.html"
+  }
+ ]
 }
