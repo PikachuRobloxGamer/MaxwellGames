@@ -30,7 +30,7 @@
     canvas: function (w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; var st = GK.stage(); st.insertBefore(c, st.firstChild); return c; },
     score: function (v) { var e = document.getElementById("score"); if (e) e.textContent = (typeof v === "string" ? v : "Score: " + v); },
     restart: function (fn) { var b = document.getElementById("restart"); if (b) b.onclick = fn || function () { location.reload(); }; },
-    tone: function (f, d, ty, vol) { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime; o.type = ty || "square"; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(vol || 0.06, t); g.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d); } catch (e) {} },
+    tone: function (f, d, ty, vol) { try { var mp = window.parent; if ((mp && mp.MG_MUTED) || (function () { try { return localStorage.getItem("mg-muted") === "1"; } catch (e) { return false; } })()) return; AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime; o.type = ty || "square"; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(vol || 0.06, t); g.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d); } catch (e) {} },
     // held-key tracking + discrete handlers
     onKey: function (fn) { document.addEventListener("keydown", fn); },
     // register a discrete "press" (keydown of given keys + optional tap target) -> fn

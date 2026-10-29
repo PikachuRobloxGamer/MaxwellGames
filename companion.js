@@ -38,12 +38,26 @@
   }
 
   function popHeart() { heart.style.transition = "none"; heart.style.opacity = "1"; heart.style.transform = "translateX(-50%) translateY(0)"; requestAnimationFrame(function () { heart.style.transition = "opacity .5s, transform .6s"; heart.style.opacity = "0"; heart.style.transform = "translateX(-50%) translateY(-22px)"; }); }
+  // ---- Maxwell reactions: a little speech bubble ----
+  var bubble, bubT;
+  function say(txt) {
+    if (!mounted || !wrap) return;
+    if (!bubble) { bubble = document.createElement("div"); bubble.style.cssText = "position:absolute;bottom:50px;left:50%;transform:translateX(-50%);background:#fff;color:#2a2340;font:800 11px system-ui;padding:4px 8px;border-radius:10px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3);pointer-events:none"; wrap.appendChild(bubble); }
+    bubble.textContent = txt; bubble.style.opacity = "1"; hop = 1; clearTimeout(bubT); bubT = setTimeout(function () { if (bubble) bubble.style.opacity = "0"; }, 1800);
+  }
+  function confettiBurst() {
+    for (var i = 0; i < 40; i++) { (function () { var d = document.createElement("div"); var e = ["🎉", "✨", "🐟", "⭐", "🎊"][i % 5]; d.textContent = e; d.style.cssText = "position:fixed;z-index:120;pointer-events:none;left:" + (Math.random() * 100) + "vw;top:-30px;font-size:" + (14 + Math.random() * 16) + "px;transition:transform 2.2s ease-in,opacity 2.2s"; document.body.appendChild(d); requestAnimationFrame(function () { d.style.transform = "translateY(110vh) rotate(" + (Math.random() * 720 - 360) + "deg)"; d.style.opacity = "0"; }); setTimeout(function () { d.remove(); }, 2300); })(); }
+  }
+  var MILES = [1000, 10000, 100000, 1000000];
+  function checkMiles(total) { try { var done = JSON.parse(ls("mg-miles") || "[]"); for (var i = 0; i < MILES.length; i++) { if (total >= MILES[i] && done.indexOf(MILES[i]) < 0) { done.push(MILES[i]); ls("mg-miles", JSON.stringify(done)); confettiBurst(); say("🎉 " + MILES[i].toLocaleString() + " treats!!"); try { window.MG.toast && window.MG.toast("🎉", "Milestone!", "You've earned " + MILES[i].toLocaleString() + " total treats!"); } catch (e) {} } } } catch (e) {} }
 
   function poll() {
     var t = treats();
     if (t > lastTreats) {
       var gain = t - lastTreats; hop = 1; popHeart();
       earned += gain; ls("mg-comp-earned", String(earned));
+      if (gain >= 100) say(["Whoa! 🤩", "Nice haul!", "Jackpot! 🐟", "So many treats!", "You're on fire! 🔥"][Math.floor(Math.random() * 5)]);
+      checkMiles(earned);
       var nl = lvlFor(earned);
       if (nl > lvl) { lvl = nl; spark = 1; heart.textContent = "⭐"; setTimeout(function () { heart.textContent = "🐟"; }, 800); popHeart(); try { window.MG.toast && window.MG.toast("🐱", "Your buddy leveled up!", "Companion is now Level " + lvl + "!"); } catch (e) {} }
     }
@@ -63,6 +77,9 @@
     if (!pollId) pollId = setInterval(poll, 450);
     poll();
   }
+  // react to opening/closing games
+  window.addEventListener("mg:open", function () { if (window.MG_COMPANION && window.MG_COMPANION.on) say(["Have fun! 🎮", "Good luck! 🍀", "Go go go!", "You got this! 💪", "Let's play! 😸"][Math.floor(Math.random() * 5)]); });
+  window.addEventListener("mg:close", function () { if (window.MG_COMPANION && window.MG_COMPANION.on) say(["GG! 🏆", "Nice one!", "Wanna go again?", "Meow~ 😺"][Math.floor(Math.random() * 4)]); });
   function pm(e) { onMove(e.clientX, e.clientY); }
   function tm(e) { var t = e.touches && e.touches[0]; if (t) onMove(t.clientX, t.clientY); }
   function stop() {
