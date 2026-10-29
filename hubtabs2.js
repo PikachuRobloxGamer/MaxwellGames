@@ -7,6 +7,21 @@
   function wordForToday() { const d = new Date(); const seed = d.getFullYear() * 1000 + (d.getMonth() + 1) * 50 + d.getDate(); return WORDS[seed % WORDS.length]; }
   function openCatdle() {
     const p = U.panel("catdleOv", "🟩 Catdle", "catdle-head");
+    const LK = "mg-catdle-last", DAY = 86400000;
+    function lastPlay() { try { return parseInt(localStorage.getItem(LK) || "0", 10) || 0; } catch (e) { return 0; } }
+    function markPlayed() { try { localStorage.setItem(LK, String(Date.now())); } catch (e) {} }
+    if (Date.now() - lastPlay() < DAY) {
+      p.body.innerHTML = '<div style="text-align:center;padding:22px 12px">'
+        + '<div style="font-size:58px">🔒🟩</div><h2 style="margin:8px 0">One Catdle a day!</h2>'
+        + '<p class="ar-hint">You\'ve already played today. Your next Catdle unlocks in:</p>'
+        + '<div id="cdlCountdown" style="font-size:2.3rem;font-weight:900;color:#3ee08f;font-variant-numeric:tabular-nums;margin:12px 0"></div>'
+        + '<p class="ar-hint">Go play the Arcade, Duels or a Boss while you wait! 🐱</p></div>';
+      const cd = p.body.querySelector("#cdlCountdown");
+      function fmt(ms) { const s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60; return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(ss).padStart(2, "0"); }
+      function upd() { const l = DAY - (Date.now() - lastPlay()); if (l <= 0) { clearInterval(iv); cd.textContent = "Ready! 🎉"; const b = document.createElement("button"); b.className = "btn asc-btn"; b.textContent = "▶ Play Catdle"; b.onclick = function () { if (p.close) p.close(); openCatdle(); }; cd.after(b); return; } cd.textContent = fmt(l); }
+      upd(); const iv = setInterval(upd, 1000); p.onClean(function () { clearInterval(iv); });
+      return;
+    }
     const ANS = wordForToday(); const MAXG = 6; let row = 0, cur = "", done = false;
     p.body.innerHTML = '<p class="ar-hint">Guess the 5-letter word! 🟩=right spot, 🟨=wrong spot, ⬛=not in word. One word a day for everyone.</p><div class="cdl-grid" id="cdlGrid"></div><div class="cdl-keys" id="cdlKeys"></div><p class="cdl-msg" id="cdlMsg"></p>';
     const grid = p.body.querySelector("#cdlGrid"); const cells = [];
@@ -24,9 +39,9 @@
       for (let i = 0; i < 5; i++) if (res[i] !== "green") { const idx = ansArr.indexOf(guess[i]); if (idx >= 0) { res[i] = "yellow"; ansArr[idx] = null; } }
       for (let i = 0; i < 5; i++) { cells[row][i].classList.add(res[i]); const kb = keysEl.querySelector('[data-k="' + guess[i] + '"]'); if (kb) { const pr = keyState[guess[i]]; if (res[i] === "green" || (res[i] === "yellow" && pr !== "green") || !pr) { keyState[guess[i]] = res[i]; kb.classList.remove("green", "yellow", "gray"); kb.classList.add(res[i]); } } }
       U.tone(500, 0.05);
-      if (guess === ANS) { done = true; const rew = (MAXG - row) * 40 + 40; U.give(rew); msg("🎉 Correct! +" + rew + " 🐟"); U.tone(880, 0.15); return; }
+      if (guess === ANS) { done = true; markPlayed(); const rew = (MAXG - row) * 40 + 40; U.give(rew); msg("🎉 Correct! +" + rew + " 🐟 — come back in 24 hours!"); U.tone(880, 0.15); return; }
       row++; cur = "";
-      if (row >= MAXG) { done = true; msg("The word was " + ANS + ". Try again tomorrow!"); }
+      if (row >= MAXG) { done = true; markPlayed(); msg("The word was " + ANS + ". Come back in 24 hours!"); }
     }
     function msg(t) { p.body.querySelector("#cdlMsg").textContent = t; }
     const kd = (e) => { if (done) return; const k = e.key.toUpperCase(); if (k === "ENTER") submit(); else if (k === "BACKSPACE") back(); else if (/^[A-Z]$/.test(k)) press(k); };
