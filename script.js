@@ -9,6 +9,17 @@ const TABS = {
 };
 let currentTab = "games";
 let activeCategory = "All";
+let sortMode = "default";
+// ----- Favorites / Recently played / Continue -----
+function lsGet(k, d) { try { return JSON.parse(localStorage.getItem(k) || d); } catch (e) { try { return JSON.parse(d); } catch (x) { return null; } } }
+function favs() { return lsGet("mg-favs", "[]") || []; }
+function isFav(id) { return favs().indexOf(id) >= 0; }
+function toggleFav(id) { const f = favs(); const i = f.indexOf(id); if (i >= 0) f.splice(i, 1); else f.push(id); try { localStorage.setItem("mg-favs", JSON.stringify(f)); } catch (e) {} }
+function recentIds() { return lsGet("mg-recent", "[]") || []; }
+function pushRecent(id) { let r = recentIds().filter((x) => x !== id); r.unshift(id); r = r.slice(0, 12); try { localStorage.setItem("mg-recent", JSON.stringify(r)); localStorage.setItem("mg-last-game", id); } catch (e) {} }
+function lastGame() { try { return localStorage.getItem("mg-last-game") || ""; } catch (e) { return ""; } }
+function gameById(id) { return items().find((g) => g.id === id); }
+function todaySeed() { const d = new Date(); return (d.getFullYear() * 372 + d.getMonth() * 31 + d.getDate()); }
 
 const $ = (id) => document.getElementById(id);
 const grid = $("grid");
@@ -136,8 +147,25 @@ function switchTab(name) {
 function items() { return TABS[currentTab].items; }
 
 function renderCategories() {
-  const cats = ["All", ...new Set(items().map((g) => g.category || "Other"))];
+  const special = [];
+  if (currentTab === "games") {
+    if (favs().length) special.push("⭐ Favorites");
+    if (recentIds().length) special.push("🕒 Recent");
+  }
+  const cats = [...special, "All", ...new Set(items().map((g) => g.category || "Other"))];
   categoriesEl.innerHTML = "";
+  // 🎲 Random + sort control (games tab only)
+  if (currentTab === "games") {
+    const rnd = document.createElement("button");
+    rnd.className = "chip chip-rnd"; rnd.textContent = "🎲 Random";
+    rnd.onclick = () => { const g = items()[Math.floor(Math.random() * items().length)]; if (g) openGame(g); };
+    categoriesEl.appendChild(rnd);
+    const sort = document.createElement("select");
+    sort.className = "lib-sort";
+    [["default", "Sort: Default"], ["newest", "Sort: Newest"], ["az", "Sort: A–Z"]].forEach(([v, t]) => { const o = document.createElement("option"); o.value = v; o.textContent = t; if (v === sortMode) o.selected = true; sort.appendChild(o); });
+    sort.onchange = () => { sortMode = sort.value; renderGrid(); };
+    categoriesEl.appendChild(sort);
+  }
   cats.forEach((cat) => {
     const btn = document.createElement("button");
     btn.className = "chip" + (cat === activeCategory ? " active" : "");
@@ -151,46 +179,71 @@ function renderCategories() {
   });
 }
 
+function buildCard(item) {
+  const card = document.createElement("div");
+  card.className = "card"; card.dataset.id = item.id;
+  card.onclick = () => explodeThenOpen(card, item);
+  let thumb;
+  if (item.thumbnail) {
+    thumb = document.createElement("img");
+    thumb.className = "thumb"; thumb.src = item.thumbnail; thumb.alt = item.title; thumb.loading = "lazy";
+    thumb.onerror = () => thumb.replaceWith(makeFallback(item.title));
+  } else { thumb = makeFallback(item.title); }
+  const body = document.createElement("div");
+  body.className = "card-body";
+  body.innerHTML = `<div class="card-title"></div><div class="card-cat"></div>`;
+  body.querySelector(".card-title").textContent = item.title;
+  body.querySelector(".card-cat").textContent = item.category || "Other";
+  card.append(thumb, body);
+  if (currentTab === "games") {
+    const star = document.createElement("button");
+    star.className = "fav-star" + (isFav(item.id) ? " on" : ""); star.textContent = isFav(item.id) ? "★" : "☆";
+    star.title = "Favorite"; star.onclick = (e) => { e.stopPropagation(); toggleFav(item.id); renderCategories(); renderGrid(); };
+    card.appendChild(star);
+  }
+  return card;
+}
+
 function renderGrid() {
   const tab = TABS[currentTab];
   const q = searchEl.value.trim().toLowerCase();
-  const list = items().filter((g) => {
-    const inCat = activeCategory === "All" || (g.category || "Other") === activeCategory;
-    const inSearch = !q || g.title.toLowerCase().includes(q);
-    return inCat && inSearch;
-  });
+  let list;
+  if (activeCategory === "⭐ Favorites") list = items().filter((g) => isFav(g.id));
+  else if (activeCategory === "🕒 Recent") list = recentIds().map(gameById).filter(Boolean);
+  else list = items().filter((g) => activeCategory === "All" || (g.category || "Other") === activeCategory);
+  if (q) list = list.filter((g) => g.title.toLowerCase().includes(q));
+  // sorting (Recent keeps its recency order)
+  if (activeCategory !== "🕒 Recent") {
+    if (sortMode === "az") list = list.slice().sort((a, b) => a.title.localeCompare(b.title));
+    else if (sortMode === "newest") { const idx = new Map(items().map((g, i) => [g, i])); list = list.slice().sort((a, b) => idx.get(b) - idx.get(a)); }
+  }
 
   const plural = tab.word === "proxy" ? "proxies" : tab.word + "s";
   if (tab.error) statusEl.textContent = `Couldn't load ${tab.file}. Open the site through GitHub Pages, not by double-clicking index.html.`;
   else statusEl.textContent = list.length ? `${list.length} ${list.length === 1 ? tab.word : plural}` : `No ${plural} found.`;
   grid.innerHTML = "";
 
-  list.forEach((item) => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.onclick = () => explodeThenOpen(card, item);
+  // Featured row (games tab, All category, no search)
+  if (currentTab === "games" && activeCategory === "All" && !q && items().length) {
+    const gotd = items()[todaySeed() % items().length];
+    const last = gameById(lastGame());
+    const row = document.createElement("div"); row.className = "lib-feature-row";
+    row.appendChild(featureCard("🌟 Game of the Day", gotd));
+    if (last) row.appendChild(featureCard("▶️ Continue", last));
+    grid.appendChild(row);
+  }
 
-    let thumb;
-    if (item.thumbnail) {
-      thumb = document.createElement("img");
-      thumb.className = "thumb";
-      thumb.src = item.thumbnail;
-      thumb.alt = item.title;
-      thumb.loading = "lazy";
-      thumb.onerror = () => thumb.replaceWith(makeFallback(item.title));
-    } else {
-      thumb = makeFallback(item.title);
-    }
+  list.forEach((item) => grid.appendChild(buildCard(item)));
+}
 
-    const body = document.createElement("div");
-    body.className = "card-body";
-    body.innerHTML = `<div class="card-title"></div><div class="card-cat"></div>`;
-    body.querySelector(".card-title").textContent = item.title;
-    body.querySelector(".card-cat").textContent = item.category || "Other";
-
-    card.append(thumb, body);
-    grid.appendChild(card);
-  });
+function featureCard(label, item) {
+  const c = document.createElement("button");
+  c.className = "feature-card"; c.onclick = () => openGame(item);
+  c.innerHTML = `<span class="fc-label"></span><span class="fc-title"></span><span class="fc-cat"></span>`;
+  c.querySelector(".fc-label").textContent = label;
+  c.querySelector(".fc-title").textContent = item.title;
+  c.querySelector(".fc-cat").textContent = item.category || "Other";
+  return c;
 }
 
 function makeFallback(title) {
@@ -201,6 +254,7 @@ function makeFallback(title) {
 }
 
 function openGame(item) {
+  if (currentTab === "games" && item && item.id) pushRecent(item.id);
   frame.src = getSrc(item.iframe || item.url);
   $("playerTitle").textContent = item.title;
   $("playerDesc").textContent = item.description || "";
@@ -217,6 +271,7 @@ function closeGame() {
   playerView.classList.add("hidden");
   libraryView.classList.remove("hidden");
   history.replaceState(null, "", currentTab === "proxies" ? "#proxies" : location.pathname);
+  if (currentTab !== "sounds") { renderCategories(); renderGrid(); } // refresh Recent / Continue
 }
 
 function openFromHash() {
@@ -365,6 +420,20 @@ function playBoom() {
     osc.stop(now + 0.4);
   } catch (e) { /* sound is optional */ }
 }
+
+// Library-upgrade styles (favorites, random, sort, featured cards)
+(function libCss() {
+  const s = document.createElement("style"); s.id = "lib-css";
+  s.textContent = ".card{position:relative}"
+    + ".fav-star{position:absolute;top:6px;right:6px;z-index:3;background:rgba(0,0,0,.45);border:none;color:#ffd84a;font-size:1.1rem;width:30px;height:30px;border-radius:50%;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}"
+    + ".fav-star.on{background:rgba(255,216,74,.25)}.fav-star:hover{transform:scale(1.15)}"
+    + ".chip-rnd{background:linear-gradient(90deg,#6c5ce7,#a06bff);color:#fff;font-weight:800}"
+    + ".lib-sort{background:var(--panel);color:var(--text);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:7px 12px;font-weight:700;font-size:.82rem;cursor:pointer}"
+    + ".lib-feature-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:6px}"
+    + ".feature-card{text-align:left;border:none;cursor:pointer;color:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:3px;background:linear-gradient(135deg,#2a1d55,#4a1d55);box-shadow:0 4px 16px rgba(108,92,231,.3)}"
+    + ".feature-card:hover{filter:brightness(1.1)}.fc-label{font-size:.72rem;font-weight:800;color:#ffd84a;letter-spacing:1px}.fc-title{font-size:1.25rem;font-weight:900}.fc-cat{font-size:.78rem;opacity:.8}";
+  document.head.appendChild(s);
+})();
 
 // Events
 searchEl.addEventListener("input", () => {
