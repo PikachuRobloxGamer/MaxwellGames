@@ -399,6 +399,46 @@
       "thumbnail": "",
       "description": "⚔️ Deltarune fight sim. Arrow keys to move, Z to confirm, X to cancel.",
       "iframe": "https://deltarunesim.com"
+    },
+    {
+      "id": "word-search",
+      "title": "Maxwell Word Search",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🔎 Find the hidden cat words in the letter grid!",
+      "iframe": "games/builtin/wordsearch.html"
+    },
+    {
+      "id": "spot-diff",
+      "title": "Spot the Difference",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🔍 Find all 5 differences between the two grids!",
+      "iframe": "games/builtin/spotdiff.html"
+    },
+    {
+      "id": "dots-boxes",
+      "title": "Dots and Boxes",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "⬛ Claim boxes vs the CPU — most wins!",
+      "iframe": "games/builtin/dotsboxes.html"
+    },
+    {
+      "id": "maxwell-mahjong",
+      "title": "Maxwell Mahjong",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🀄 Match free tile pairs to clear the board!",
+      "iframe": "games/builtin/mahjong.html"
+    },
+    {
+      "id": "battleship",
+      "title": "Maxwell Battleship",
+      "category": "🐱 Maxwell Originals",
+      "thumbnail": "",
+      "description": "🚢 Sink the CPU's fleet before they sink yours!",
+      "iframe": "games/builtin/battleship.html"
     }
   ]
 }

@@ -1,0 +1,38 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Dots and Boxes</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>⬛ Dots and Boxes</span><span id=score>You 0 - 0 CPU</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Tap between two dots to draw a line. Complete a box to claim it (🐱=you) and go again. Most boxes wins!</p></div></div>
+<script src="kit.js"></script>
+<script>
+var N=5,CELL=64,PAD=24,W=(N-1)*CELL+PAD*2,c=GK.canvas(W,W),x=c.getContext('2d');
+var hLines,vLines,boxes,turn,over,ys,cs;
+function R(){hLines=Array.from({length:N},function(){return new Array(N-1).fill(0);});vLines=Array.from({length:N-1},function(){return new Array(N).fill(0);});boxes=Array.from({length:N-1},function(){return new Array(N-1).fill(0);});turn=1;over=false;ys=0;cs=0;GK.score('You 0 - 0 CPU');window.__g={score:0,over:false};draw();}
+function dx(c0){return PAD+c0*CELL;}
+function claimCheck(){var got=false;for(var r=0;r<N-1;r++)for(var cc=0;cc<N-1;cc++){if(!boxes[r][cc]&&hLines[r][cc]&&hLines[r+1][cc]&&vLines[r][cc]&&vLines[r][cc+1]){boxes[r][cc]=turn;got=true;if(turn===1)ys++;else cs++;}}return got;}
+function anyLeft(){return hLines.some(function(r){return r.some(function(v){return !v;})})||vLines.some(function(r){return r.some(function(v){return !v;})});}
+function afterMove(){GK.score('You '+ys+' - '+cs+' CPU');window.__g.score=ys;draw();if(!anyLeft()){over=true;if(ys>cs)GK.award(80);draw();return;}if(turn===2)setTimeout(cpuMove,500);}
+function pos(e){var rr=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{x:(p.clientX-rr.left)*W/rr.width,y:(p.clientY-rr.top)*W/rr.height};}
+function tryLine(px,py){ // find nearest free line
+  var best=null,bd=22;
+  for(var r=0;r<N;r++)for(var cc=0;cc<N-1;cc++){if(hLines[r][cc])continue;var mx=dx(cc)+CELL/2,my=dx(r);var d=Math.hypot(px-mx,py-my);if(d<bd){bd=d;best={t:'h',r:r,c:cc};}}
+  for(r=0;r<N-1;r++)for(cc=0;cc<N;cc++){if(vLines[r][cc])continue;var mx2=dx(cc),my2=dx(r)+CELL/2;var d2=Math.hypot(px-mx2,py-my2);if(d2<bd){bd=d2;best={t:'v',r:r,c:cc};}}
+  return best;
+}
+function playLine(l){ if(l.t==='h')hLines[l.r][l.c]=turn;else vLines[l.r][l.c]=turn; var got=claimCheck(); GK.tone(got?780:440,0.06); if(!got)turn=turn===1?2:1; afterMove(); }
+c.addEventListener('pointerdown',function(e){ if(over){R();return;} if(turn!==1)return; var p=pos(e);var l=tryLine(p.x,p.y);if(l)playLine(l);});
+function cpuMove(){ if(over||turn!==2)return;
+  var moves=[];for(var r=0;r<N;r++)for(var cc=0;cc<N-1;cc++)if(!hLines[r][cc])moves.push({t:'h',r:r,c:cc});for(r=0;r<N-1;r++)for(cc=0;cc<N;cc++)if(!vLines[r][cc])moves.push({t:'v',r:r,c:cc});
+  // prefer a move that completes a box; avoid giving one away if possible
+  function completes(m){if(m.t==='h')hLines[m.r][m.c]=9;else vLines[m.r][m.c]=9;var g=false;for(var r=0;r<N-1;r++)for(var cc=0;cc<N-1;cc++){if(boxes[r][cc])continue;if(hLines[r][cc]&&hLines[r+1][cc]&&vLines[r][cc]&&vLines[r][cc+1]){g=true;}}if(m.t==='h')hLines[m.r][m.c]=0;else vLines[m.r][m.c]=0;return g;}
+  var good=moves.filter(completes); var pick= good.length?good[0]:moves[Math.floor(Math.random()*moves.length)];
+  playLine(pick);
+}
+function draw(){
+  x.fillStyle='#0c1020';x.fillRect(0,0,W,W);
+  for(var r=0;r<N-1;r++)for(var cc=0;cc<N-1;cc++)if(boxes[r][cc]){x.fillStyle=boxes[r][cc]===1?'rgba(62,224,143,.2)':'rgba(255,107,107,.2)';x.fillRect(dx(cc),dx(r),CELL,CELL);x.font='26px serif';x.textAlign='center';x.textBaseline='middle';x.fillText(boxes[r][cc]===1?'🐱':'🐶',dx(cc)+CELL/2,dx(r)+CELL/2);}
+  function line(x1,y1,x2,y2,owner){x.strokeStyle=owner?(owner===1?'#3ee08f':'#ff6b6b'):'rgba(255,255,255,.12)';x.lineWidth=owner?5:3;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();}
+  for(r=0;r<N;r++)for(cc=0;cc<N-1;cc++)line(dx(cc),dx(r),dx(cc+1),dx(r),hLines[r][cc]);
+  for(r=0;r<N-1;r++)for(cc=0;cc<N;cc++)line(dx(cc),dx(r),dx(cc),dx(r+1),vLines[r][cc]);
+  for(r=0;r<N;r++)for(cc=0;cc<N;cc++){x.fillStyle='#fff';x.beginPath();x.arc(dx(cc),dx(r),4,0,7);x.fill();}
+  if(over){x.fillStyle='rgba(0,0,0,.7)';x.fillRect(0,0,W,W);x.fillStyle=ys>cs?'#3ee08f':ys<cs?'#ff6b6b':'#ffd84a';x.textAlign='center';x.font='900 26px system-ui';x.fillText(ys>cs?'YOU WIN! 🏆':ys<cs?'CPU WINS':'TIE!',W/2,W/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('tap to play again',W/2,W/2+22);}
+}
+GK.restart(R);R();
+</script></body></html>

@@ -1,0 +1,38 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Battleship</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🚢 Maxwell Battleship</span><span id=score>Your turn!</span><button id=restart>↻ Restart</button></div><div id=stage><p class=hint>Tap the CPU's waters (top grid) to fire 🎯. Sink all their ships before they sink yours! 💣</p></div></div>
+<script src="kit.js"></script>
+<script>
+var N=8,CELL=38,W=N*CELL,GAP=28,H=N*CELL*2+GAP+28,c=GK.canvas(W,H),x=c.getContext('2d');
+var SHIPS=[4,3,3,2,2];
+var pBoard,eBoard,pShots,eShots,over,win,msg;
+function empty(){return Array.from({length:N},function(){return new Array(N).fill(0);});}
+function place(board){ SHIPS.forEach(function(len){ for(var t=0;t<200;t++){ var hor=Math.random()<0.5; var r=Math.floor(Math.random()*N),cc=Math.floor(Math.random()*N); var er=r+(hor?0:len-1),ec=cc+(hor?len-1:0); if(er>=N||ec>=N)continue; var ok=true; for(var i=0;i<len;i++){var rr=r+(hor?0:i),xx=cc+(hor?i:0); if(board[rr][xx]||(rr>0&&board[rr-1][xx])||(rr<N-1&&board[rr+1][xx])||(xx>0&&board[rr][xx-1])||(xx<N-1&&board[rr][xx+1]))ok=false;} if(!ok)continue; for(i=0;i<len;i++){board[r+(hor?0:i)][cc+(hor?i:0)]=1;} break; } }); }
+function R(){pBoard=empty();eBoard=empty();place(pBoard);place(eBoard);pShots=empty();eShots=empty();over=false;win=false;msg='Your turn — fire at the top grid!';GK.score('Your turn!');window.__g={score:0,over:false};draw();}
+function alive(board,shots){for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++)if(board[r][cc]&&!shots[r][cc])return true;return false;}
+function pos(e){var rr=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{x:(p.clientX-rr.left)*W/rr.width,y:(p.clientY-rr.top)*H/rr.height};}
+c.addEventListener('pointerdown',function(e){ if(over){R();return;} var p=pos(e); if(p.y>=20&&p.y<20+N*CELL){ var cc=Math.floor(p.x/CELL),r=Math.floor((p.y-20)/CELL); if(r<0||r>=N||cc<0||cc>=N||pShots[r][cc])return; pShots[r][cc]=1; var hit=eBoard[r][cc]; GK.tone(hit?760:300,0.08); if(hit){window.__g.score++;} if(!alive(eBoard,pShots)){over=true;win=true;msg='🏆 You sank the whole fleet!';GK.award(100);draw();return;} cpuTurn(); draw(); } });
+var huntQ=[];
+function cpuTurn(){ var r,cc;
+  if(huntQ.length){var h=huntQ.shift();r=h.r;cc=h.c;if(r<0||r>=N||cc<0||cc>=N||eShots[r][cc])return cpuTurn();}
+  else{do{r=Math.floor(Math.random()*N);cc=Math.floor(Math.random()*N);}while(eShots[r][cc]);}
+  eShots[r][cc]=1; if(pBoard[r][cc]){huntQ.push({r:r-1,c:cc},{r:r+1,c:cc},{r:r,c:cc-1},{r:r,c:cc+1});}
+  if(!alive(pBoard,eShots)){over=true;win=false;msg='💀 The CPU sank your fleet!';}
+}
+function drawGrid(oy,board,shots,hideShips){
+  for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){var px=cc*CELL,py=oy+r*CELL;x.fillStyle=(r+cc)%2?'#0e2a44':'#103255';x.fillRect(px+1,py+1,CELL-2,CELL-2);
+    var ship=board[r][cc],shot=shots[r][cc];
+    if(!hideShips&&ship){x.fillStyle='#4a5a70';x.fillRect(px+4,py+4,CELL-8,CELL-8);}
+    if(shot){x.font='22px serif';x.textAlign='center';x.textBaseline='middle';x.fillText(ship?'💥':'🔵',px+CELL/2,py+CELL/2);}
+  }
+}
+function draw(){
+  x.fillStyle='#061420';x.fillRect(0,0,W,H);
+  x.fillStyle='#ff6b6b';x.font='bold 13px system-ui';x.textAlign='left';x.fillText('🎯 CPU waters (fire here)',4,14);
+  drawGrid(20,eBoard,pShots,true);
+  x.fillStyle='#3ee08f';x.fillText('🛡️ Your ships',4,20+N*CELL+GAP-6);
+  drawGrid(20+N*CELL+GAP,pBoard,eShots,false);
+  GK.score(msg);
+  if(over){x.fillStyle='rgba(0,0,0,.7)';x.fillRect(0,0,W,H);x.fillStyle=win?'#3ee08f':'#ff6b6b';x.textAlign='center';x.font='900 24px system-ui';x.fillText(win?'VICTORY! 🏆':'DEFEATED 💀',W/2,H/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('tap to play again',W/2,H/2+22);}
+}
+GK.restart(R);R();
+</script></body></html>

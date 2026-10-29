@@ -1,0 +1,33 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Word Search</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🔎 Maxwell Word Search</span><span id=score>0 found</span><button id=restart>↻ New</button></div><div id=stage></div></div>
+<script src="kit.js"></script>
+<script>
+var POOL=["MAXWELL","TREATS","ARCADE","KITTEN","MEOW","FISH","GOLDEN","BOUNCE","PIXEL","BOSS","RACE","JUMP","DUEL","CROWN","PAW"];
+var N=11,CELL=30,W=N*CELL,c=GK.canvas(W,W),x=c.getContext('2d');
+var grid,words,found,sel,start;
+function R(){
+  grid=Array.from({length:N},function(){return new Array(N).fill('');});
+  words=POOL.slice().sort(function(){return Math.random()-0.5;}).slice(0,7);
+  var placed=[];
+  words.forEach(function(w){ for(var tryn=0;tryn<60;tryn++){ var dir=[[1,0],[0,1],[1,1],[1,-1]][Math.floor(Math.random()*4)]; var r=Math.floor(Math.random()*N),cc=Math.floor(Math.random()*N); var er=r+dir[1]*(w.length-1),ec=cc+dir[0]*(w.length-1); if(er<0||er>=N||ec<0||ec>=N)continue; var ok=true; for(var i=0;i<w.length;i++){var rr=r+dir[1]*i,xx=cc+dir[0]*i;if(grid[rr][xx]&&grid[rr][xx]!==w[i]){ok=false;break;}} if(!ok)continue; for(i=0;i<w.length;i++){grid[r+dir[1]*i][cc+dir[0]*i]=w[i];} placed.push(w); break; } });
+  words=placed;
+  for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++)if(!grid[r][cc])grid[r][cc]="ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random()*26)];
+  found=[];sel=null;start=null;render();window.__g={score:0,over:false};
+}
+function pos(e){var rr=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{c:Math.floor((p.clientX-rr.left)*W/rr.width/CELL),r:Math.floor((p.clientY-rr.top)*W/rr.height/CELL)};}
+function down(e){var p=pos(e);start=p;sel=[p];draw();}
+function move(e){if(!start)return;var p=pos(e);var dr=p.r-start.r,dc=p.c-start.c; // only straight/diagonal
+  if(dr===0||dc===0||Math.abs(dr)===Math.abs(dc)){var len=Math.max(Math.abs(dr),Math.abs(dc));var sr=Math.sign(dr),sc=Math.sign(dc);sel=[];for(var i=0;i<=len;i++)sel.push({r:start.r+sr*i,c:start.c+sc*i});draw();}}
+function up(){ if(sel&&sel.length>1){ var w=sel.map(function(s){return grid[s.r]&&grid[s.r][s.c];}).join(''); var rev=w.split('').reverse().join(''); var hit=words.find(function(ww){return (ww===w||ww===rev)&&found.indexOf(ww)<0;}); if(hit){found.push(hit);GK.tone(760,0.1);window.__g.score=found.length;GK.score(found.length+' found');GK.award(5);if(found.length===words.length){GK.tone(900,0.2);GK.award(40);}} } start=null;sel=null;render();}
+c.addEventListener('pointerdown',down);c.addEventListener('pointermove',move);window.addEventListener('pointerup',up);
+c.addEventListener('touchstart',function(e){e.preventDefault();down(e);},{passive:false});c.addEventListener('touchmove',function(e){e.preventDefault();move(e);},{passive:false});c.addEventListener('touchend',up);
+function foundCells(){var set={};found.forEach(function(w){ /* re-find cells: brute */ for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){[[1,0],[0,1],[1,1],[1,-1]].forEach(function(d){var ok=true;for(var i=0;i<w.length;i++){var rr=r+d[1]*i,xx=cc+d[0]*i;if(rr<0||rr>=N||xx<0||xx>=N||grid[rr][xx]!==w[i]){ok=false;break;}}if(ok)for(i=0;i<w.length;i++)set[(r+d[1]*i)+','+(cc+d[0]*i)]=1;});}});return set;}
+function draw(){
+  var fc=foundCells();
+  x.fillStyle='#0c1424';x.fillRect(0,0,W,W);
+  var selSet={};if(sel)sel.forEach(function(s){selSet[s.r+','+s.c]=1;});
+  for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){var k=r+','+cc;x.fillStyle=selSet[k]?'#6c5ce7':fc[k]?'#1e7a46':((r+cc)%2?'#141c30':'#101729');x.fillRect(cc*CELL+1,r*CELL+1,CELL-2,CELL-2);x.fillStyle='#fff';x.font='bold 15px system-ui';x.textAlign='center';x.textBaseline='middle';x.fillText(grid[r][cc],cc*CELL+CELL/2,r*CELL+CELL/2+1);}
+}
+function render(){draw();var st=GK.stage();var old=document.getElementById('wsWords');if(old)old.remove();var d=document.createElement('div');d.id='wsWords';d.style.cssText='margin-top:8px;text-align:center;font-size:.8rem;line-height:1.8';d.innerHTML='<p class=hint>Drag across letters to find words!</p>'+words.map(function(w){return '<span style="display:inline-block;margin:2px 6px;'+(found.indexOf(w)>=0?'color:#3ee08f;text-decoration:line-through':'color:#e8e9ee')+'">'+w+'</span>';}).join('');st.appendChild(d);}
+GK.restart(R);R();
+</script></body></html>

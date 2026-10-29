@@ -1,0 +1,27 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Spot the Difference</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🔍 Spot the Difference</span><span id=score>0 / 5</span><button id=restart>↻ New</button></div><div id=stage><p class=hint>Two grids, a few differences! Tap a cell on EITHER grid where they differ. Find all 5! 🐱</p></div></div>
+<script src="kit.js"></script>
+<script>
+var N=6,CELL=52,GAPY=20,W=N*CELL,H=N*CELL*2+GAPY+20,c=GK.canvas(W,H),x=c.getContext('2d');
+var EMO=['🐱','🐟','⭐','🎈','🌸','🍄','🧶','🐭','🌙','🔥','🍉','🐸'];
+var a,bgrid,diffs,foundSet,over,DIFF=5;
+function R(){
+  a=Array.from({length:N},function(){return Array.from({length:N},function(){return EMO[Math.floor(Math.random()*EMO.length)];});});
+  bgrid=a.map(function(r){return r.slice();});
+  diffs=[];var cells=[];for(var i=0;i<N*N;i++)cells.push(i);cells.sort(function(){return Math.random()-0.5;});
+  for(var k=0;k<DIFF;k++){var p=cells[k],r=Math.floor(p/N),cc=p%N;var ne;do{ne=EMO[Math.floor(Math.random()*EMO.length)];}while(ne===a[r][cc]);bgrid[r][cc]=ne;diffs.push(r+','+cc);}
+  foundSet={};over=false;GK.score('0 / '+DIFF);window.__g={score:0,over:false};draw();
+}
+function grids(){return [{oy:20,g:a},{oy:20+N*CELL+GAPY,g:bgrid}];}
+function pos(e){var rr=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{x:(p.clientX-rr.left)*W/rr.width,y:(p.clientY-rr.top)*H/rr.height};}
+c.addEventListener('pointerdown',function(e){ if(over){R();return;} var p=pos(e);
+  grids().forEach(function(gr){ if(p.y>=gr.oy&&p.y<gr.oy+N*CELL){ var cc=Math.floor(p.x/CELL),r=Math.floor((p.y-gr.oy)/CELL); var key=r+','+cc; if(diffs.indexOf(key)>=0&&!foundSet[key]){foundSet[key]=1;GK.tone(760,0.1);var n=Object.keys(foundSet).length;GK.score(n+' / '+DIFF);window.__g.score=n;GK.award(8);if(n===DIFF){over=true;GK.tone(900,0.2);GK.award(30);}draw();} else if(diffs.indexOf(key)<0){GK.tone(170,0.08);} } });
+});
+function draw(){
+  x.fillStyle='#0a0e1c';x.fillRect(0,0,W,H);
+  grids().forEach(function(gr){ for(var r=0;r<N;r++)for(var cc=0;cc<N;cc++){var px=cc*CELL,py=gr.oy+r*CELL;x.fillStyle=(r+cc)%2?'#13203a':'#182747';x.fillRect(px+1,py+1,CELL-2,CELL-2);x.font='30px serif';x.textAlign='center';x.textBaseline='middle';x.fillText(gr.g[r][cc],px+CELL/2,py+CELL/2+1);var key=r+','+cc;if(foundSet[key]){x.strokeStyle='#3ee08f';x.lineWidth=3;x.beginPath();x.arc(px+CELL/2,py+CELL/2,CELL/2-3,0,7);x.stroke();}}});
+  x.fillStyle='#8b8fa3';x.font='bold 12px system-ui';x.textAlign='center';x.fillText('▲ find the differences ▼',W/2,20+N*CELL+GAPY/2+4);
+  if(over){x.fillStyle='rgba(0,0,0,.7)';x.fillRect(0,0,W,H);x.fillStyle='#3ee08f';x.font='900 24px system-ui';x.fillText('ALL FOUND! 🎉',W/2,H/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('tap for a new round',W/2,H/2+22);}
+}
+GK.restart(R);R();
+</script></body></html>

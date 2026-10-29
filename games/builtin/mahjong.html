@@ -1,0 +1,32 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Maxwell Mahjong</title></head>
+<body><div class=wrap><div class=bar><span class=ttl>🀄 Maxwell Mahjong</span><span id=score>0 pairs</span><button id=restart>↻ New</button></div><div id=stage><p class=hint>Match two of the same FREE tile (a tile is free if its left OR right side is open). Clear them all! 🐱</p></div></div>
+<script src="kit.js"></script>
+<script>
+var FACES=['🐱','🐟','⭐','🎈','🌸','🍄','🧶','🐭','🌙','🔥','🍉','🐸','👑','🐾'];
+var ROWS=6,COLS=10,CW=40,CH=52,c=GK.canvas(COLS*CW,ROWS*CH),x=c.getContext('2d');
+var tiles,sel,pairs,over;
+function R(){
+  // build pairs of faces to fill ROWS*COLS (even)
+  var total=ROWS*COLS; var deck=[]; var need=total/2;
+  for(var i=0;i<need;i++){var f=FACES[i%FACES.length];deck.push(f,f);}
+  deck.sort(function(){return Math.random()-0.5;});
+  tiles=[];var k=0;for(var r=0;r<ROWS;r++)for(var cc=0;cc<COLS;cc++){tiles.push({r:r,c:cc,face:deck[k++],gone:false});}
+  sel=null;pairs=0;over=false;GK.score('0 pairs');window.__g={score:0,over:false};draw();
+}
+function at(r,cc){return tiles.find(function(t){return t.r===r&&t.c===cc&&!t.gone;});}
+function free(t){var l=at(t.r,t.c-1),rt=at(t.r,t.c+1);return !l||!rt;}
+function pos(e){var rr=c.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return{c:Math.floor((p.clientX-rr.left)*(COLS*CW)/rr.width/CW),r:Math.floor((p.clientY-rr.top)*(ROWS*CH)/rr.height/CH)};}
+c.addEventListener('pointerdown',function(e){ if(over){R();return;} var p=pos(e);var t=at(p.r,p.c);if(!t||!free(t)){GK.tone(180,0.06);return;}
+  if(!sel){sel=t;GK.tone(560,0.05);}
+  else if(sel===t){sel=null;}
+  else if(sel.face===t.face){sel.gone=true;t.gone=true;sel=null;pairs++;GK.tone(800,0.08);window.__g.score=pairs;GK.score(pairs+' pairs');GK.award(4);if(tiles.every(function(z){return z.gone;})){over=true;GK.tone(900,0.25);GK.award(50);}}
+  else{sel=t;GK.tone(560,0.05);}
+  draw();
+});
+function draw(){
+  x.fillStyle='#0b2a1a';x.fillRect(0,0,COLS*CW,ROWS*CH);
+  tiles.forEach(function(t){ if(t.gone)return; var px=t.c*CW,py=t.r*CH; var fr=free(t); x.fillStyle=sel===t?'#ffd84a':fr?'#f3efe0':'#9a9684'; x.strokeStyle='#5a4a2a';x.lineWidth=2; x.beginPath();x.roundRect?x.roundRect(px+2,py+2,CW-4,CH-4,6):x.rect(px+2,py+2,CW-4,CH-4);x.fill();x.stroke(); x.globalAlpha=fr?1:0.5;x.font='26px serif';x.textAlign='center';x.textBaseline='middle';x.fillText(t.face,px+CW/2,py+CH/2);x.globalAlpha=1;});
+  if(over){x.fillStyle='rgba(0,0,0,.7)';x.fillRect(0,0,COLS*CW,ROWS*CH);x.fillStyle='#3ee08f';x.textAlign='center';x.font='900 26px system-ui';x.fillText('BOARD CLEARED! 🎉',COLS*CW/2,ROWS*CH/2-6);x.fillStyle='#fff';x.font='700 14px system-ui';x.fillText('tap for a new board',COLS*CW/2,ROWS*CH/2+22);}
+}
+GK.restart(R);R();
+</script></body></html>
