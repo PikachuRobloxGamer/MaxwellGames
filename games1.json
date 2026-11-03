@@ -486,7 +486,8 @@
    "category": "Action",
    "thumbnail": "",
    "description": "🃏 Chaos, chaos! Take on the Megalomaniac fight. Arrow keys to move, Z to confirm, X to cancel.",
-   "iframe": "https://cross-0673.itch.io/megalomaniac"
+   "iframe": "https://cross-0673.itch.io/megalomaniac",
+   "external": true
   },
   {
    "id": "hardmode-sans",
@@ -494,7 +495,8 @@
    "category": "Action",
    "thumbnail": "",
    "description": "💀 Survive Larekun's brutal HardMode Sans fight! Arrow keys to move, Z to confirm, X to cancel.",
-   "iframe": "https://gamejolt.com/games/HDMS/977374"
+   "iframe": "https://gamejolt.com/games/HDMS/977374",
+   "external": true
   }
  ]
 }

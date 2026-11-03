@@ -182,7 +182,7 @@ function renderCategories() {
 function buildCard(item) {
   const card = document.createElement("div");
   card.className = "card"; card.dataset.id = item.id;
-  card.onclick = () => explodeThenOpen(card, item);
+  card.onclick = () => { if (item.external) openGame(item); else explodeThenOpen(card, item); };
   let thumb;
   if (item.thumbnail) {
     thumb = document.createElement("img");
@@ -255,6 +255,14 @@ function makeFallback(title) {
 
 function openGame(item) {
   if (currentTab === "games" && item && item.id) pushRecent(item.id);
+  // Some sites (Game Jolt, itch.io) block being embedded in an iframe, so open them in a new tab.
+  if (item && item.external) {
+    const u = getSrc(item.iframe || item.url);
+    const w = window.open(u, "_blank", "noopener");
+    if (!w) { try { MG.toast("↗️", "Opening " + item.title, "If nothing opened, allow pop-ups and tap again."); } catch (e) {} }
+    window.dispatchEvent(new CustomEvent("mg:open", { detail: { id: currentTab + ":" + item.id } }));
+    return;
+  }
   frame.src = getSrc(item.iframe || item.url);
   $("playerTitle").textContent = item.title;
   $("playerDesc").textContent = item.description || "";
