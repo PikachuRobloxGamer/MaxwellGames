@@ -479,6 +479,14 @@
    "thumbnail": "",
    "description": "📰 A cozy daily mini-crossword, all about Maxwell.",
    "iframe": "games/builtin/crossword.html"
+  },
+  {
+   "id": "megalomaniac",
+   "title": "Megalomaniac Sans Fight",
+   "category": "Action",
+   "thumbnail": "",
+   "description": "🃏 Chaos, chaos! Take on the Megalomaniac fight. Arrow keys to move, Z to confirm, X to cancel.",
+   "iframe": "https://cross-0673.itch.io/megalomaniac"
   }
  ]
 }
