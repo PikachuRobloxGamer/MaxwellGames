@@ -560,111 +560,12 @@
    "external": true
   },
   {
-   "id": "judgement-hall",
-   "title": "Undertale: Judgement Hall",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "⚖️ Face Sans in the Judgement Hall.",
-   "iframe": "https://strainedpixels.itch.io/undertale-judgement-hall-fan-game",
-   "external": true
-  },
-  {
-   "id": "vhs-sans",
-   "title": "VHS Sans Fight (Your Fault)",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "📼 Glitchy AU Sans fight.",
-   "iframe": "https://badtime-x-x.itch.io/vhs-sans-fight-undertale-your-fault",
-   "external": true
-  },
-  {
-   "id": "sans-custom-fight",
-   "title": "Sans Custom Fight",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "🛠️ Build your own Sans attacks, then fight.",
-   "iframe": "https://frankie-dalton.itch.io/sans-custom-fight-hinicetomeetya-bad-time-simulator",
-   "external": true
-  },
-  {
-   "id": "hardmode-sans-siki",
-   "title": "HardMode Sans by Siki",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "💀 A tougher Sans fight.",
-   "iframe": "https://gamejolt.com/games/uthm/676194",
-   "external": true
-  },
-  {
-   "id": "hardmode-sans-tortik",
-   "title": "Hardmode Sans by Tortik678",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "💀 Another hardmode Sans battle.",
-   "iframe": "https://gamejolt.com/games/tortik/622798",
-   "external": true
-  },
-  {
-   "id": "hardmode-sans-phase2",
-   "title": "Hardmode Sans Phase 2",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "💀 Phase-2 hardmode Sans.",
-   "iframe": "https://gamejolt.com/games/12370/890964",
-   "external": true
-  },
-  {
-   "id": "early-genocide-sans",
-   "title": "Early Genocide Hardmode Sans",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "💀 Early-route hardmode Sans fight.",
-   "iframe": "https://gamejolt.com/games/early-hardmode-sans-fight/613587",
-   "external": true
-  },
-  {
    "id": "true-hero-jsab",
    "title": "Battle Against a True Hero (Undyne)",
    "category": "Action",
    "thumbnail": "",
    "description": "🔱 Undyne fight, Just Shapes & Beats style.",
    "iframe": "https://codeyhuntting.itch.io/battle-against-a-true-hero-just-shapes-and-beats-edition",
-   "external": true
-  },
-  {
-   "id": "undyne-2d",
-   "title": "Undyne 2D Fight",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "🔱 Battle Undyne the Undying.",
-   "iframe": "https://sezame.itch.io/undertale-undyne-2d-fight",
-   "external": true
-  },
-  {
-   "id": "underfell-undyne",
-   "title": "Underfell Undyne the Undying",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "🔱 AU Undyne the Undying.",
-   "iframe": "https://pcshadowwz.itch.io/underfellundyne",
-   "external": true
-  },
-  {
-   "id": "undyne-remake",
-   "title": "Undyne the Undying Remake",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "🔱 Remade Undyne the Undying fight.",
-   "iframe": "https://rg00.itch.io/undyne-the-undying-fight-remake",
-   "external": true
-  },
-  {
-   "id": "chara-attacks",
-   "title": "Chara Attacks",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "🔪 Fight with Chara's attacks.",
-   "iframe": "https://r42003.itch.io/chara-attacks",
    "external": true
   },
   {
@@ -686,15 +587,6 @@
    "external": true
   },
   {
-   "id": "big-shot",
-   "title": "BIG SHOT",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "📸 Take on Spamton NEO.",
-   "iframe": "https://sdlt010.itch.io/big-shot",
-   "external": true
-  },
-  {
    "id": "roaring-knight-remake",
    "title": "Roaring Knight Remake",
    "category": "Action",
@@ -710,15 +602,6 @@
    "thumbnail": "",
    "description": "⚔️ Deltarune x JoJo boss fight.",
    "iframe": "https://zenlaeth.itch.io/jojorune-vs-dio",
-   "external": true
-  },
-  {
-   "id": "deltarune-fight-club",
-   "title": "Deltarune Fight Club",
-   "category": "Action",
-   "thumbnail": "",
-   "description": "🥊 Pick a boss and fight.",
-   "iframe": "https://captainspeedypants.itch.io/dfc",
    "external": true
   },
   {
