@@ -988,6 +988,7 @@
       }
       persist(); applyLooks(); applyMaxwell(); updateHud();
       if (!$("panel").classList.contains("hidden")) renderPanel();
+      if (was !== r) { try { window.dispatchEvent(new CustomEvent("mg-role", { detail: r })); } catch (e) {} }
     },
     unlockAllAch() { ACH.forEach((a) => { if (!save.ach.includes(a.id)) save.ach.push(a.id); }); persist(); updateHud(); },
     markJukebox() { if (!save.jukebox) { save.jukebox = 1; addTreats(5); } checkAch(); persist(); },

@@ -144,7 +144,19 @@ function switchTab(name) {
   renderGrid();
 }
 
-function items() { return TABS[currentTab].items; }
+// Games marked "ownerOnly" in games1.json only show up when the owner is logged in.
+const OWNER_HASH = "03187c39b7ed90e6ad2efde77f3061ecb4ee920316ce29414fb281d31e8b9b55";
+function isOwnerNow() {
+  try { if (window.MG && MG.role) return MG.role === "owner"; } catch (e) {}
+  try { return localStorage.getItem("maxwellgames-owner") === OWNER_HASH; } catch (e) { return false; }
+}
+function canSeeItem(g) { return !g.ownerOnly || isOwnerNow(); }
+function items() { return TABS[currentTab].items.filter(canSeeItem); }
+window.addEventListener("mg-role", () => {
+  if (currentTab === "sounds") return;
+  renderCategories();
+  renderGrid();
+});
 
 function renderCategories() {
   const special = [];
@@ -288,7 +300,7 @@ function openFromHash() {
   const isProxy = h.startsWith("proxy-");
   const name = isProxy ? "proxies" : "games";
   const id = isProxy ? h.slice(6) : h;
-  const item = TABS[name].items.find((g) => g.id === id);
+  const item = TABS[name].items.find((g) => g.id === id && canSeeItem(g));
   if (!item) return false;
   switchTab(name);
   openGame(item);

@@ -485,8 +485,9 @@
    "title": "Soul Script",
    "category": "🐱 Maxwell Originals",
    "thumbnail": "games/soulscript/thumb.svg",
-   "description": "Learn JavaScript in an Undertale-style RPG! 16 coding lessons, real code challenges, a shop, and 4 bullet-dodging boss fights. Arrow keys / WASD to dodge, Z or Enter to continue.",
-   "iframe": "games/soulscript/index.html"
+   "description": "👑 Owner only. Learn JavaScript in an Undertale-style RPG! 16 coding lessons, real code challenges, a shop, and 4 bullet-dodging boss fights. Arrow keys / WASD to dodge, Z or Enter to continue.",
+   "iframe": "games/soulscript/index.html",
+   "ownerOnly": true
   },
   {
    "id": "megalomaniac",
