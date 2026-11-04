@@ -497,6 +497,14 @@
    "description": "💀 Survive Larekun's brutal HardMode Sans fight! Arrow keys to move, Z to confirm, X to cancel.",
    "iframe": "https://gamejolt.com/games/HDMS/977374",
    "external": true
+  },
+  {
+   "id": "kaizo-knight",
+   "title": "Kaizo Knight",
+   "category": "Action",
+   "thumbnail": "",
+   "description": "⚔️ A brutally tough knight platformer — precise jumps and no mercy!",
+   "iframe": "https://mezu-bezu.github.io/kaizo-knight-browser/"
   }
  ]
 }
