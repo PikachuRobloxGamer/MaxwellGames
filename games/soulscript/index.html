@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Soul Script</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a single dark "underground" world — sticky HUD, one active screen at a time, pixel display face over a readable body face. */
+:root{
+  color-scheme: dark;
+  --bg:#0b0a14; --panel:#15132b; --panel2:#1d1a3a; --line:#f2efe6; --dim:#9a94bd; --faint:#3a3560;
+  --gold:#ffd23f; --soul:#ff2a4b; --ok:#59e39b; --bad:#ff5c6c; --ice:#8fd3ff; --ember:#ff9f43;
+  --code-bg:#0f0d1f; --t-k:#c79bff; --t-s:#ffd27a; --t-n:#7fe3ff; --t-c:#6f6a92; --t-g:#7ef2b8;
+  --f-display:"Pixelify Sans", "Courier New", monospace;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-code:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+html,body{background:var(--bg);color:var(--line)}
+body{font-family:var(--f-body);font-size:16px;line-height:1.55;min-height:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+code,pre{font-family:var(--f-code)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* HUD */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:2px solid var(--faint)}
+.hud .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-block:10px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.04em;display:flex;align-items:center;gap:8px;background:none;border:0;padding:0}
+.brand .h{width:16px;height:16px;image-rendering:pixelated}
+.stats{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-family:var(--f-display);font-size:15px}
+.stat b{color:var(--gold);font-weight:600}
+.xpbar{width:110px;height:8px;background:var(--faint);display:inline-block;vertical-align:middle;position:relative}
+.xpbar i{position:absolute;inset:0 auto 0 0;background:var(--gold);width:0}
+.nav{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.nav button{background:transparent;border:2px solid var(--faint);padding:4px 10px;font-family:var(--f-display);font-size:15px}
+.nav button:hover{border-color:var(--line)}
+.nav button[aria-current="true"]{border-color:var(--gold);color:var(--gold)}
+
+main{padding-block:22px 60px}
+.screen{animation:fadein .25s ease}
+@keyframes fadein{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.px{font-family:var(--f-display)}
+.btn{background:transparent;border:2px solid var(--line);padding:8px 16px;font-family:var(--f-display);font-size:17px;letter-spacing:.03em;display:inline-flex;align-items:center;gap:8px}
+.btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold)}
+.btn.primary{background:var(--gold);color:#1a1405;border-color:var(--gold)}
+.btn.primary:hover:not(:disabled){background:#ffe27a;color:#1a1405}
+.btn.small{padding:4px 10px;font-size:14px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.eyebrow{font-family:var(--f-display);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;text-wrap:balance;margin:0;line-height:1.15}
+h2{font-size:28px}
+h3{font-size:20px}
+p{margin:0}
+code.i{background:var(--code-bg);border:1px solid var(--faint);padding:0 5px;font-size:.88em;color:var(--t-s)}
+
+/* Title */
+.title{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:center;padding-block:24px}
+.title h1{font-size:clamp(44px,8vw,86px);letter-spacing:.02em;line-height:.95}
+.title h1 span{color:var(--gold)}
+.title .lead{font-size:19px;color:var(--dim);margin-top:14px;max-width:46ch}
+.title .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;align-items:center}
+.name-in{display:flex;gap:8px;align-items:center;margin-top:24px;flex-wrap:wrap}
+.name-in label{font-family:var(--f-display);color:var(--dim)}
+.name-in input{background:var(--code-bg);border:2px solid var(--faint);color:var(--line);font-family:var(--f-display);font-size:18px;padding:6px 10px;width:12ch}
+#titleCanvas{width:100%;max-width:480px;aspect-ratio:1;justify-self:center;image-rendering:pixelated}
+.features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:28px;border-top:2px solid var(--faint);padding-top:22px}
+.features div{font-size:15px;color:var(--dim)}
+.features b{display:block;font-family:var(--f-display);color:var(--line);font-size:17px;margin-bottom:2px}
+
+/* Map */
+.map-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px;margin-bottom:18px}
+.progress-line{font-family:var(--f-display);color:var(--dim)}
+.progress-line b{color:var(--gold)}
+.zone{border:2px solid var(--faint);padding:18px 18px 22px;margin-bottom:16px;position:relative;background:linear-gradient(90deg,color-mix(in srgb,var(--zc) 9%,transparent),transparent 60%)}
+.zone.locked{opacity:.5}
+.zone-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.zone h3{color:var(--zc)}
+.zone .zdesc{color:var(--dim);font-size:15px;margin-top:4px;max-width:70ch}
+.path{display:flex;align-items:center;gap:0;margin-top:18px;overflow-x:auto;padding:6px 2px 4px}
+.node{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;width:118px}
+.node .dot{width:46px;height:46px;border:3px solid var(--faint);display:grid;place-items:center;font-family:var(--f-display);font-size:18px;background:var(--bg)}
+.node .lbl{font-size:13px;color:var(--dim);text-align:center;line-height:1.25;max-width:110px}
+.node.done .dot{border-color:var(--gold);background:var(--gold);color:#1a1405}
+.node.open .dot{border-color:var(--line);animation:pulse 1.4s infinite}
+.node.open .lbl{color:var(--line)}
+.node.boss .dot{width:56px;height:56px;border-color:var(--zc)}
+.node.boss.open .dot{background:color-mix(in srgb,var(--zc) 25%,transparent)}
+.node.boss.done .dot{background:var(--zc);color:#100}
+.node.lock{cursor:not-allowed}
+.node:not(.lock):hover .dot{transform:translateY(-2px)}
+.link{flex:1 0 24px;height:3px;background:var(--faint);min-width:24px}
+.link.on{background:var(--gold)}
+@keyframes pulse{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--gold) 25%,transparent)}}
+
+/* Lesson */
+.lhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.steps{display:flex;gap:6px;font-family:var(--f-display);font-size:14px}
+.steps span{border:2px solid var(--faint);padding:2px 10px;color:var(--dim)}
+.steps span.on{border-color:var(--gold);color:var(--gold)}
+.steps span.ok{border-color:var(--ok);color:var(--ok)}
+.learn{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+.talk{display:flex;gap:14px;align-items:flex-start}
+.talk canvas{width:84px;height:84px;flex:0 0 84px;image-rendering:pixelated}
+.bubble{border:3px solid var(--line);padding:16px 18px;flex:1;min-width:0;min-height:170px;display:flex;flex-direction:column;background:var(--bg)}
+.bubble .who{font-family:var(--f-display);color:var(--gold);font-size:15px;margin-bottom:6px}
+.bubble p{font-size:18px;line-height:1.6;flex:1;max-width:60ch}
+.talk-nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:8px}
+.pdots{display:flex;gap:5px}
+.pdots i{width:8px;height:8px;background:var(--faint)}
+.pdots i.on{background:var(--gold)}
+.example{border:2px solid var(--faint);background:var(--code-bg);min-width:0}
+.ex-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:2px solid var(--faint);gap:8px}
+.ex-bar span{font-family:var(--f-display);font-size:14px;color:var(--dim)}
+pre.code{margin:0;padding:14px 16px;font-size:14.5px;line-height:1.6;overflow-x:auto;white-space:pre}
+.out{border-top:2px solid var(--faint);padding:10px 16px;font-family:var(--f-code);font-size:14px;min-height:44px;color:var(--ok);white-space:pre-wrap;word-break:break-word}
+.out .err{color:var(--bad)}
+.out .muted{color:var(--dim)}
+.t-k{color:var(--t-k)}.t-s{color:var(--t-s)}.t-n{color:var(--t-n)}.t-c{color:var(--t-c);font-style:italic}.t-g{color:var(--t-g)}
+
+.quiz{max-width:760px}
+.quiz .q{font-size:20px;margin:6px 0 14px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.opt{text-align:left;background:transparent;border:2px solid var(--faint);padding:12px 14px;font-family:var(--f-code);font-size:15px;display:flex;gap:10px;align-items:flex-start;min-width:0;word-break:break-word}
+.opt:hover:not(:disabled){border-color:var(--line)}
+.opt .k{font-family:var(--f-display);color:var(--dim)}
+.opt.right{border-color:var(--ok);color:var(--ok)}
+.opt.wrong{border-color:var(--bad);color:var(--bad);animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.why{margin-top:14px;border-left:4px solid var(--gold);padding:6px 12px;color:var(--line);font-size:16px}
+
+.chal{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:20px;align-items:start}
+.task{border:2px solid var(--faint);padding:16px}
+.task h3{margin-bottom:8px}
+.task p{color:var(--line);font-size:16px}
+.tests{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:6px}
+.tests li{display:flex;gap:10px;align-items:flex-start;font-size:15px;color:var(--dim)}
+.tests li .m{font-family:var(--f-display);width:18px;flex:0 0 18px;text-align:center}
+.tests li.pass{color:var(--ok)}
+.tests li.fail{color:var(--bad)}
+.hints{margin-top:14px;display:grid;gap:8px}
+.hint{border:2px dashed var(--faint);padding:8px 12px;font-size:15px}
+.hint b{font-family:var(--f-display);color:var(--gold);font-weight:600}
+.ide{display:flex;border:2px solid var(--faint);background:var(--code-bg);height:320px;min-width:0}
+.ide.tall{height:380px}
+.gutter{flex:0 0 40px;padding:12px 6px 12px 0;text-align:right;color:var(--t-c);font-family:var(--f-code);font-size:14px;line-height:1.6;overflow:hidden;user-select:none;border-right:1px solid var(--faint);white-space:pre}
+.ed-wrap{position:relative;flex:1;min-width:0}
+.ed-wrap pre,.ed-wrap textarea{position:absolute;inset:0;margin:0;padding:12px 14px;font-family:var(--f-code);font-size:14px;line-height:1.6;white-space:pre;tab-size:2;border:0;letter-spacing:0;word-spacing:0}
+.ed-wrap pre{overflow:hidden;pointer-events:none;color:var(--line)}
+.ed-wrap textarea{background:transparent;color:transparent;caret-color:var(--gold);resize:none;overflow:auto;outline:none}
+.ed-wrap textarea::selection{background:color-mix(in srgb,var(--gold) 30%,transparent);color:transparent}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+.actions .sp{flex:1}
+.kbd{font-size:13px;color:var(--dim)}
+.console{border:2px solid var(--faint);border-top:0;background:var(--code-bg)}
+.console .out{border-top:0;max-height:160px;overflow:auto}
+.donebox{max-width:620px;border:3px solid var(--gold);padding:24px;text-align:left}
+.donebox h2{color:var(--gold)}
+.rewards{display:flex;gap:18px;margin:16px 0;font-family:var(--f-display);font-size:20px;flex-wrap:wrap}
+.rewards span b{color:var(--gold)}
+
+/* Battle */
+.battle{max-width:680px;margin:0 auto}
+.bcan-wrap{position:relative}
+#bc{width:100%;aspect-ratio:4/3;background:#000;display:block;image-rendering:pixelated;touch-action:none;border:2px solid var(--faint)}
+.bstat{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-family:var(--f-display);font-size:18px;margin-top:12px}
+.hpbar{width:120px;height:18px;background:var(--bad);position:relative;display:inline-block;vertical-align:middle}
+.hpbar i{position:absolute;inset:0 auto 0 0;background:var(--gold);transition:width .2s}
+.bbtns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.bbtn{background:transparent;border:3px solid var(--ember);color:var(--ember);font-family:var(--f-display);font-size:20px;font-weight:600;padding:10px 4px;letter-spacing:.05em}
+.bbtn:hover:not(:disabled),.bbtn:focus-visible{border-color:var(--gold);color:var(--gold)}
+.bbtn:disabled{opacity:.35;cursor:not-allowed}
+.bbtn.spare{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 25%,transparent)}
+.bpanel{border:3px solid var(--line);padding:14px 16px;margin-top:12px;background:var(--bg)}
+.bpanel .q{font-size:17px;margin-bottom:10px}
+.timer{height:6px;background:var(--faint);margin-top:12px;position:relative}
+.timer i{position:absolute;inset:0 auto 0 0;background:var(--gold)}
+.plist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.plist button{text-align:left;background:transparent;border:2px solid var(--faint);padding:10px 12px;font-family:var(--f-display);font-size:17px}
+.plist button:hover{border-color:var(--gold);color:var(--gold)}
+.plist small{display:block;font-family:var(--f-body);font-size:13px;color:var(--dim)}
+.touch-tip{font-size:13px;color:var(--dim);margin-top:8px;text-align:center}
+
+/* Shop */
+.shop{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:24px;align-items:start}
+.keeper{border:3px solid var(--line);padding:16px;text-align:center}
+.keeper canvas{width:120px;height:120px;image-rendering:pixelated}
+.keeper p{text-align:left;font-size:16px;margin-top:10px}
+.items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.item{border:2px solid var(--faint);padding:14px;display:flex;flex-direction:column;gap:6px}
+.item .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.item h3{font-size:18px}
+.item .price{font-family:var(--f-display);color:var(--gold);white-space:nowrap}
+.item p{font-size:14.5px;color:var(--dim);flex:1}
+.item .own{font-family:var(--f-display);font-size:14px;color:var(--ok)}
+.swatch{display:inline-block;width:12px;height:12px;vertical-align:middle;margin-right:6px}
+
+/* Playground */
+.play{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+#pc{width:100%;aspect-ratio:4/3;background:#000;display:block;border:2px solid var(--faint);image-rendering:pixelated}
+.play select{background:var(--code-bg);color:var(--line);border:2px solid var(--faint);font-family:var(--f-display);font-size:15px;padding:6px 8px}
+.ref{margin-top:14px;border:2px solid var(--faint);padding:12px 14px;font-size:14.5px;color:var(--dim)}
+.ref b{color:var(--line);font-family:var(--f-display);font-weight:600}
+
+/* Stats */
+.statsgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.sbox{border:2px solid var(--faint);padding:12px 14px}
+.sbox .v{font-family:var(--f-display);font-size:30px;color:var(--gold);font-variant-numeric:tabular-nums}
+.sbox .l{font-size:14px;color:var(--dim)}
+.achs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.ach{border:2px solid var(--faint);padding:10px 12px;opacity:.45}
+.ach.got{opacity:1;border-color:var(--gold)}
+.ach b{font-family:var(--f-display);display:block}
+.ach span{font-size:14px;color:var(--dim)}
+.colors{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.colors button{border:2px solid var(--faint);background:transparent;padding:6px 10px;font-family:var(--f-display)}
+.colors button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+.danger{margin-top:28px;border-top:2px solid var(--faint);padding-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* Toasts */
+.toasts{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;z-index:20;max-width:min(340px,calc(100vw - 32px))}
+.toast{background:var(--panel);border:2px solid var(--gold);padding:10px 14px;font-family:var(--f-display);font-size:16px;animation:tin .25s ease}
+.toast small{display:block;font-family:var(--f-body);color:var(--dim);font-size:13px}
+@keyframes tin{from{transform:translateY(10px);opacity:0}}
+
+@media (max-width:860px){
+  .title,.learn,.chal,.play,.shop{grid-template-columns:minmax(0,1fr)}
+  .features,.statsgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .achs,.items{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #titleCanvas{max-width:280px;order:-1}
+}
+@media (max-width:520px){
+  .opts,.plist,.items,.achs{grid-template-columns:minmax(0,1fr)}
+  .bbtn{font-size:16px}
+  .nav{margin-left:0}
+  .bubble p{font-size:16.5px}
+  .talk canvas{width:56px;height:56px;flex-basis:56px}
+  h2{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Ask Byte (AI helper) */
+.ask-fab{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;align-items:center;gap:8px;background:var(--panel);border:3px solid var(--gold);color:var(--gold);font-family:var(--f-display);font-size:17px;padding:8px 14px 8px 10px}
+.ask-fab canvas{width:28px;height:28px;image-rendering:pixelated}
+.ask-fab:hover{background:var(--panel2)}
+.chat{position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);z-index:30;background:var(--bg);border-left:3px solid var(--line);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px);animation:slidein .2s ease}
+@keyframes slidein{from{transform:translateX(30px);opacity:.5}}
+.chat-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:2px solid var(--faint)}
+.chat-head canvas{width:36px;height:36px;image-rendering:pixelated}
+.chat-head h3{font-size:19px}
+.chat-head .ctx{font-size:12.5px;color:var(--dim);line-height:1.3}
+.chat-head .x{margin-left:auto;background:none;border:2px solid var(--faint);font-family:var(--f-display);padding:2px 10px;font-size:16px}
+.msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:92%;font-size:15.5px;line-height:1.55;min-width:0}
+.msg.me{align-self:flex-end;background:var(--panel2);border:2px solid var(--faint);padding:8px 12px;white-space:pre-wrap;word-break:break-word}
+.msg.bot{align-self:flex-start;border-left:3px solid var(--gold);padding:2px 0 2px 12px}
+.msg.bot p{margin:0 0 8px}
+.msg.bot p:last-child{margin-bottom:0}
+.msg.bot ul,.msg.bot ol{margin:4px 0 8px;padding-left:20px}
+.msg.bot .think{color:var(--dim);font-family:var(--f-display)}
+.msg.bot .think::after{content:"";animation:dots 1.2s steps(4) infinite}
+@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+.msg.err{color:var(--bad);font-size:14px;border-left-color:var(--bad)}
+.cblock{border:2px solid var(--faint);background:var(--code-bg);margin:6px 0 10px;min-width:0}
+.cblock pre{margin:0;padding:10px 12px;font-size:13.5px;line-height:1.55;overflow-x:auto}
+.cblock .cb-bar{display:flex;gap:6px;justify-content:flex-end;padding:4px 6px;border-top:1px solid var(--faint)}
+.cblock .cb-bar button{background:none;border:1px solid var(--faint);font-family:var(--f-display);font-size:13px;padding:2px 8px;color:var(--dim)}
+.cblock .cb-bar button:hover{color:var(--gold);border-color:var(--gold)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px}
+.chips button{background:none;border:2px solid var(--faint);font-size:13.5px;padding:4px 10px;color:var(--line)}
+.chips button:hover{border-color:var(--gold);color:var(--gold)}
+.chat form{display:flex;gap:8px;padding:10px 14px 14px;border-top:2px solid var(--faint);align-items:flex-end}
+.chat textarea{flex:1;min-width:0;resize:none;background:var(--code-bg);border:2px solid var(--faint);color:var(--line);font-family:var(--f-body);font-size:15.5px;padding:8px 10px;max-height:140px;line-height:1.4}
+.chat-note{font-size:12px;color:var(--dim);padding:0 14px 8px}
+@media (max-width:520px){.ask-fab span{display:none}.ask-fab{padding:8px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="hud" id="hud">
+  <div class="wrap">
+    <button class="brand" data-go="map" aria-label="Soul Script map"><canvas class="h" id="brandHeart" width="7" height="6"></canvas>SOUL SCRIPT</button>
+    <div class="stats" id="hudStats" hidden>
+      <span class="stat" id="hudName">KID</span>
+      <span class="stat">LV <b id="hudLv">1</b></span>
+      <span class="stat">HP <b id="hudHp">20</b></span>
+      <span class="stat"><span class="xpbar"><i id="hudXp"></i></span> <span id="hudXpT" style="color:var(--dim)">0 XP</span></span>
+      <span class="stat"><b id="hudG">0</b> G</span>
+    </div>
+    <nav class="nav" id="nav" hidden>
+      <button data-go="map">Map</button>
+      <button data-go="shop">Shop</button>
+      <button data-go="play">Playground</button>
+      <button data-go="stats">Stats</button>
+      <button id="muteBtn" aria-label="Toggle sound">Sound: on</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- TITLE -->
+  <section class="screen" id="scr-title">
+    <div class="title">
+      <div>
+        <div class="eyebrow">A JavaScript adventure in 4 zones</div>
+        <h1>SOUL<br><span>SCRIPT</span></h1>
+        <p class="lead">You fell into an underground made of code. Learn JavaScript from Byte the lantern, write real programs, and beat bosses in bullet-dodging battles where your answers are your attacks.</p>
+        <div class="name-in">
+          <label for="nameIn">Name the fallen coder:</label>
+          <input id="nameIn" maxlength="10" value="KID" autocomplete="off">
+        </div>
+        <div class="row">
+          <button class="btn primary" id="startBtn">Start ▸</button>
+          <span class="kbd" id="saveNote"></span>
+        </div>
+      </div>
+      <canvas id="titleCanvas" width="240" height="240" aria-hidden="true"></canvas>
+    </div>
+    <div class="features">
+      <div><b>16 lessons</b>From console.log to bullet patterns, each with Python comparisons.</div>
+      <div><b>Real code</b>Write JavaScript in an editor and pass live tests.</div>
+      <div><b>4 boss fights</b>Dodge attacks, answer to FIGHT, ACT to win with MERCY.</div>
+      <div><b>Playground</b>Build your own battle box and fangame bits.</div>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <section class="screen" id="scr-map" hidden>
+    <div class="map-head">
+      <div><div class="eyebrow">World map</div><h2>The Underground</h2></div>
+      <div class="progress-line" id="progLine"></div>
+    </div>
+    <div id="zones"></div>
+  </section>
+
+  <!-- LESSON -->
+  <section class="screen" id="scr-lesson" hidden>
+    <div class="lhead">
+      <div><div class="eyebrow" id="lZone"></div><h2 id="lTitle"></h2></div>
+      <div class="steps" id="lSteps"><span>Learn</span><span>Quiz</span><span>Code</span></div>
+    </div>
+
+    <div id="stLearn" class="learn">
+      <div class="talk">
+        <canvas id="byteCan" width="12" height="12" aria-hidden="true"></canvas>
+        <div class="bubble">
+          <div class="who">BYTE</div>
+          <p id="talkText" aria-live="polite"></p>
+          <div class="talk-nav">
+            <button class="btn small" id="pgBack">◂ Back</button>
+            <div class="pdots" id="pDots"></div>
+            <button class="btn small primary" id="pgNext">Next ▸</button>
+          </div>
+        </div>
+      </div>
+      <div class="example" id="exBox">
+        <div class="ex-bar"><span>example.js</span><span style="display:flex;gap:6px"><button class="btn small" id="exAsk" hidden>Ask about this</button><button class="btn small" id="exRun">Run ▶</button></span></div>
+        <pre class="code" id="exCode"></pre>
+        <div class="out" id="exOut"><span class="muted">Press Run to see the output.</span></div>
+      </div>
+    </div>
+
+    <div id="stQuiz" class="quiz" hidden>
+      <div class="eyebrow">Quick check</div>
+      <p class="q" id="qText"></p>
+      <div class="example" id="qCodeBox"><pre class="code" id="qCode"></pre></div>
+      <div class="opts" id="qOpts"></div>
+      <div class="why" id="qWhy" hidden></div>
+      <div class="actions"><button class="btn primary" id="qNext" hidden>Start the code challenge ▸</button></div>
+    </div>
+
+    <div id="stCode" class="chal" hidden>
+      <div>
+        <div class="task">
+          <div class="eyebrow">Challenge</div>
+          <h3 id="cTitle">Your task</h3>
+          <p id="cTask"></p>
+          <ul class="tests" id="cTests"></ul>
+          <div class="hints" id="cHints"></div>
+        </div>
+      </div>
+      <div style="min-width:0">
+        <div id="cEditor"></div>
+        <div class="console"><div class="out" id="cOut"><span class="muted">Console output appears here.</span></div></div>
+        <div class="actions">
+          <button class="btn primary" id="cRun">Run tests ▶</button>
+          <button class="btn small" id="cHint">Hint</button>
+          <button class="btn small" id="cSol">Solution</button>
+          <button class="btn small" id="cReset">Reset</button>
+          <button class="btn small" id="cAsk" hidden>Ask Byte why</button>
+          <span class="sp"></span><span class="kbd">Ctrl + Enter runs</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="stDone" hidden>
+      <div class="donebox">
+        <div class="eyebrow">Level cleared</div>
+        <h2 id="dTitle">* You feel your skills growing.</h2>
+        <div class="rewards" id="dRewards"></div>
+        <p id="dMsg" style="color:var(--dim)"></p>
+        <div class="actions" style="margin-top:16px">
+          <button class="btn primary" id="dNext">Next ▸</button>
+          <button class="btn" data-go="map">Map</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BATTLE -->
+  <section class="screen" id="scr-battle" hidden>
+    <div class="battle">
+      <div class="bcan-wrap"><canvas id="bc" width="640" height="480"></canvas></div>
+      <div class="bstat">
+        <span id="bName">KID</span><span>LV <span id="bLv">1</span></span>
+        <span>HP <span class="hpbar"><i id="bHpFill"></i></span> <span id="bHp">20 / 20</span></span>
+      </div>
+      <div class="bbtns" id="bBtns">
+        <button class="bbtn" data-act="fight">✦ FIGHT</button>
+        <button class="bbtn" data-act="act">◉ ACT</button>
+        <button class="bbtn" data-act="item">✚ ITEM</button>
+        <button class="bbtn" data-act="mercy">✕ MERCY</button>
+      </div>
+      <div class="bpanel" id="bPanel" hidden></div>
+      <p class="touch-tip">Arrow keys or WASD move your soul. On touch screens, drag anywhere on the battle screen. Z, Enter or a tap moves dialogue along.</p>
+    </div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="screen" id="scr-shop" hidden>
+    <div class="map-head"><div><div class="eyebrow">Spend your G</div><h2>Byte's Lantern Shop</h2></div><div class="progress-line">You have <b id="shopG">0</b> G · <b id="shopHints">0</b> hint tokens</div></div>
+    <div class="shop">
+      <div class="keeper"><canvas id="keeperCan" width="12" height="12" aria-hidden="true"></canvas><p id="keeperLine">* Welcome! Everything here was made with JavaScript. Even me.</p></div>
+      <div class="items" id="shopItems"></div>
+    </div>
+  </section>
+
+  <!-- PLAYGROUND -->
+  <section class="screen" id="scr-play" hidden>
+    <div class="map-head"><div><div class="eyebrow">Free build</div><h2>Fangame Playground</h2></div>
+      <div class="actions" style="margin:0"><label class="kbd" for="preset">Start from:</label><select id="preset"></select></div></div>
+    <div class="play">
+      <div style="min-width:0">
+        <div id="pEditor"></div>
+        <div class="actions">
+          <button class="btn primary" id="pRun">Run ▶</button>
+          <button class="btn small" id="pStop">Stop</button>
+          <span class="sp"></span><span class="kbd">Ctrl + Enter runs</span>
+        </div>
+      </div>
+      <div style="min-width:0">
+        <canvas id="pc" width="480" height="360" tabindex="0" aria-label="Playground game screen"></canvas>
+        <div class="console"><div class="out" id="pOut"><span class="muted">Click the game screen, then use the arrow keys.</span></div></div>
+        <div class="ref"><b>How it works.</b> Write a <code class="i">update(keys, frame)</code> function and a <code class="i">draw(ctx)</code> function. They both run 60 times per second. <code class="i">keys.ArrowLeft</code> is true while that key is held. The screen is 480 × 360 and y grows downward. <code class="i">console.log</code> prints below the game.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="screen" id="scr-stats" hidden>
+    <div class="eyebrow">Your save file</div><h2 id="stName">KID</h2>
+    <div class="statsgrid" id="statsGrid"></div>
+    <h3>Soul color</h3>
+    <div class="colors" id="colorPick"></div>
+    <h3 style="margin-top:24px">Achievements</h3>
+    <div class="achs" id="achList"></div>
+    <div class="danger">
+      <button class="btn small" id="resetBtn">Erase save</button>
+      <span id="resetConfirm" hidden><span class="kbd">This deletes all progress.</span> <button class="btn small" id="resetYes" style="border-color:var(--bad);color:var(--bad)">Yes, erase</button> <button class="btn small" id="resetNo">Keep it</button></span>
+    </div>
+  </section>
+</main>
+
+
+<button class="ask-fab" id="askFab" hidden aria-label="Ask Byte, your AI coding helper"><canvas id="fabCan" width="12" height="12"></canvas><span>Ask Byte</span></button>
+<aside class="chat" id="chat" hidden aria-label="Ask Byte">
+  <div class="chat-head">
+    <canvas id="chatCan" width="12" height="12" aria-hidden="true"></canvas>
+    <div><h3>Ask Byte</h3><div class="ctx" id="chatCtx">Sees your lesson and your code</div></div>
+    <button class="x" id="chatClose" aria-label="Close">✕</button>
+  </div>
+  <div class="msgs" id="msgs" aria-live="polite"></div>
+  <div class="chips" id="chips"></div>
+  <div class="chat-note" id="chatNote">Byte can see what's on your screen, including your code and test results.</div>
+  <form id="chatForm">
+    <textarea id="chatIn" rows="2" placeholder="Ask anything about JavaScript or your fangame…" aria-label="Your question"></textarea>
+    <button class="btn primary small" id="chatSend" type="submit">Send</button>
+    <button class="btn small" id="chatStop" type="button" hidden>Stop</button>
+  </form>
+</aside>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script type="text/plain" id="worker-src">
+if (typeof window === "undefined") self.onmessage = function (e) {
+  self.postMessage(runAll(e.data.code, e.data.tests || [], e.data.src));
+};
+function fmt(v) {
+  if (typeof v === "string") return v;
+  if (v === undefined) return "undefined";
+  if (typeof v === "function") return "[function]";
+  try { return JSON.stringify(v); } catch (_) { return String(v); }
+}
+function makeConsole(arr) {
+  var f = function () { arr.push(Array.prototype.map.call(arguments, fmt).join(" ")); };
+  return { log: f, info: f, warn: f, error: f };
+}
+function runAll(code, tests, src) {
+  if (src === undefined) src = code;
+  var logs = [], results = [], error = null;
+  try { new Function("console", "__logs", "__code", code)(makeConsole(logs), logs, src); }
+  catch (err) { error = (err && err.name ? err.name + ": " : "") + (err && err.message ? err.message : String(err)); }
+  if (!error) {
+    for (var i = 0; i < tests.length; i++) {
+      var l = [];
+      try { results.push(!!new Function("console", "__logs", "__code", code + "\n;return (" + tests[i] + ");")(makeConsole(l), l, src)); }
+      catch (err) { results.push(false); }
+    }
+  }
+  return { logs: logs, results: results, error: error };
+}
+</script>
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const PAL = { k:"#1b1430", y:"#ffd23f", o:"#ff9f43", e:"#1b1430", w:"#fff6c9", g:"#6fcf6a", d:"#3e8f4a", m:"#b9b6cc",
+  i:"#a9e4ff", b:"#5aa7e0", r:"#ff2a4b", W:"#ffffff", c:"#5ff2c4", p:"#7a4dff", q:"#3a2380", s:"#c9c3d9", z:"#7b7394" };
+
+const SPR = {
+  byte:["....kkkk....","..kkyyyykk..",".kyywyyyyyk.","kyyyyyyyyyyk","kyyeeyyeeyyk","kyyeeyyeeyyk","kyyyyyyyyyyk","kyyyyooyyyyk",".kyyyyyyyyk.","..kkyyyykk..","....kyyk....",".....kk....."],
+  heart:[".xx.xx.","xxxxxxx","xxxxxxx",".xxxxx.","..xxx..","...x..."],
+  moss:["......kkkk......","....kkggggkk....","...kgggwwgggk...","..kggdggggdggk..","..kggggggggggk..",".kmmmmmmmmmmmmk.",".kmkkkkkkkkkkmk.",".kmkykkkkkkykmk.",".kmkkkkkkkkkkmk.",".kmmmmmmmmmmmmk.","..kdggggggggdk..","..kggk....kggk..","..kkkk....kkkk.."],
+  frost:[".....kkkkkk.....","...kkWiiiiWkk...","..kiiiiiiiiiik..",".kiiikkkkkkiiik.",".kiikWWWWWWkiik.",".kiikWWrrWWkiik.",".kiikWWrrWWkiik.",".kiikWWWWWWkiik.",".kiiikkkkkkiiik.","..kbiiiiiiiibk..","..kbbkbbbbkbbk..","...kk.kbbk.kk...","......kbbk......",".....kbbbbk.....","....kkkkkkkk...."],
+  gear:[".......kk.......","......kook......",".......kk.......","...kkkkkkkkkk...","..kssssssssssk..","..kskkkskkkksk..","..kskcckkccksk..","..kskkkskkkksk..","..kssssssssssk..","..ksskzkzkzksk..","..kssssssssssk..","...kkkkkkkkkk...",".kokzzzzzzzzkok.",".kk.kzzzzzzk.kk.","....kzk..kzk....","....kkk..kkk...."],
+  kernel:[".....kkkkkk.....","...kkppppppkk...","..kppqqqqqqppk..",".kpqqkkkkkkqqpk.",".kpqkWWWWWWkqpk.","kpqkWWrrrrWWkqpk","kpqkWrrkkrrWkqpk","kpqkWrrkkrrWkqpk","kpqkWWrrrrWWkqpk",".kpqkWWWWWWkqpk.",".kpqqkkkkkkqqpk.","..kppqqqqqqppk..","...kkppppppkk...","..k..kkkkkk..k..",".k.k........k.k."]
+};
+
+const SOUL_COLORS = { red:"#ff2a4b", cyan:"#5ff2e6", gold:"#ffd23f", violet:"#b48cff" };
+const LV_XP = [0,30,80,150,240,350,480,640,830,1050,1300,1600,1950,2350,2800,3300,3850,4450,5100,5800];
+
+const ZONES = [
+{ id:"caves", name:"Lantern Caves", color:"#7fb4ff", desc:"Where every coder lands first. Byte teaches printing, variables, math and text.",
+  levels:[
+  { id:"c1", title:"Hello, Underground", concept:"console.log",
+    pages:[
+      { t:"Hi! I'm Byte, the lantern that lights these caves. You already know some Python? Great. JavaScript will feel familiar, just with more curly braces.", code:"// Welcome to JavaScript!\nconsole.log(\"* You fell into the Underground.\");" },
+      { t:"In Python you print with `print()`. In JavaScript you use `console.log()`. Ending a line with a semicolon is optional, but it's a good habit.", code:"// Python:      print(\"Hello\")\n// JavaScript:\nconsole.log(\"Hello\");\nconsole.log(\"* You feel determined.\");" },
+      { t:"Comments start with `//` instead of `#`. You can also log numbers and math. Press Run on the right to try any example.", code:"// this line is ignored\nconsole.log(2 + 3);        // 5\nconsole.log(\"HP:\", 20);    // HP: 20" }
+    ],
+    quiz:{ q:"Which line prints text in JavaScript?", o:["print(\"Hi\")","console.log(\"Hi\");","echo \"Hi\"","log.console(\"Hi\");"], a:1, why:"console.log() writes to the console. It is JavaScript's version of Python's print()." },
+    ch:{ task:"Make the console print exactly this line: * You feel determined.", starter:"// Print the message on the line below\n\n",
+      tests:[["Prints \"* You feel determined.\"", '__logs.includes("* You feel determined.")']],
+      hints:["Use console.log( ) and put the text inside quotes.", "console.log(\"* You feel determined.\");"],
+      sol:"console.log(\"* You feel determined.\");" } },
+
+  { id:"c2", title:"Remember Things", concept:"let and const",
+    pages:[
+      { t:"Games need to remember things: HP, names, gold. In Python you write `hp = 20`. In JavaScript you add a keyword in front: `let`.", code:"let hp = 20;\nconsole.log(hp);\n\nhp = 15;          // let can change\nconsole.log(hp);" },
+      { t:"Use `const` for values that should never change, like a player's name or the size of the screen. Trying to change a const is an error.", code:"const playerName = \"Kid\";\nconst SCREEN_W = 640;\nconsole.log(playerName, SCREEN_W);" },
+      { t:"JavaScript names use camelCase: `maxHp`, `playerName`. Python uses snake_case like `max_hp`. Both work, but camelCase is the JavaScript style.", code:"let maxHp = 20;\nlet goldCoins = 0;\nconsole.log(maxHp, goldCoins);" }
+    ],
+    quiz:{ q:"Which keyword makes a variable that can NOT be reassigned?", o:["let","var","const","fixed"], a:2, why:"const locks the variable. Use let when the value will change, like hp during a battle." },
+    ch:{ task:"Create a variable hp equal to 20 using let. Create a constant playerName holding any name you want. Then log hp.", starter:"// 1. make hp\n\n// 2. make playerName\n\n// 3. log hp\n",
+      tests:[["hp is 20", 'typeof hp !== "undefined" && hp === 20'],["hp was made with let", '/\\blet\\s+hp\\b/.test(__code)'],["playerName is a non-empty string made with const", 'typeof playerName === "string" && playerName.length > 0 && /\\bconst\\s+playerName\\b/.test(__code)'],["The console shows 20", '__logs.includes("20")']],
+      hints:["Write: let hp = 20;", "Then: const playerName = \"Kid\"; and console.log(hp);"],
+      sol:"let hp = 20;\nconst playerName = \"Kid\";\nconsole.log(hp);" } },
+
+  { id:"c3", title:"Damage and Healing", concept:"math operators",
+    pages:[
+      { t:"Math works like Python: `+ - * /` and `%` for remainder. One difference: JavaScript has no `//`. Use `Math.floor()` to round down.", code:"console.log(10 + 5);      // 15\nconsole.log(7 % 3);       // 1\nconsole.log(Math.floor(7 / 2)); // 3" },
+      { t:"Shortcuts save typing. `hp -= 5` means hp = hp - 5. `hp += 3` heals. `turn++` adds one. Python has no `++`, but JavaScript does.", code:"let hp = 20;\nhp -= 5;   // took damage\nhp += 3;   // healed\nlet turn = 0;\nturn++;\nconsole.log(hp, turn); // 18 1" },
+      { t:"Random numbers make attacks unpredictable. `Math.random()` gives a decimal from 0 up to (not including) 1.", code:"// random whole number from 1 to 6\nlet roll = Math.floor(Math.random() * 6) + 1;\nconsole.log(\"You rolled\", roll);" }
+    ],
+    quiz:{ q:"What is hp at the end?", code:"let hp = 20;\nhp -= 5;\nhp += 2;", o:["15","17","22","27"], a:1, why:"20 minus 5 is 15, plus 2 is 17." },
+    ch:{ task:"The enemy hits for 7 damage. Subtract damage from hp using -=, then heal 3 using +=. hp should end at 16.", starter:"let hp = 20;\nlet damage = 7;\n\n// 1. subtract damage from hp\n\n// 2. heal 3\n\nconsole.log(hp);\n",
+      tests:[["hp ends at 16", 'hp === 16'],["Uses -= with damage", '/hp\\s*-=\\s*damage/.test(__code)'],["Uses += to heal", '/hp\\s*\\+=/.test(__code)']],
+      hints:["hp -= damage; subtracts the damage.", "Then add: hp += 3;"],
+      sol:"let hp = 20;\nlet damage = 7;\n\nhp -= damage;\nhp += 3;\n\nconsole.log(hp);" } },
+
+  { id:"c4", title:"Words and Messages", concept:"strings",
+    pages:[
+      { t:"Text is called a string. You can use double quotes, single quotes, or backticks. Join strings with `+`.", code:"const a = \"* Hello\";\nconst b = ', traveler.';\nconsole.log(a + b);" },
+      { t:"Backtick strings let you drop variables right in with `${ }`. It's exactly like a Python f-string, just with a dollar sign.", code:"const enemy = \"Mossling\";\nlet hp = 12;\n// Python: f\"* {enemy} has {hp} HP\"\nconsole.log(`* ${enemy} has ${hp} HP`);" },
+      { t:"Strings have handy tools. `.length` counts characters. `.toUpperCase()` shouts. Note: length has no brackets, it's a property.", code:"const name = \"Byte\";\nconsole.log(name.length);        // 4\nconsole.log(name.toUpperCase()); // BYTE" }
+    ],
+    quiz:{ q:"What does this print?", code:"const enemy = \"Mossling\";\nconsole.log(`* ${enemy} draws near!`);", o:["* ${enemy} draws near!","* Mossling draws near!","* enemy draws near!","An error"], a:1, why:"Inside backticks, ${enemy} is replaced with the variable's value." },
+    ch:{ task:"Make a constant called message using a backtick string and ${ }. It should equal: * Mossling has 12 HP. Then log it.", starter:"const enemy = \"Mossling\";\nlet hp = 12;\n\n// make message here\n\n",
+      tests:[["message is \"* Mossling has 12 HP.\"", 'message === "* Mossling has 12 HP."'],["Uses ${ } inside backticks", '__code.includes("${")'],["Logs the message", '__logs.includes("* Mossling has 12 HP.")']],
+      hints:["Start with: const message = `* ${enemy} has ...", "const message = `* ${enemy} has ${hp} HP.`; then console.log(message);"],
+      sol:"const enemy = \"Mossling\";\nlet hp = 12;\n\nconst message = `* ${enemy} has ${hp} HP.`;\nconsole.log(message);" } }
+  ],
+  boss:{ id:"b1", name:"Mossling Knight", spr:"moss", hp:60, atk:3, xp:100, gold:40, patterns:["rain","aimed"],
+    intro:"* Mossling Knight guards the cave exit. It rattles its helmet.",
+    flavor:["* Mossling Knight polishes its visor.","* Smells like damp moss and semicolons.","* Mossling Knight is counting its variables.","* The helmet creaks."],
+    taunts:["None shall pass without declaring variables!","My helmet is a const. It cannot be changed!","Prepare for 7 % 3 damage!","Hp -= YOU!"],
+    acts:[{ n:"Check", d:"See its stats", t:"* MOSSLING KNIGHT - ATK 3 DEF 1\n* Guards the first cave. Very proud of its helmet.", m:0 },
+          { n:"Compliment", d:"Praise the helmet", t:"* You compliment the helmet. Mossling Knight blushes a deeper green.", m:40 },
+          { n:"Debug", d:"Point out a typo", t:"* You point out a missing semicolon on its shield. It fixes it, grateful.", m:30 }],
+    qs:[
+      { q:"What does this print?", code:"let a = 5;\na += 3;\nconsole.log(a);", o:["5","8","53","3"], a:1, why:"a += 3 adds 3 to a, so 5 becomes 8." },
+      { q:"What happens?", code:"const x = 10;\nx = 3;", o:["x becomes 3","x stays 10, no error","Error: assignment to constant","x becomes 13"], a:2, why:"A const cannot be reassigned, so JavaScript throws a TypeError." },
+      { q:"What does this print?", code:"console.log(7 % 3);", o:["2.33","1","2","4"], a:1, why:"% gives the remainder. 7 divided by 3 is 2 with 1 left over." },
+      { q:"What does this print?", code:"console.log(\"HP: \" + 4 + 2);", o:["HP: 6","HP: 42","HP: 4 2","Error"], a:1, why:"Once a string is involved, + joins text. \"HP: \" + 4 gives \"HP: 4\", then + 2 gives \"HP: 42\"." },
+      { q:"What does this print?", code:"const n = \"soul\";\nconsole.log(n.length);", o:["3","4","5","undefined"], a:1, why:"\"soul\" has 4 characters." },
+      { q:"What does this print?", code:"console.log(`${2 * 3} hits`);", o:["${2 * 3} hits","2 * 3 hits","6 hits","Error"], a:2, why:"${ } runs the code inside, so 2 * 3 becomes 6." },
+      { q:"Which line is a comment in JavaScript?", code:"", o:["# heal the player","// heal the player","<!-- heal -->","-- heal"], a:1, why:"JavaScript comments start with //. Python uses #." },
+      { q:"What does this print?", code:"console.log(Math.floor(9 / 2));", o:["4.5","4","5","9"], a:1, why:"9 / 2 is 4.5, and Math.floor rounds down to 4." }
+    ] } },
+
+{ id:"snow", name:"Snowpine Woods", color:"#8fd3ff", desc:"Cold logic lives here. Learn true and false, if statements, and functions you can call again and again.",
+  levels:[
+  { id:"s1", title:"True or False", concept:"comparisons",
+    pages:[
+      { t:"A comparison gives back a boolean: `true` or `false`. Careful, they're lowercase in JavaScript. Python writes `True` and `False`.", code:"let hp = 4;\nconsole.log(hp > 0);   // true\nconsole.log(hp >= 10); // false" },
+      { t:"To check if two things are equal, use three equals signs: `===`. Not-equal is `!==`. The two-equals version `==` has strange rules, so skip it.", code:"console.log(5 === 5);    // true\nconsole.log(5 === \"5\");  // false, number vs string\nconsole.log(3 !== 4);    // true" },
+      { t:"You can store a boolean in a variable. Game code does this all the time for flags like isAlive or canSpare.", code:"let hp = 0;\nconst isAlive = hp > 0;\nconsole.log(\"Alive?\", isAlive);" }
+    ],
+    quiz:{ q:"Python's True is written how in JavaScript?", o:["True","TRUE","true","1 == 1 only"], a:2, why:"JavaScript booleans are lowercase: true and false." },
+    ch:{ task:"Using hp and maxHp, create three constants: isAlive (hp is above 0), isLow (hp is 5 or less), and isFull (hp equals maxHp).", starter:"let hp = 4;\nlet maxHp = 20;\n\nconst isAlive = ;\n",
+      tests:[["isAlive is true", 'isAlive === true'],["isLow is true", 'isLow === true'],["isFull is false", 'isFull === false'],["Uses === for isFull", '/isFull\\s*=\\s*[^;\\n]*===/.test(__code)']],
+      hints:["const isAlive = hp > 0;", "const isLow = hp <= 5; and const isFull = hp === maxHp;"],
+      sol:"let hp = 4;\nlet maxHp = 20;\n\nconst isAlive = hp > 0;\nconst isLow = hp <= 5;\nconst isFull = hp === maxHp;" } },
+
+  { id:"s2", title:"Choices", concept:"if / else",
+    pages:[
+      { t:"In Python, `if` uses a colon and indentation. In JavaScript, the condition goes in round brackets and the code goes in curly braces.", code:"let hp = 0;\n\nif (hp <= 0) {\n  console.log(\"* GAME OVER\");\n}" },
+      { t:"`else` runs when the condition is false. Python's `elif` is spelled `else if` in JavaScript.", code:"let hp = 3;\n\nif (hp <= 0) {\n  console.log(\"dead\");\n} else if (hp <= 5) {\n  console.log(\"low HP!\");\n} else {\n  console.log(\"doing fine\");\n}" },
+      { t:"Indentation doesn't matter to JavaScript, the braces do. Still, indent anyway so humans can read it.", code:"let gold = 50;\nif (gold >= 40) {\n  gold -= 40;\n  console.log(\"* Bought a pie!\", gold);\n}" }
+    ],
+    quiz:{ q:"How do you write Python's elif in JavaScript?", o:["elif","elseif","else if","otherwise"], a:2, why:"JavaScript chains conditions with else if." },
+    ch:{ task:"Write an if / else. If hp is 0 or less, set state to \"gameover\". Otherwise set state to \"playing\". (The tests also try a different hp value.)", starter:"let hp = 0;\nlet state = \"\";\n\n// your if / else here\n\nconsole.log(state);\n",
+      tests:[["state is \"gameover\" when hp is 0", 'state === "gameover"'],["state is \"playing\" when hp is 9", 'new Function(__code.replace(/let hp = 0;/, "let hp = 9;") + ";return state;")() === "playing"'],["Uses if and else", '/\\bif\\s*\\(/.test(__code) && /\\belse\\b/.test(__code)']],
+      hints:["if (hp <= 0) { ... } else { ... }", "Inside the braces: state = \"gameover\"; and state = \"playing\";"],
+      sol:"let hp = 0;\nlet state = \"\";\n\nif (hp <= 0) {\n  state = \"gameover\";\n} else {\n  state = \"playing\";\n}\n\nconsole.log(state);" } },
+
+  { id:"s3", title:"Reusable Spells", concept:"functions",
+    pages:[
+      { t:"Functions are blocks of code you can run again and again. Python says `def`. JavaScript says `function`, and uses braces.", code:"// Python: def greet(name):\nfunction greet(name) {\n  return `* Hello, ${name}!`;\n}\nconsole.log(greet(\"Kid\"));\nconsole.log(greet(\"Byte\"));" },
+      { t:"Functions can take several inputs and give back one output with `return`. Without return, a function gives back `undefined`.", code:"function heal(hp, amount) {\n  return hp + amount;\n}\nconsole.log(heal(10, 5)); // 15" },
+      { t:"There's also a short form called an arrow function. You'll see it everywhere in game code.", code:"const double = (n) => n * 2;\nconst add = (a, b) => a + b;\nconsole.log(double(6), add(2, 3));" },
+      { t:"`Math.min()` returns the smallest number you give it. Handy for making sure healing never goes over max HP.", code:"console.log(Math.min(25, 20)); // 20\nconsole.log(Math.max(-3, 0));  // 0" }
+    ],
+    quiz:{ q:"What does this print?", code:"function f(x) {\n  return x * 2;\n}\nconsole.log(f(4));", o:["4","8","x * 2","undefined"], a:1, why:"f(4) returns 4 * 2, which is 8." },
+    ch:{ task:"Write a function heal(hp, amount, maxHp) that returns hp plus amount, but never more than maxHp.", starter:"function heal(hp, amount, maxHp) {\n  // return the new hp\n}\n\nconsole.log(heal(10, 5, 20)); // should be 15\nconsole.log(heal(18, 5, 20)); // should be 20\n",
+      tests:[["heal(10, 5, 20) returns 15", 'heal(10, 5, 20) === 15'],["heal(18, 5, 20) returns 20", 'heal(18, 5, 20) === 20'],["heal(0, 30, 28) returns 28", 'heal(0, 30, 28) === 28']],
+      hints:["Add first: hp + amount. Then cap it.", "return Math.min(hp + amount, maxHp);"],
+      sol:"function heal(hp, amount, maxHp) {\n  return Math.min(hp + amount, maxHp);\n}\n\nconsole.log(heal(10, 5, 20));\nconsole.log(heal(18, 5, 20));" } },
+
+  { id:"s4", title:"Mercy Logic", concept:"&&, || and else if",
+    pages:[
+      { t:"Combine conditions with `&&` (and), `||` (or), and `!` (not). Python spells these as words: and, or, not.", code:"let hp = 3, hasPie = true;\nconsole.log(hp < 5 && hasPie); // true\nconsole.log(hp > 10 || hasPie); // true\nconsole.log(!hasPie);           // false" },
+      { t:"A function can return early from inside an if. The first `return` that runs ends the function.", code:"function grade(score) {\n  if (score >= 90) return \"A\";\n  if (score >= 80) return \"B\";\n  return \"keep going\";\n}\nconsole.log(grade(85));" }
+    ],
+    quiz:{ q:"What does this print?", code:"console.log(3 > 2 && 2 > 5);", o:["true","false","3","Error"], a:1, why:"&& needs both sides true. 2 > 5 is false, so the whole thing is false." },
+    ch:{ task:"Write checkHP(hp): return \"dead\" if hp is 0 or less, \"low\" if 5 or less, otherwise \"ok\". Then write canSpare(enemyHp, mercy): return true if enemyHp is 10 or less OR mercy is 100 or more.", starter:"function checkHP(hp) {\n\n}\n\nfunction canSpare(enemyHp, mercy) {\n\n}\n",
+      tests:[["checkHP(0) is \"dead\"", 'checkHP(0) === "dead"'],["checkHP(4) is \"low\"", 'checkHP(4) === "low"'],["checkHP(12) is \"ok\"", 'checkHP(12) === "ok"'],["canSpare(8, 0) is true", 'canSpare(8, 0) === true'],["canSpare(50, 100) is true", 'canSpare(50, 100) === true'],["canSpare(50, 20) is false", 'canSpare(50, 20) === false']],
+      hints:["In checkHP: if (hp <= 0) return \"dead\"; then check <= 5.", "canSpare can be one line: return enemyHp <= 10 || mercy >= 100;"],
+      sol:"function checkHP(hp) {\n  if (hp <= 0) return \"dead\";\n  if (hp <= 5) return \"low\";\n  return \"ok\";\n}\n\nfunction canSpare(enemyHp, mercy) {\n  return enemyHp <= 10 || mercy >= 100;\n}" } }
+  ],
+  boss:{ id:"b2", name:"Frostbite Sentry", spr:"frost", hp:80, atk:4, xp:150, gold:55, patterns:["sweep","rain","ring"],
+    intro:"* Frostbite Sentry swivels toward you. Its eye glows red.",
+    flavor:["* Frostbite Sentry is computing true or false.","* The air smells like cold metal.","* Frostbite Sentry's eye blinks in binary.","* Snow piles up on its lens."],
+    taunts:["IF intruder THEN freeze.","ERROR: mercy is not defined.","Calculating... you === trouble.","else { attack(); }"],
+    acts:[{ n:"Check", d:"See its stats", t:"* FROSTBITE SENTRY - ATK 4 DEF 2\n* Only understands true and false.", m:0 },
+          { n:"Defrost", d:"Wipe its lens", t:"* You wipe the snow off its lens. It can see you're not a threat.", m:35 },
+          { n:"Say true", d:"Agree with it", t:"* You say \"true.\" Frostbite Sentry beeps happily.", m:30 }],
+    qs:[
+      { q:"What does this print?", code:"console.log(5 === \"5\");", o:["true","false","5","Error"], a:1, why:"=== checks the type too. A number is never strictly equal to a string." },
+      { q:"What does this print?", code:"console.log(!true || true);", o:["true","false","undefined","Error"], a:0, why:"!true is false, and false || true is true." },
+      { q:"What does this print?", code:"const add = (a, b) => a + b;\nconsole.log(add(2, 3));", o:["23","5","a + b","undefined"], a:1, why:"The arrow function returns a + b, which is 5." },
+      { q:"What does this print?", code:"if (0) {\n  console.log(\"A\");\n} else {\n  console.log(\"B\");\n}", o:["A","B","A then B","Nothing"], a:1, why:"0 counts as false in an if, so the else branch runs." },
+      { q:"What does the second line print?", code:"function g() { console.log(\"hi\"); }\nconsole.log(g());", o:["hi","undefined","g","null"], a:1, why:"g logs \"hi\" first, but it has no return, so console.log(g()) prints undefined." },
+      { q:"What does this print?", code:"let hp = 6;\nif (hp <= 5) console.log(\"low\");\nelse if (hp <= 10) console.log(\"mid\");\nelse console.log(\"high\");", o:["low","mid","high","low then mid"], a:1, why:"6 is not <= 5, but it is <= 10, so \"mid\" prints." },
+      { q:"Which checks if hp is between 1 and 9?", code:"", o:["1 < hp < 10","hp > 0 && hp < 10","hp > 0 || hp < 10","hp == 1..9"], a:1, why:"Both parts must be true, so use &&. The chained form doesn't work in JavaScript." },
+      { q:"What does this print?", code:"function f(n) {\n  if (n > 3) return \"big\";\n  return \"small\";\n}\nconsole.log(f(3));", o:["big","small","undefined","3"], a:1, why:"3 > 3 is false, so the first return is skipped." }
+    ] } },
+
+{ id:"lab", name:"Sunken Lab", color:"#ff9f43", desc:"A flooded lab full of data. Learn arrays, loops and objects to manage inventories and bullets.",
+  levels:[
+  { id:"l1", title:"Inventory", concept:"arrays",
+    pages:[
+      { t:"An array is a list, just like Python's list. Square brackets, commas between items. The first item is at index 0.", code:"const items = [\"Bandage\", \"Pie\", \"Snack\"];\nconsole.log(items[0]);    // Bandage\nconsole.log(items.length); // 3" },
+      { t:"Python's `append` is called `push` in JavaScript. `pop` removes the last item. `len(items)` becomes `items.length`.", code:"const items = [\"Bandage\"];\nitems.push(\"Pie\");\nconsole.log(items);       // [\"Bandage\",\"Pie\"]\nconst last = items.pop();\nconsole.log(last, items);" },
+      { t:"`includes` checks if something is in the array, like Python's `in`. You can push to a const array; const only stops you from replacing the whole array.", code:"const items = [\"Pie\", \"Snack\"];\nconsole.log(items.includes(\"Pie\")); // true" }
+    ],
+    quiz:{ q:"What is Python's append() called in JavaScript?", o:["add()","append()","push()","insert()"], a:2, why:"push() adds an item to the end of an array." },
+    ch:{ task:"Push \"Snack\" onto inventory. Then make a constant count with the array's length and a constant first with the first item.", starter:"const inventory = [\"Bandage\", \"Pie\"];\n\n// push \"Snack\"\n\n// count and first\n\n",
+      tests:[["inventory ends with \"Snack\"", 'inventory[inventory.length - 1] === "Snack"'],["count is 3", 'count === 3'],["first is \"Bandage\"", 'first === "Bandage"'],["Uses push", '/\\.push\\(/.test(__code)']],
+      hints:["inventory.push(\"Snack\");", "const count = inventory.length; const first = inventory[0];"],
+      sol:"const inventory = [\"Bandage\", \"Pie\"];\n\ninventory.push(\"Snack\");\n\nconst count = inventory.length;\nconst first = inventory[0];" } },
+
+  { id:"l2", title:"Over and Over", concept:"loops",
+    pages:[
+      { t:"The classic for loop has three parts: a start, a condition, and a step. It's like Python's `for i in range(3)`.", code:"// Python: for i in range(3):\nfor (let i = 0; i < 3; i++) {\n  console.log(\"Turn\", i);\n}" },
+      { t:"To go through every item in an array, `for...of` is the closest to Python's `for item in items`.", code:"const hits = [3, 4, 5];\nfor (const h of hits) {\n  console.log(\"* You took\", h, \"damage\");\n}" },
+      { t:"A loop that adds things up is super common. Start a total at 0 and add each item.", code:"const coins = [5, 10, 2];\nlet total = 0;\nfor (const c of coins) {\n  total += c;\n}\nconsole.log(total); // 17" },
+      { t:"`while` also exists. Be careful: a loop whose condition never becomes false runs forever and freezes the game. The challenge stops after 2 seconds if that happens.", code:"let hp = 3;\nwhile (hp > 0) {\n  console.log(\"hp\", hp);\n  hp--;\n}" }
+    ],
+    quiz:{ q:"How many times does this loop run?", code:"for (let i = 0; i < 4; i++) {\n  console.log(i);\n}", o:["3","4","5","Forever"], a:1, why:"i takes the values 0, 1, 2 and 3. That's 4 runs." },
+    ch:{ task:"Write totalDamage(hits) that adds up every number in the hits array and returns the total. An empty array should return 0. Use a loop.", starter:"function totalDamage(hits) {\n  let total = 0;\n  // loop over hits\n\n  return total;\n}\n\nconsole.log(totalDamage([3, 4, 5])); // 12\n",
+      tests:[["totalDamage([3, 4, 5]) returns 12", 'totalDamage([3, 4, 5]) === 12'],["totalDamage([]) returns 0", 'totalDamage([]) === 0'],["totalDamage([10, 1]) returns 11", 'totalDamage([10, 1]) === 11'],["Uses a loop", '/\\bfor\\b|\\bwhile\\b|forEach/.test(__code)']],
+      hints:["for (const h of hits) { ... }", "Inside the loop: total += h;"],
+      sol:"function totalDamage(hits) {\n  let total = 0;\n  for (const h of hits) {\n    total += h;\n  }\n  return total;\n}\n\nconsole.log(totalDamage([3, 4, 5]));" } },
+
+  { id:"l3", title:"Things with Stats", concept:"objects",
+    pages:[
+      { t:"Objects group related values, like Python dictionaries. Keys don't need quotes, and you read them with a dot.", code:"// Python: player = {\"name\": \"Kid\", \"hp\": 20}\nconst player = { name: \"Kid\", hp: 20, atk: 5 };\nconsole.log(player.name, player.hp);" },
+      { t:"You can change values inside an object, even a const one. Brackets work too, like Python: `player[\"hp\"]`.", code:"const enemy = { name: \"Gearwick\", hp: 30 };\nenemy.hp -= 8;\nconsole.log(enemy[\"hp\"]); // 22" },
+      { t:"When you pass an object to a function, the function changes the real object, not a copy. That's how game code updates enemies.", code:"function hurt(target, dmg) {\n  target.hp -= dmg;\n}\nconst e = { hp: 10 };\nhurt(e, 4);\nconsole.log(e.hp); // 6" }
+    ],
+    quiz:{ q:"What does this print?", code:"const p = { hp: 5 };\np.hp += 2;\nconsole.log(p.hp);", o:["5","7","52","Error, p is const"], a:1, why:"const stops you replacing p, but you can still change p.hp." },
+    ch:{ task:"Create a player object with name (any string), hp 20 and atk 5. Then write attack(enemy, dmg): subtract dmg from enemy.hp, never let it go below 0, and return the enemy.", starter:"const player = { };\n\nfunction attack(enemy, dmg) {\n\n}\n",
+      tests:[["player has name, hp 20, atk 5", 'typeof player.name === "string" && player.hp === 20 && player.atk === 5'],["attack({hp: 10}, 3).hp is 7", 'attack({ hp: 10 }, 3).hp === 7'],["attack({hp: 2}, 5).hp is 0", 'attack({ hp: 2 }, 5).hp === 0'],["attack returns the same object", '(function(){ const e = { hp: 9 }; return attack(e, 1) === e; })()']],
+      hints:["const player = { name: \"Kid\", hp: 20, atk: 5 };", "In attack: enemy.hp = Math.max(enemy.hp - dmg, 0); return enemy;"],
+      sol:"const player = { name: \"Kid\", hp: 20, atk: 5 };\n\nfunction attack(enemy, dmg) {\n  enemy.hp = Math.max(enemy.hp - dmg, 0);\n  return enemy;\n}" } },
+
+  { id:"l4", title:"Bullet Storm", concept:"forEach and filter",
+    pages:[
+      { t:"Bullet-hell attacks are arrays of objects. Each bullet has a position and a speed. Every frame you move them all.", code:"const bullets = [\n  { x: 10, y: 0, speed: 4 },\n  { x: 50, y: 20, speed: 6 }\n];\nbullets.forEach(b => { b.y += b.speed; });\nconsole.log(bullets);" },
+      { t:"`filter` makes a new array with only the items that pass a test. It's like a Python list comprehension with an if. Use it to delete bullets that flew off screen.", code:"// Python: [b for b in bullets if b[\"y\"] <= 480]\nconst bullets = [{ y: 100 }, { y: 600 }];\nconst onScreen = bullets.filter(b => b.y <= 480);\nconsole.log(onScreen.length); // 1" },
+      { t:"`map` turns every item into something new. Also like a list comprehension.", code:"const dmg = [1, 2, 3];\nconsole.log(dmg.map(d => d * 10)); // [10,20,30]" }
+    ],
+    quiz:{ q:"What does this print?", code:"console.log([5, 1, 8].filter(n => n > 2).length);", o:["1","2","3","[5, 8]"], a:1, why:"filter keeps 5 and 8. That's 2 items." },
+    ch:{ task:"Write moveBullets(bullets): add each bullet's speed to its y, then return only bullets whose y is 480 or less.", starter:"function moveBullets(bullets) {\n  // 1. move every bullet down by its speed\n\n  // 2. return only the bullets still on screen\n}\n",
+      tests:[["Moves bullets by their speed", '(function(){ const r = moveBullets([{ y: 0, speed: 5 }]); return r.length === 1 && r[0].y === 5; })()'],["Removes bullets past 480", 'moveBullets([{ y: 0, speed: 5 }, { y: 478, speed: 5 }]).length === 1'],["Keeps a bullet landing exactly on 480", 'moveBullets([{ y: 470, speed: 10 }]).length === 1'],["Returns an array", 'Array.isArray(moveBullets([]))']],
+      hints:["bullets.forEach(b => { b.y += b.speed; });", "return bullets.filter(b => b.y <= 480);"],
+      sol:"function moveBullets(bullets) {\n  bullets.forEach(b => {\n    b.y += b.speed;\n  });\n  return bullets.filter(b => b.y <= 480);\n}" } }
+  ],
+  boss:{ id:"b3", name:"Dr. Gearwick", spr:"gear", hp:100, atk:5, xp:200, gold:70, patterns:["aimed","ring","sweep","spiral"],
+    intro:"* Dr. Gearwick whirs to life. \"An intruder in my array!\"",
+    flavor:["* Dr. Gearwick sorts his bolts by size.","* Gears click like a loop counter.","* Dr. Gearwick is mapping you to a new array.","* Something in the lab goes beep."],
+    taunts:["Your index is out of bounds!","I shall filter you out!","for (const bolt of bolts) fire(bolt);","Behold my array of projectiles!"],
+    acts:[{ n:"Check", d:"See his stats", t:"* DR. GEARWICK - ATK 5 DEF 3\n* Built the lab. Loves arrays a little too much.", m:0 },
+          { n:"Oil gears", d:"Fix the squeak", t:"* You oil a squeaky gear. Dr. Gearwick sighs with relief.", m:35 },
+          { n:"Ask about work", d:"Show interest", t:"* You ask about his research. He talks about sorting for a long time. He likes you now.", m:30 }],
+    qs:[
+      { q:"What does this print?", code:"const a = [1, 2, 3];\nconsole.log(a[3]);", o:["3","undefined","null","Error"], a:1, why:"Indexes start at 0, so a[3] is past the end and gives undefined." },
+      { q:"What does this print?", code:"const a = [4, 5];\na.push(6);\nconsole.log(a.length);", o:["2","3","6","[4,5,6]"], a:1, why:"After push, there are 3 items." },
+      { q:"What does this print?", code:"let s = 0;\nfor (let i = 1; i <= 3; i++) {\n  s += i;\n}\nconsole.log(s);", o:["3","6","4","0"], a:1, why:"1 + 2 + 3 = 6." },
+      { q:"What does this print?", code:"console.log([1, 2, 3].map(x => x * 10));", o:["[10,20,30]","60","[1,2,3]","[11,12,13]"], a:0, why:"map multiplies each item by 10 and returns a new array." },
+      { q:"What does this print?", code:"const o = { name: \"Byte\" };\nconsole.log(o[\"name\"]);", o:["name","Byte","undefined","o.name"], a:1, why:"Bracket access with a string key works the same as o.name." },
+      { q:"What prints, in order?", code:"for (const item of [\"a\", \"b\"]) {\n  console.log(item);\n}", o:["0 then 1","a then b","[\"a\",\"b\"]","Nothing"], a:1, why:"for...of gives you each item, not the index." },
+      { q:"What does this print?", code:"const e = { hp: 10 };\nfunction hit(t) { t.hp -= 3; }\nhit(e);\nconsole.log(e.hp);", o:["10","7","13","undefined"], a:1, why:"Objects are passed by reference, so hit changes the real e." },
+      { q:"What does this print?", code:"const b = [{ y: 10 }, { y: 900 }, { y: 50 }];\nconsole.log(b.filter(x => x.y < 480).length);", o:["1","2","3","0"], a:1, why:"Two bullets have y below 480." }
+    ] } },
+
+{ id:"kernel", name:"The Kernel", color:"#b48cff", desc:"The core of the Underground. Draw on a canvas, detect collisions, move a soul and fire real attack patterns.",
+  levels:[
+  { id:"k1", title:"Paint the Screen", concept:"canvas drawing",
+    pages:[
+      { t:"Browser games draw on a `<canvas>` element. You get a drawing tool called `ctx` and tell it what to draw. The top-left corner is (0, 0).", code:"// const ctx = canvas.getContext(\"2d\");\nctx.fillStyle = \"black\";\nctx.fillRect(0, 0, 640, 480);   // background\nctx.fillStyle = \"red\";\nctx.fillRect(312, 300, 16, 16); // the soul" },
+      { t:"y gets bigger as you go DOWN the screen. That surprises everyone at first. So moving up means subtracting from y.", code:"// x grows to the right, y grows downward\n// (0,0) ─────────▶ x\n//   │\n//   ▼ y\nlet soulY = 300;\nsoulY -= 10; // moves UP\nconsole.log(soulY);" },
+      { t:"`strokeRect` draws an outline, perfect for a battle box. Set the color with strokeStyle and the thickness with lineWidth.", code:"ctx.strokeStyle = \"white\";\nctx.lineWidth = 4;\nctx.strokeRect(220, 240, 200, 140);" }
+    ],
+    quiz:{ q:"On a canvas, increasing y moves things which way?", o:["Up","Down","Left","Right"], a:1, why:"Canvas y starts at the top and grows downward." },
+    ch:{ task:"Write drawSoul(ctx, x, y). It should set ctx.fillStyle to \"red\" and then draw a 16 by 16 square at x, y with fillRect.", starter:"function drawSoul(ctx, x, y) {\n\n}\n",
+      tests:[["Sets fillStyle to \"red\"", '(function(){ const c = __mockCtx(); drawSoul(c, 10, 20); return c.calls.some(k => k[0] === "fillStyle" && k[1] === "red"); })()'],["Draws fillRect(x, y, 16, 16)", '(function(){ const c = __mockCtx(); drawSoul(c, 10, 20); return c.calls.some(k => k[0] === "fillRect" && k[1] === 10 && k[2] === 20 && k[3] === 16 && k[4] === 16); })()'],["Sets the color before drawing", '(function(){ const c = __mockCtx(); drawSoul(c, 1, 2); const a = c.calls.findIndex(k => k[0] === "fillStyle" && k[1] === "red"); const b = c.calls.findIndex(k => k[0] === "fillRect"); return a > -1 && b > a; })()']],
+      hints:["First line: ctx.fillStyle = \"red\";", "Second line: ctx.fillRect(x, y, 16, 16);"],
+      sol:"function drawSoul(ctx, x, y) {\n  ctx.fillStyle = \"red\";\n  ctx.fillRect(x, y, 16, 16);\n}" } },
+
+  { id:"k2", title:"Did It Hit?", concept:"collision",
+    pages:[
+      { t:"Every bullet game needs collision checks. The simplest kind compares two rectangles. Each has x, y, w (width) and h (height).", code:"const soul = { x: 100, y: 100, w: 16, h: 16 };\nconst bullet = { x: 110, y: 105, w: 8, h: 8 };\nconsole.log(soul, bullet);" },
+      { t:"Two rectangles overlap when they overlap on BOTH the x axis and the y axis. A's left edge must be left of B's right edge, and A's right edge must be right of B's left edge. Same for top and bottom.", code:"// overlap on x?\n// a.x < b.x + b.w   AND   a.x + a.w > b.x\n// overlap on y?\n// a.y < b.y + b.h   AND   a.y + a.h > b.y" }
+    ],
+    quiz:{ q:"Box A spans x 0 to 10. Box B spans x 5 to 15. Do they overlap on x?", o:["Yes","No","Only if y matches first","Can't tell"], a:0, why:"A's right edge (10) is past B's left edge (5), and A's left edge (0) is before B's right edge (15)." },
+    ch:{ task:"Write hits(a, b) that returns true if rectangles a and b overlap and false if they don't. Each has x, y, w, h.", starter:"function hits(a, b) {\n\n}\n",
+      tests:[["Overlapping boxes return true", 'hits({x:0,y:0,w:10,h:10}, {x:5,y:5,w:10,h:10}) === true'],["Boxes apart on x return false", 'hits({x:0,y:0,w:10,h:10}, {x:20,y:0,w:10,h:10}) === false'],["Boxes apart on y return false", 'hits({x:0,y:0,w:10,h:10}, {x:0,y:30,w:10,h:10}) === false'],["A box inside another returns true", 'hits({x:0,y:0,w:50,h:50}, {x:10,y:10,w:5,h:5}) === true']],
+      hints:["Use && to join four comparisons.", "return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;"],
+      sol:"function hits(a, b) {\n  return a.x < b.x + b.w &&\n         a.x + a.w > b.x &&\n         a.y < b.y + b.h &&\n         a.y + a.h > b.y;\n}" } },
+
+  { id:"k3", title:"Move Your Soul", concept:"keyboard input",
+    pages:[
+      { t:"Games listen for key presses with `addEventListener`. The trick is to remember which keys are held down in an object.", code:"const keys = {};\n// document.addEventListener(\"keydown\", e => keys[e.key] = true);\n// document.addEventListener(\"keyup\",   e => keys[e.key] = false);\nkeys.ArrowLeft = true; // pretend left is held\nconsole.log(keys);" },
+      { t:"Every frame, check the keys and move. Then clamp: keep the soul inside the box so it can't escape.", code:"let x = 5, speed = 3;\nconst keys = { ArrowLeft: true };\nif (keys.ArrowLeft) x -= speed;\nx = Math.max(0, x); // clamp at the left wall\nconsole.log(x); // 2" },
+      { t:"Clamping both sides looks like this. Remember the soul's size, or its right side pokes out of the box.", code:"const box = { x: 100, w: 200 };\nlet x = 400, size = 16;\nx = Math.max(box.x, Math.min(box.x + box.w - size, x));\nconsole.log(x); // 284" }
+    ],
+    quiz:{ q:"Why store keys in an object instead of moving on keydown?", o:["It's faster to type","So movement is smooth while a key is held","keydown doesn't exist","Objects are required for canvas"], a:1, why:"keydown repeats slowly and unevenly. Checking held keys every frame gives smooth movement." },
+    ch:{ task:"Write moveSoul(soul, keys, box). Move soul.x and soul.y by soul.speed for each held arrow key (ArrowLeft, ArrowRight, ArrowUp, ArrowDown). Then keep the soul inside box, using soul.size. Return the soul.", starter:"function moveSoul(soul, keys, box) {\n  // move\n\n  // clamp inside the box\n\n  return soul;\n}\n",
+      tests:[["Right arrow moves right", 'moveSoul({x:50,y:50,size:10,speed:3}, {ArrowRight:true}, {x:0,y:0,w:200,h:200}).x === 53'],["Up arrow moves up (y shrinks)", 'moveSoul({x:50,y:50,size:10,speed:3}, {ArrowUp:true}, {x:0,y:0,w:200,h:200}).y === 47'],["Stops at the left wall", 'moveSoul({x:1,y:50,size:10,speed:3}, {ArrowLeft:true}, {x:0,y:0,w:200,h:200}).x === 0'],["Stops at the right wall using size", 'moveSoul({x:189,y:50,size:10,speed:3}, {ArrowRight:true}, {x:0,y:0,w:200,h:200}).x === 190'],["Stops at the bottom wall", 'moveSoul({x:50,y:189,size:10,speed:3}, {ArrowDown:true}, {x:0,y:0,w:200,h:200}).y === 190']],
+      hints:["if (keys.ArrowLeft) soul.x -= soul.speed; and the same for the other three.", "soul.x = Math.max(box.x, Math.min(box.x + box.w - soul.size, soul.x)); and the same idea for y with box.h."],
+      sol:"function moveSoul(soul, keys, box) {\n  if (keys.ArrowLeft)  soul.x -= soul.speed;\n  if (keys.ArrowRight) soul.x += soul.speed;\n  if (keys.ArrowUp)    soul.y -= soul.speed;\n  if (keys.ArrowDown)  soul.y += soul.speed;\n\n  soul.x = Math.max(box.x, Math.min(box.x + box.w - soul.size, soul.x));\n  soul.y = Math.max(box.y, Math.min(box.y + box.h - soul.size, soul.y));\n  return soul;\n}" } },
+
+  { id:"k4", title:"Attack Patterns", concept:"Math.cos and Math.sin",
+    pages:[
+      { t:"Boss attacks are just math. To shoot a bullet at an angle, split its speed into a sideways part (vx) and a downward part (vy) with cosine and sine.", code:"const angle = 0;     // 0 = straight right\nconst speed = 4;\nconst vx = Math.cos(angle) * speed; // 4\nconst vy = Math.sin(angle) * speed; // 0\nconsole.log(vx, vy);" },
+      { t:"Angles in JavaScript use radians. A full circle is `Math.PI * 2`. To spread 8 bullets around a circle, give bullet i the angle i / 8 of a full circle.", code:"const count = 4;\nfor (let i = 0; i < count; i++) {\n  const a = (i / count) * Math.PI * 2;\n  console.log(i, a.toFixed(2));\n}" },
+      { t:"Each frame you add vx and vy to the bullet's position. That's the whole secret behind ring attacks, spirals and fans in your favorite fangames.", code:"const b = { x: 100, y: 100, vx: 3, vy: -2 };\n// every frame:\nb.x += b.vx;\nb.y += b.vy;\nconsole.log(b.x, b.y);" }
+    ],
+    quiz:{ q:"What does Math.cos(0) return?", o:["0","1","-1","Math.PI"], a:1, why:"cos(0) is 1, so a bullet at angle 0 moves fully in the x direction." },
+    ch:{ task:"Write spawnRing(cx, cy, count, speed). Return an array of count bullets. Each starts at cx, cy, with angle (i / count) * Math.PI * 2, vx = Math.cos(angle) * speed and vy = Math.sin(angle) * speed.", starter:"function spawnRing(cx, cy, count, speed) {\n  const bullets = [];\n\n  return bullets;\n}\n\nconsole.log(spawnRing(0, 0, 4, 2));\n",
+      tests:[["Returns count bullets", 'spawnRing(0, 0, 8, 3).length === 8'],["Bullets start at cx, cy", 'spawnRing(50, 60, 4, 3).every(b => b.x === 50 && b.y === 60)'],["First bullet heads right (vx = speed, vy = 0)", '(function(){ const b = spawnRing(0, 0, 8, 3)[0]; return Math.abs(b.vx - 3) < 1e-6 && Math.abs(b.vy) < 1e-6; })()'],["Every bullet moves at the given speed", 'spawnRing(0, 0, 12, 5).every(b => Math.abs(Math.hypot(b.vx, b.vy) - 5) < 1e-6)']],
+      hints:["Use a for loop from i = 0 while i < count.", "Inside: const a = (i / count) * Math.PI * 2; bullets.push({ x: cx, y: cy, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed });"],
+      sol:"function spawnRing(cx, cy, count, speed) {\n  const bullets = [];\n  for (let i = 0; i < count; i++) {\n    const a = (i / count) * Math.PI * 2;\n    bullets.push({\n      x: cx, y: cy,\n      vx: Math.cos(a) * speed,\n      vy: Math.sin(a) * speed\n    });\n  }\n  return bullets;\n}\n\nconsole.log(spawnRing(0, 0, 4, 2));" } }
+  ],
+  boss:{ id:"b4", name:"THE KERNEL", spr:"kernel", hp:140, atk:6, xp:300, gold:100, patterns:["ring","spiral","aimed","sweep","rain"],
+    intro:"* THE KERNEL awakens. Every line of code in the Underground runs through it.",
+    flavor:["* THE KERNEL hums at 60 frames per second.","* You can hear requestAnimationFrame ticking.","* THE KERNEL is recompiling the room.","* The red eye follows your soul."],
+    taunts:["I am the game loop.","Every frame, I update. Every frame, I draw.","Math.cos(you) * DESTRUCTION.","Your collision box is MINE."],
+    acts:[{ n:"Check", d:"See its stats", t:"* THE KERNEL - ATK 6 DEF 4\n* Runs everything. Has never been thanked.", m:0 },
+          { n:"Thank it", d:"For running everything", t:"* You thank THE KERNEL for keeping everything running. Its eye flickers in surprise.", m:30 },
+          { n:"Show code", d:"Share what you built", t:"* You show THE KERNEL the code you wrote. It reads every line. It seems proud.", m:40 }],
+    qs:[
+      { q:"What does requestAnimationFrame(loop) do?", code:"", o:["Runs loop once, right now","Runs loop before the next screen repaint (about 60 times a second if repeated)","Pauses the game","Loads an image"], a:1, why:"It schedules loop for the next frame. Calling it again inside loop keeps the game running." },
+      { q:"What does this draw?", code:"ctx.fillRect(10, 20, 30, 40);", o:["A 10×20 rect at (30, 40)","A 30×40 rect with its corner at (10, 20)","A circle","A line from (10,20) to (30,40)"], a:1, why:"fillRect(x, y, width, height)." },
+      { q:"What does this print?", code:"console.log(Math.hypot(3, 4));", o:["7","5","12","25"], a:1, why:"hypot gives the distance: √(3² + 4²) = 5. Great for circle collisions." },
+      { q:"What does this line do in a game?", code:"addEventListener(\"keydown\", e => keys[e.key] = true);", o:["Moves the player","Remembers that a key is being held","Prints the key","Blocks the keyboard"], a:1, why:"It records the held key so the game loop can check it each frame." },
+      { q:"A bullet has vx = 0 and vy = 5. Which way does it fly?", code:"", o:["Up","Down","Right","It doesn't move"], a:1, why:"Positive y goes down the canvas." },
+      { q:"Do these overlap?", code:"const a = { x: 0, y: 0, w: 10, h: 10 };\nconst b = { x: 10, y: 0, w: 10, h: 10 };", o:["Yes","No, they only touch edges"], a:1, why:"a.x + a.w is 10, which is not greater than b.x (10). They touch but don't overlap." },
+      { q:"Which angle points straight down on a canvas?", code:"", o:["0","Math.PI / 2","Math.PI","-Math.PI / 2"], a:1, why:"sin(π/2) is 1, and positive y is down." },
+      { q:"What's wrong with this game loop?", code:"function loop() {\n  update();\n  draw();\n}\nloop();", o:["Nothing","It only runs once because it never calls requestAnimationFrame(loop)","draw must come first","update is a reserved word"], a:1, why:"Without requestAnimationFrame(loop), the loop runs one time and stops." }
+    ] } }
+];
+
+const SHOP = [
+  { id:"snack", name:"Byte Snack", price:8, d:"Heals 8 HP in battle. Tastes like warm pixels.", kind:"item" },
+  { id:"bandage", name:"Bandage", price:15, d:"Heals 15 HP in battle. Slightly used.", kind:"item" },
+  { id:"pie", name:"Glow Pie", price:35, d:"Fully restores your HP in battle.", kind:"item" },
+  { id:"hint", name:"Hint Token", price:10, d:"Reveals one hint in any code challenge.", kind:"hint" },
+  { id:"cloak", name:"Debug Cloak", price:70, d:"Permanent +6 max HP.", kind:"once" },
+  { id:"charm", name:"Patience Charm", price:60, d:"Longer invincibility after you get hit.", kind:"once" },
+  { id:"cyan", name:"Cyan Soul", price:40, d:"Change your soul's color. Pick it on the Stats page.", kind:"color" },
+  { id:"gold", name:"Gold Soul", price:40, d:"A soul that shines like determination.", kind:"color" },
+  { id:"violet", name:"Violet Soul", price:40, d:"A soul the color of the Kernel's glow.", kind:"color" }
+];
+const ITEM_HEAL = { snack:8, bandage:15, pie:999 };
+
+const ACH = [
+  { id:"first", n:"First Words", d:"Clear your first lesson." },
+  { id:"clean", n:"Clean Code", d:"Pass a challenge on the first run with no hints." },
+  { id:"boss1", n:"Cave Clear", d:"Get past the Mossling Knight." },
+  { id:"pacifist", n:"Merciful", d:"Spare a boss." },
+  { id:"flawless", n:"Untouchable", d:"Win a boss fight without taking damage." },
+  { id:"comeback", n:"Stay Determined", d:"Beat a boss after losing to it." },
+  { id:"shopper", n:"Customer", d:"Buy something from Byte." },
+  { id:"tinker", n:"Tinkerer", d:"Run your own code in the Playground." },
+  { id:"grad", n:"Graduate", d:"Beat THE KERNEL." }
+];
+
+/* ============================================================
+   SAVE
+   ============================================================ */
+const SAVE_KEY = "soulscript-save-v1";
+function fresh(){ return { name:"KID", xp:0, gold:25, hints:3, done:{}, first:{}, boss:{}, spared:{}, lost:{}, items:{ snack:1, bandage:1 }, owned:{}, color:"red", ach:{}, drafts:{}, started:false }; }
+let S = fresh();
+function load(){ try{ const r = localStorage.getItem(SAVE_KEY); if(r){ S = Object.assign(fresh(), JSON.parse(r)); } }catch(e){} }
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const shuffle = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const rand = a => a[Math.floor(Math.random()*a.length)];
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+function hl(src){
+  const re = /(\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|\b(\d+(?:\.\d+)?)\b|\b(let|const|var|function|return|if|else|for|of|in|while|true|false|null|undefined|new|class|this|typeof)\b|\b(console|Math|ctx|document|canvas|keys)\b/g;
+  let out = "", last = 0, m;
+  while((m = re.exec(src))){
+    out += esc(src.slice(last, m.index));
+    const cls = m[1] ? "c" : m[2] ? "s" : m[3] ? "n" : m[4] ? "k" : "g";
+    out += '<span class="t-' + cls + '">' + esc(m[0]) + "</span>";
+    last = re.lastIndex;
+  }
+  return out + esc(src.slice(last));
+}
+function prose(t){ return esc(t).replace(/`([^`]+)`/g, '<code class="i">$1</code>'); }
+
+function toast(title, sub){
+  const el = document.createElement("div"); el.className = "toast";
+  el.innerHTML = esc(title) + (sub ? "<small>" + esc(sub) + "</small>" : "");
+  $("#toasts").appendChild(el); setTimeout(() => el.remove(), 3800);
+}
+
+/* sound */
+let AC = null, muted = false;
+function tone(f, d=0.06, type="square", vol=0.04, slide=0){
+  if(muted) return;
+  try{
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, f + slide), t + d);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + 0.02);
+  }catch(e){}
+}
+const SFX = {
+  blip:() => tone(480 + Math.random()*80, 0.03, "square", 0.02),
+  select:() => tone(880, 0.05, "square", 0.03),
+  hurt:() => tone(220, 0.25, "sawtooth", 0.05, -160),
+  hit:() => { tone(180, 0.12, "square", 0.06, 400); setTimeout(() => tone(120, 0.15, "triangle", 0.05), 60); },
+  good:() => { tone(660, 0.08); setTimeout(() => tone(990, 0.12), 80); },
+  bad:() => tone(170, 0.2, "square", 0.04, -60),
+  heal:() => { [523, 784, 1046].forEach((f,i) => setTimeout(() => tone(f, 0.1, "triangle", 0.05), i*70)); },
+  win:() => { [523,659,784,1046].forEach((f,i) => setTimeout(() => tone(f, 0.16, "square", 0.04), i*110)); },
+  lvl:() => { [392,523,659,784,1046].forEach((f,i) => setTimeout(() => tone(f, 0.12, "triangle", 0.06), i*80)); }
+};
+
+/* pixel sprites */
+function drawSprite(ctx, rows, x, y, s, colorOverride, alpha=1){
+  ctx.save(); ctx.globalAlpha = alpha;
+  for(let r=0;r<rows.length;r++){
+    const row = rows[r];
+    for(let c=0;c<row.length;c++){
+      const ch = row[c]; if(ch === ".") continue;
+      ctx.fillStyle = colorOverride || PAL[ch] || "#fff";
+      ctx.fillRect(Math.round(x + c*s), Math.round(y + r*s), Math.ceil(s), Math.ceil(s));
+    }
+  }
+  ctx.restore();
+}
+function soulColor(){ return SOUL_COLORS[S.color] || SOUL_COLORS.red; }
+function drawHeart(ctx, cx, cy, s, color){ drawSprite(ctx, SPR.heart, cx - 3.5*s, cy - 3*s, s, color || soulColor()); }
+
+/* stats */
+function lv(){ let l = 1; for(let i=0;i<LV_XP.length;i++) if(S.xp >= LV_XP[i]) l = i + 1; return l; }
+function maxHP(){ return 20 + 4*(lv() - 1) + (S.owned.cloak ? 6 : 0); }
+function addXP(n){
+  const before = lv(); S.xp += n;
+  if(lv() > before){ SFX.lvl(); toast("LV up! You're LV " + lv() + ".", "Max HP is now " + maxHP() + "."); }
+}
+function unlock(id){ if(S.ach[id]) return; S.ach[id] = true; const a = ACH.find(x => x.id === id); if(a) toast("Achievement: " + a.n, a.d); save(); }
+
+/* ============================================================
+   HUD + ROUTER
+   ============================================================ */
+let screen = "title";
+function renderHUD(){
+  $("#hudName").textContent = S.name;
+  $("#hudLv").textContent = lv();
+  $("#hudHp").textContent = maxHP();
+  const l = lv(), a = LV_XP[l-1], b = LV_XP[l] ?? (a + 1);
+  $("#hudXp").style.width = (l >= LV_XP.length ? 100 : clamp((S.xp - a) / (b - a) * 100, 0, 100)) + "%";
+  $("#hudXpT").textContent = S.xp + " XP";
+  $("#hudG").textContent = S.gold;
+}
+function show(name){
+  if(screen === "play" && name !== "play") stopPlay();
+  if(screen === "battle" && name !== "battle" && B && !B.ended){ B = null; }
+  screen = name;
+  document.querySelectorAll(".screen").forEach(s => s.hidden = s.id !== "scr-" + name);
+  const inGame = name !== "title";
+  $("#hudStats").hidden = !inGame; $("#nav").hidden = !inGame;
+  if(typeof SAMPLE !== "undefined" && SAMPLE) $("#askFab").hidden = !inGame;
+  if(!$("#chat").hidden){ $("#chatCtx").textContent = ctxLabel(); $("#chips").innerHTML = chipsFor().map(c => "<button type=\"button\">" + esc(c) + "</button>").join(""); }
+  document.querySelectorAll("#nav [data-go]").forEach(b => b.setAttribute("aria-current", b.dataset.go === name ? "true" : "false"));
+  renderHUD();
+  if(name === "map") renderMap();
+  if(name === "shop") renderShop();
+  if(name === "stats") renderStats();
+  if(name === "play") openPlay();
+  window.scrollTo({ top:0 });
+}
+document.addEventListener("click", e => {
+  const g = e.target.closest("[data-go]");
+  if(g){ if(screen === "title" && !S.started) return; SFX.select(); show(g.dataset.go); }
+});
+$("#muteBtn").addEventListener("click", () => { muted = !muted; $("#muteBtn").textContent = "Sound: " + (muted ? "off" : "on"); try{ localStorage.setItem("soulscript-mute", muted ? "1" : "0"); }catch(e){} });
+
+/* ============================================================
+   TITLE
+   ============================================================ */
+const tCan = $("#titleCanvas"), tCtx = tCan.getContext("2d");
+const motes = Array.from({ length:40 }, () => ({ x:Math.random()*240, y:Math.random()*240, s:Math.random()*1.5 + .5, v:Math.random()*10 + 4 }));
+function drawTitle(t){
+  tCtx.fillStyle = "#0b0a14"; tCtx.fillRect(0, 0, 240, 240);
+  for(const m of motes){ m.y -= m.v * 0.016; if(m.y < -4){ m.y = 244; m.x = Math.random()*240; } tCtx.fillStyle = "rgba(255,210,63," + (0.25 + m.s*0.25) + ")"; tCtx.fillRect(m.x, m.y, m.s*2, m.s*2); }
+  tCtx.strokeStyle = "#f2efe6"; tCtx.lineWidth = 3; tCtx.strokeRect(40, 130, 160, 80);
+  const bob = Math.sin(t/500)*6;
+  drawSprite(tCtx, SPR.byte, 96, 26 + bob, 4);
+  const hx = 120 + Math.sin(t/700)*40, hy = 170 + Math.cos(t/450)*14;
+  drawHeart(tCtx, hx, hy, 3);
+  for(let i=0;i<4;i++){ const bx = 40 + ((t/8 + i*47) % 160); tCtx.fillStyle = "#f2efe6"; tCtx.fillRect(bx, 140 + (i*17)%60, 6, 6); }
+}
+$("#startBtn").addEventListener("click", () => {
+  const n = $("#nameIn").value.trim().toUpperCase().slice(0, 10) || "KID";
+  S.name = n; S.started = true; save(); SFX.win();
+  show("map");
+});
+$("#nameIn").addEventListener("keydown", e => { if(e.key === "Enter") $("#startBtn").click(); });
+
+/* ============================================================
+   MAP
+   ============================================================ */
+function zoneOpen(zi){ return zi === 0 || !!S.boss[ZONES[zi-1].boss.id]; }
+function levelOpen(zi, li){ if(!zoneOpen(zi)) return false; if(li === 0) return true; return !!S.done[ZONES[zi].levels[li-1].id]; }
+function bossOpen(zi){ return zoneOpen(zi) && ZONES[zi].levels.every(l => S.done[l.id]); }
+function renderMap(){
+  let total = 0, cleared = 0;
+  const html = ZONES.map((z, zi) => {
+    const open = zoneOpen(zi);
+    let nodes = "";
+    z.levels.forEach((l, li) => {
+      total++; const d = !!S.done[l.id]; if(d) cleared++;
+      const o = levelOpen(zi, li);
+      const cls = d ? "done" : o ? "open" : "lock";
+      if(li > 0) nodes += '<div class="link' + (S.done[z.levels[li-1].id] ? " on" : "") + '"></div>';
+      nodes += '<button class="node ' + cls + '" data-z="' + zi + '" data-l="' + li + '"' + (o ? "" : ' aria-disabled="true"') + ' aria-label="' + esc(l.title) + (d ? ", cleared" : o ? ", open" : ", locked") + '"><span class="dot">' + (d ? "✓" : o ? (li+1) : "·") + '</span><span class="lbl">' + esc(l.title) + '<br><span style="color:var(--dim)">' + esc(l.concept) + "</span></span></button>";
+    });
+    total++; const bd = !!S.boss[z.boss.id]; if(bd) cleared++;
+    const bo = bossOpen(zi);
+    nodes += '<div class="link' + (S.done[z.levels[z.levels.length-1].id] ? " on" : "") + '"></div>';
+    nodes += '<button class="node boss ' + (bd ? "done" : bo ? "open" : "lock") + '" data-z="' + zi + '" data-boss="1" aria-label="Boss: ' + esc(z.boss.name) + '"><span class="dot">' + (bd ? (S.spared[z.boss.id] ? "♥" : "★") : bo ? "!" : "·") + '</span><span class="lbl" style="color:' + z.color + '">BOSS<br>' + esc(z.boss.name) + "</span></button>";
+    return '<div class="zone' + (open ? "" : " locked") + '" style="--zc:' + z.color + '"><div class="zone-top"><h3>' + (zi+1) + ". " + esc(z.name) + '</h3><span class="eyebrow">' + (open ? z.levels.filter(l => S.done[l.id]).length + " / " + z.levels.length + " lessons" : "Beat the previous boss to enter") + '</span></div><p class="zdesc">' + esc(z.desc) + '</p><div class="path">' + nodes + "</div></div>";
+  }).join("");
+  $("#zones").innerHTML = html;
+  $("#progLine").innerHTML = "<b>" + cleared + "</b> / " + total + " cleared";
+}
+$("#zones").addEventListener("click", e => {
+  const n = e.target.closest(".node"); if(!n) return;
+  const zi = +n.dataset.z;
+  if(n.dataset.boss){ if(!bossOpen(zi)){ SFX.bad(); toast("Locked", "Clear every lesson in this zone first."); return; } SFX.select(); startBattle(zi); return; }
+  const li = +n.dataset.l;
+  if(!levelOpen(zi, li)){ SFX.bad(); toast("Locked", "Clear the lesson before this one first."); return; }
+  SFX.select(); openLevel(zi, li);
+});
+
+/* ============================================================
+   CODE RUNNER (Web Worker with timeout)
+   ============================================================ */
+const MOCK_CTX = "function __mockCtx(){ const calls = []; const c = { calls: calls }; ['fillStyle','strokeStyle','lineWidth','font','globalAlpha','textAlign'].forEach(p => { let v; Object.defineProperty(c, p, { get(){ return v; }, set(x){ v = x; calls.push([p, x]); } }); }); ['fillRect','strokeRect','clearRect','beginPath','arc','fill','stroke','moveTo','lineTo','fillText','save','restore','closePath','drawImage'].forEach(m => { c[m] = function(){ calls.push([m].concat(Array.from(arguments))); }; }); return c; }\n";
+let workerURL = null;
+try{ workerURL = URL.createObjectURL(new Blob([$("#worker-src").textContent], { type:"text/javascript" })); }catch(e){}
+function inlineRun(code, tests, src){ try{ const f = new Function($("#worker-src").textContent + "\nreturn runAll;")(); return f(code, tests, src); }catch(e){ return { logs:[], results:[], error:String(e) }; } }
+function runCode(code, tests=[]){
+  const full = MOCK_CTX + code;
+  return new Promise(res => {
+    let w = null;
+    try{ if(workerURL) w = new Worker(workerURL); }catch(e){ w = null; }
+    if(!w){ res(inlineRun(full, tests, code)); return; }
+    const timer = setTimeout(() => { w.terminate(); res({ logs:[], results:tests.map(() => false), error:"Your code ran for more than 2 seconds and was stopped. Look for a loop that never ends." }); }, 2000);
+    w.onmessage = e => { clearTimeout(timer); w.terminate(); res(e.data); };
+    w.onerror = e => { clearTimeout(timer); w.terminate(); e.preventDefault && e.preventDefault(); res(inlineRun(full, tests, code)); };
+    w.postMessage({ code:full, tests, src:code });
+  });
+}
+function renderOut(el, r){
+  if(r.error){ el.innerHTML = (r.logs||[]).map(l => esc(l)).join("\n") + (r.logs && r.logs.length ? "\n" : "") + '<span class="err">' + esc(r.error) + "</span>"; return; }
+  el.innerHTML = r.logs && r.logs.length ? r.logs.map(l => esc(l)).join("\n") : '<span class="muted">(nothing was logged)</span>';
+}
+
+/* ============================================================
+   EDITOR (highlighted textarea)
+   ============================================================ */
+function makeEditor(host, tall){
+  host.innerHTML = '<div class="ide' + (tall ? " tall" : "") + '"><div class="gutter"></div><div class="ed-wrap"><pre aria-hidden="true"><code></code></pre><textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Code editor"></textarea></div></div>';
+  const ta = $("textarea", host), pre = $("pre", host), code = $("code", host), gut = $(".gutter", host);
+  const listeners = [];
+  function paint(){
+    code.innerHTML = hl(ta.value) + "\n ";
+    const n = ta.value.split("\n").length;
+    gut.textContent = Array.from({ length:n }, (_, i) => i + 1).join("\n");
+    sync();
+  }
+  function sync(){ pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; gut.scrollTop = ta.scrollTop; }
+  ta.addEventListener("input", () => { paint(); listeners.forEach(f => f(ta.value)); });
+  ta.addEventListener("scroll", sync);
+  ta.addEventListener("keydown", e => {
+    if(e.key === "Tab" && !e.shiftKey){ e.preventDefault(); ta.setRangeText("  ", ta.selectionStart, ta.selectionEnd, "end"); ta.dispatchEvent(new Event("input")); }
+    else if(e.key === "Enter" && !e.ctrlKey && !e.metaKey){
+      const s = ta.selectionStart, before = ta.value.slice(0, s);
+      const line = before.slice(before.lastIndexOf("\n") + 1);
+      let ind = (line.match(/^\s*/) || [""])[0];
+      if(/[{(\[]\s*$/.test(line)) ind += "  ";
+      e.preventDefault(); ta.setRangeText("\n" + ind, s, ta.selectionEnd, "end"); ta.dispatchEvent(new Event("input"));
+    }
+    else if(e.key === "}" ){
+      const s = ta.selectionStart, before = ta.value.slice(0, s), line = before.slice(before.lastIndexOf("\n") + 1);
+      if(/^\s{2,}$/.test(line)){ e.preventDefault(); ta.setRangeText("}", s - 2, ta.selectionEnd, "end"); ta.dispatchEvent(new Event("input")); }
+    }
+  });
+  return {
+    get:() => ta.value,
+    set:v => { ta.value = v; paint(); },
+    onChange:f => listeners.push(f),
+    onRun:f => ta.addEventListener("keydown", e => { if(e.key === "Enter" && (e.ctrlKey || e.metaKey)){ e.preventDefault(); f(); } }),
+    focus:() => ta.focus()
+  };
+}
+
+/* ============================================================
+   LESSONS
+   ============================================================ */
+let L = null, typer = null;
+const chEd = makeEditor($("#cEditor"));
+chEd.onChange(v => { if(L){ S.drafts[L.lv.id] = v; save(); } });
+chEd.onRun(() => runChallenge());
+
+function openLevel(zi, li){
+  const lvd = ZONES[zi].levels[li];
+  L = { zi, li, lv:lvd, step:"learn", page:0, fails:0, hintsShown:0, usedSol:false, quizOk:false };
+  $("#lZone").textContent = "Zone " + (zi+1) + " · " + ZONES[zi].name + " · Lesson " + (li+1);
+  $("#lTitle").textContent = lvd.title;
+  show("lesson"); setStep("learn");
+}
+function setStep(st){
+  L.step = st;
+  $("#stLearn").hidden = st !== "learn"; $("#stQuiz").hidden = st !== "quiz"; $("#stCode").hidden = st !== "code"; $("#stDone").hidden = st !== "done";
+  const order = ["learn","quiz","code"], idx = order.indexOf(st);
+  [...$("#lSteps").children].forEach((s, i) => { s.className = st === "done" || i < idx ? "ok" : i === idx ? "on" : ""; });
+  if(st === "learn") renderPage();
+  if(st === "quiz") renderQuiz();
+  if(st === "code") renderChallenge();
+}
+function typeText(el, raw, done){
+  if(typer) clearInterval(typer.id);
+  const plain = raw.replace(/`/g, "");
+  let i = 0; el.textContent = "";
+  const t = { done:false, finish(){ clearInterval(t.id); el.innerHTML = prose(raw); t.done = true; done && done(); } };
+  t.id = setInterval(() => { i += 2; el.textContent = plain.slice(0, i); if(i % 4 === 0) SFX.blip(); if(i >= plain.length) t.finish(); }, 22);
+  typer = t;
+}
+function renderPage(){
+  const pages = L.lv.pages, p = pages[L.page];
+  typeText($("#talkText"), p.t);
+  $("#exCode").innerHTML = hl(p.code || "");
+  $("#exBox").hidden = !p.code;
+  $("#exOut").innerHTML = '<span class="muted">Press Run to see the output.</span>';
+  $("#pDots").innerHTML = pages.map((_, i) => '<i class="' + (i <= L.page ? "on" : "") + '"></i>').join("");
+  $("#pgBack").disabled = L.page === 0;
+  $("#pgNext").textContent = L.page === pages.length - 1 ? "Take the quiz ▸" : "Next ▸";
+}
+function nextPage(){
+  if(typer && !typer.done){ typer.finish(); return; }
+  SFX.select();
+  if(L.page < L.lv.pages.length - 1){ L.page++; renderPage(); } else setStep("quiz");
+}
+$("#pgNext").addEventListener("click", nextPage);
+$("#pgBack").addEventListener("click", () => { if(L.page > 0){ L.page--; renderPage(); } });
+$("#talkText").addEventListener("click", () => { if(typer && !typer.done) typer.finish(); });
+$("#exRun").addEventListener("click", async () => {
+  const code = L.lv.pages[L.page].code;
+  $("#exOut").innerHTML = '<span class="muted">Running…</span>';
+  const r = await runCode(code); renderOut($("#exOut"), r); SFX.select();
+});
+
+function renderQuiz(){
+  const q = L.lv.quiz;
+  $("#qText").textContent = q.q;
+  $("#qCodeBox").hidden = !q.code; $("#qCode").innerHTML = hl(q.code || "");
+  $("#qWhy").hidden = true; $("#qNext").hidden = true;
+  $("#qOpts").innerHTML = q.o.map((o, i) => '<button class="opt" data-i="' + i + '"><span class="k">' + "ABCD"[i] + "</span><span>" + esc(o) + "</span></button>").join("");
+}
+$("#qOpts").addEventListener("click", e => {
+  const b = e.target.closest(".opt"); if(!b || b.disabled) return;
+  const q = L.lv.quiz, i = +b.dataset.i;
+  if(i === q.a){
+    b.classList.add("right"); SFX.good();
+    [...$("#qOpts").children].forEach(x => x.disabled = true);
+    $("#qWhy").hidden = false; $("#qWhy").textContent = "Correct! " + q.why; $("#qNext").hidden = false; $("#qNext").focus();
+  } else {
+    b.classList.add("wrong"); b.disabled = true; SFX.bad();
+    $("#qWhy").hidden = false; $("#qWhy").textContent = "* Not that one. Try again.";
+  }
+});
+$("#qNext").addEventListener("click", () => { SFX.select(); setStep("code"); });
+
+function renderChallenge(){
+  const c = L.lv.ch;
+  $("#cTitle").textContent = L.lv.title;
+  $("#cTask").textContent = c.task;
+  $("#cTests").innerHTML = c.tests.map(t => '<li><span class="m">○</span><span>' + esc(t[0]) + "</span></li>").join("");
+  chEd.set(S.drafts[L.lv.id] ?? c.starter);
+  $("#cOut").innerHTML = '<span class="muted">Console output appears here.</span>';
+  renderHints(); updateChalBtns();
+}
+function renderHints(){
+  const c = L.lv.ch;
+  $("#cHints").innerHTML = c.hints.slice(0, L.hintsShown).map((h, i) => '<div class="hint"><b>Hint ' + (i+1) + ".</b> " + esc(h) + "</div>").join("") + (L.usedSol ? '<div class="hint"><b>Solution loaded.</b> Read it line by line, then press Run tests.</div>' : "");
+}
+function updateChalBtns(){
+  const c = L.lv.ch;
+  const left = c.hints.length - L.hintsShown;
+  $("#cHint").textContent = left > 0 ? "Hint (" + S.hints + " tokens)" : "No more hints";
+  $("#cHint").disabled = left <= 0;
+  const solFree = L.fails >= 3;
+  $("#cSol").textContent = solFree ? "Solution (free)" : "Solution (20 G)";
+}
+$("#cHint").addEventListener("click", () => {
+  if(S.hints <= 0){ SFX.bad(); toast("No hint tokens", "Buy more in Byte's shop for 10 G each."); return; }
+  S.hints--; L.hintsShown++; save(); SFX.select(); renderHints(); updateChalBtns();
+});
+$("#cSol").addEventListener("click", () => {
+  const free = L.fails >= 3;
+  if(!free && S.gold < 20){ SFX.bad(); toast("Not enough G", "Fail 3 runs and the solution becomes free."); return; }
+  if(!free) S.gold -= 20;
+  L.usedSol = true; chEd.set(L.lv.ch.sol); S.drafts[L.lv.id] = L.lv.ch.sol; save(); renderHUD(); renderHints(); SFX.select();
+});
+$("#cReset").addEventListener("click", () => { chEd.set(L.lv.ch.starter); S.drafts[L.lv.id] = L.lv.ch.starter; save(); });
+$("#cRun").addEventListener("click", runChallenge);
+
+async function runChallenge(){
+  if(!L || L.step !== "code") return;
+  const c = L.lv.ch, btn = $("#cRun");
+  btn.disabled = true; $("#cOut").innerHTML = '<span class="muted">Running…</span>';
+  const r = await runCode(chEd.get(), c.tests.map(t => t[1]));
+  btn.disabled = false;
+  renderOut($("#cOut"), r);
+  L.lastRun = { code:chEd.get(), r };
+  const items = [...$("#cTests").children];
+  let all = !r.error;
+  c.tests.forEach((t, i) => {
+    const ok = !r.error && r.results[i];
+    if(!ok) all = false;
+    items[i].className = ok ? "pass" : "fail";
+    $(".m", items[i]).textContent = ok ? "✓" : "✕";
+  });
+  if(all){ SFX.win(); setTimeout(finishLevel, 500); }
+  else {
+    L.fails++; SFX.bad(); updateChalBtns();
+    if(L.fails === 3) toast("The solution is free now", "Stuck? Peek at it, then try to rewrite it yourself.");
+  }
+}
+function finishLevel(){
+  const id = L.lv.id, firstTime = !S.done[id];
+  const clean = L.fails === 0 && L.hintsShown === 0 && !L.usedSol;
+  let xp = 0, g = 0;
+  if(firstTime){
+    xp = 30 + L.zi*10; g = 12 + L.zi*3;
+    if(clean){ g += 10; }
+    S.done[id] = true; addXP(xp); S.gold += g;
+    unlock("first");
+  }
+  if(clean) unlock("clean");
+  save(); renderHUD();
+  setStep("done");
+  $("#dTitle").textContent = rand(["* You feel your skills growing.","* The code runs. You're filled with determination.","* Byte flickers proudly.","* Another line of the Underground makes sense now."]);
+  $("#dRewards").innerHTML = firstTime ? "<span><b>+" + xp + "</b> XP</span><span><b>+" + g + "</b> G</span>" + (clean ? '<span style="color:var(--ok)">Clean run bonus</span>' : "") : '<span style="color:var(--dim)">Replay complete. Rewards were already collected.</span>';
+  const z = ZONES[L.zi], last = L.li === z.levels.length - 1;
+  $("#dMsg").textContent = last ? "Every lesson in " + z.name + " is clear. " + z.boss.name + " is waiting." : "Next up: " + z.levels[L.li+1].title + ".";
+  $("#dNext").textContent = last ? "Fight " + z.boss.name + " ▸" : "Next lesson ▸";
+}
+$("#dNext").addEventListener("click", () => {
+  const z = ZONES[L.zi];
+  SFX.select();
+  if(L.li === z.levels.length - 1) startBattle(L.zi); else openLevel(L.zi, L.li + 1);
+});
+
+/* ============================================================
+   BATTLE
+   ============================================================ */
+const bc = $("#bc"), bx = bc.getContext("2d");
+const MENU_BOX = { x:32, y:258, w:576, h:140 }, DODGE_BOX = { x:226, y:250, w:188, h:150 };
+let B = null;
+const keys = {};
+
+function startBattle(zi){
+  const boss = ZONES[zi].boss;
+  B = { zi, boss, hp:boss.hp, max:boss.hp, mercy:0, phase:"text", lines:[], line:"", wrapped:[], shown:0, cb:null,
+        box:{ ...MENU_BOX }, tbox:{ ...MENU_BOX }, soul:{ x:320, y:325 }, bullets:[], t:0, dur:0, spawner:null,
+        php:maxHP(), pmax:maxHP(), flawless:true, iv:0, shake:0, fx:[], flash:0, speech:"", speechT:0,
+        qOrder:shuffle(boss.qs.map((_, i) => i)), qi:0, dust:[], bossAlpha:1, ended:false, q:null, qT:0 };
+  show("battle"); renderBStat(); setBtns(false); hidePanel();
+  say(["* " + boss.name + " blocks the way!", boss.intro], toMenu);
+}
+function renderBStat(){
+  $("#bName").textContent = S.name; $("#bLv").textContent = lv();
+  $("#bHp").textContent = Math.max(0, Math.ceil(B.php)) + " / " + B.pmax;
+  $("#bHpFill").style.width = clamp(B.php / B.pmax * 100, 0, 100) + "%";
+  const mb = $('[data-act="mercy"]');
+  const sp = canSpare();
+  mb.classList.toggle("spare", sp); mb.textContent = sp ? "♥ SPARE" : "✕ MERCY";
+}
+function canSpare(){ return B && (B.mercy >= 100 || B.hp <= B.max * 0.2); }
+function setBtns(on){ document.querySelectorAll(".bbtn").forEach(b => b.disabled = !on); if(on) $('.bbtn').focus({ preventScroll:true }); }
+function hidePanel(){ $("#bPanel").hidden = true; $("#bPanel").innerHTML = ""; }
+function say(lines, cb){ B.phase = "text"; B.lines = lines.slice(); B.cb = cb; B.tbox = { ...MENU_BOX }; nextLine(); }
+function nextLine(){
+  if(!B.lines.length){ const cb = B.cb; B.cb = null; B.line = ""; cb && cb(); return; }
+  B.line = B.lines.shift(); B.shown = 0;
+  bx.font = '22px "Pixelify Sans", monospace';
+  B.wrapped = B.line.split("\n").flatMap(p => wrapText(bx, p, MENU_BOX.w - 48));
+}
+function advance(){
+  if(!B || B.phase !== "text") return;
+  const total = B.wrapped.join("").length;
+  if(B.shown < total){ B.shown = total; return; }
+  SFX.select(); nextLine();
+}
+function wrapText(ctx, text, maxW){
+  const words = text.split(" "), out = []; let cur = "";
+  for(const w of words){ const t = cur ? cur + " " + w : w; if(ctx.measureText(t).width > maxW && cur){ out.push(cur); cur = w; } else cur = t; }
+  if(cur) out.push(cur); return out;
+}
+function toMenu(){
+  B.phase = "menu"; B.tbox = { ...MENU_BOX };
+  const f = canSpare() ? "* " + B.boss.name + " is ready to be spared." : rand(B.boss.flavor);
+  B.line = f; B.shown = 0; bx.font = '22px "Pixelify Sans", monospace'; B.wrapped = wrapText(bx, f, MENU_BOX.w - 48);
+  renderBStat(); setBtns(true);
+}
+
+document.querySelectorAll(".bbtn").forEach(b => b.addEventListener("click", () => { if(!B || B.phase !== "menu") return; SFX.select(); battleAct(b.dataset.act); }));
+document.addEventListener("keydown", e => {
+  if(screen !== "battle" || !B || B.phase !== "menu") return;
+  if(/^[1-4]$/.test(e.key) && $("#bPanel").hidden){ const a = ["fight","act","item","mercy"][+e.key - 1]; SFX.select(); battleAct(a); }
+});
+
+function battleAct(a){
+  const P = $("#bPanel");
+  if(a === "fight"){
+    setBtns(false); B.phase = "question";
+    const q = B.boss.qs[B.qOrder[B.qi % B.qOrder.length]]; B.qi++; if(B.qi % B.qOrder.length === 0) B.qOrder = shuffle(B.qOrder);
+    B.q = q; B.qT = 0; B.qLimit = 20;
+    P.hidden = false;
+    P.innerHTML = '<div class="eyebrow">Attack with the right answer</div><p class="q">' + esc(q.q) + "</p>" + (q.code ? '<div class="example"><pre class="code">' + hl(q.code) + "</pre></div>" : "") + '<div class="opts">' + q.o.map((o, i) => '<button class="opt" data-i="' + i + '"><span class="k">' + "ABCD"[i] + "</span><span>" + esc(o) + "</span></button>").join("") + '</div><div class="timer"><i id="qTimer"></i></div>';
+    P.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => answer(+b.dataset.i)));
+    P.querySelector(".opt").focus({ preventScroll:true });
+    P.scrollIntoView({ block:"nearest", behavior:"smooth" });
+  }
+  if(a === "act"){
+    P.hidden = false;
+    P.innerHTML = '<div class="plist">' + B.boss.acts.map((x, i) => '<button data-i="' + i + '">* ' + esc(x.n) + "<small>" + esc(x.d) + "</small></button>").join("") + '<button data-back="1">◂ Back</button></div>';
+    P.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      SFX.select(); hidePanel();
+      if(b.dataset.back) return;
+      const act = B.boss.acts[+b.dataset.i];
+      setBtns(false); B.mercy = Math.min(100, B.mercy + act.m); renderBStat();
+      const lines = [act.t]; if(act.m && B.mercy >= 100) lines.push("* " + B.boss.name + " doesn't want to fight anymore.");
+      say(lines, enemyTurn);
+    }));
+  }
+  if(a === "item"){
+    const inv = Object.entries(S.items).filter(([, n]) => n > 0);
+    if(!inv.length){ setBtns(false); say(["* Your pockets are empty. Byte's shop sells healing items."], toMenu); return; }
+    P.hidden = false;
+    P.innerHTML = '<div class="plist">' + inv.map(([id, n]) => { const it = SHOP.find(s => s.id === id); return '<button data-id="' + id + '">* ' + esc(it.name) + " ×" + n + "<small>" + esc(it.d) + "</small></button>"; }).join("") + '<button data-back="1">◂ Back</button></div>';
+    P.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      SFX.select(); hidePanel(); if(b.dataset.back) return;
+      const id = b.dataset.id, it = SHOP.find(s => s.id === id);
+      S.items[id]--; save(); setBtns(false);
+      const before = B.php; B.php = Math.min(B.pmax, B.php + ITEM_HEAL[id]); SFX.heal(); renderBStat();
+      say(["* You used the " + it.name + ".", B.php >= B.pmax ? "* Your HP was maxed out." : "* You recovered " + Math.round(B.php - before) + " HP."], enemyTurn);
+    }));
+  }
+  if(a === "mercy"){
+    P.hidden = false;
+    P.innerHTML = '<div class="plist"><button data-m="spare" style="' + (canSpare() ? "color:var(--gold);border-color:var(--gold)" : "") + '">* Spare<small>' + (canSpare() ? "It's ready. End the fight peacefully." : "Lower its HP below 20% or fill MERCY with ACT.") + '</small></button><button data-m="flee">* Flee<small>Run back to the map.</small></button><button data-back="1">◂ Back</button></div>';
+    P.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      SFX.select(); hidePanel(); if(b.dataset.back) return;
+      setBtns(false);
+      if(b.dataset.m === "flee"){ say(["* You fled. Come back when you're ready."], () => { B.ended = true; show("map"); }); return; }
+      if(canSpare()) winBattle(true);
+      else say(["* You try to spare " + B.boss.name + ".", "* It isn't ready yet. (MERCY " + B.mercy + "%)"], enemyTurn);
+    }));
+  }
+}
+function answer(i){
+  if(!B || B.phase !== "question") return;
+  const q = B.q, ok = i === q.a;
+  const P = $("#bPanel");
+  P.querySelectorAll(".opt").forEach((b, j) => { b.disabled = true; if(j === q.a) b.classList.add("right"); else if(j === i) b.classList.add("wrong"); });
+  B.phase = "wait";
+  setTimeout(() => {
+    hidePanel();
+    if(ok){
+      const dmg = Math.round(10 + lv()*2 + Math.random()*7 + (B.qT < 6 ? 4 : 0));
+      B.hp = Math.max(0, B.hp - dmg); B.flash = 0.35; B.shake = 8; SFX.hit();
+      B.fx.push({ k:"slash", t:0 }); B.fx.push({ k:"num", t:0, v:dmg });
+      renderBStat();
+      const lines = ["* Correct! You dealt " + dmg + " damage." + (B.qT < 6 ? " (Quick answer bonus!)" : ""), "* " + q.why];
+      if(B.hp <= 0) say(lines, () => winBattle(false));
+      else say(lines, enemyTurn);
+    } else {
+      SFX.bad();
+      say([i < 0 ? "* Too slow! Your attack missed." : "* Your attack missed. The answer was: " + q.o[q.a], "* " + q.why], enemyTurn);
+    }
+  }, i < 0 ? 300 : 900);
+}
+
+/* attack patterns */
+const PAT = {
+  rain: k => { let acc = 0; return (dt, b) => { acc += dt; const ev = 0.2 / k; while(acc > ev){ acc -= ev; b.bullets.push({ x:b.box.x + Math.random()*b.box.w, y:b.box.y - 10, vx:(Math.random()-.5)*20, vy:(110 + Math.random()*80)*k, r:5 }); } }; },
+  aimed: k => { let acc = 0.4; return (dt, b) => { acc += dt; if(acc > 0.65 / k){ acc = 0; const B2 = b.box, side = Math.floor(Math.random()*4); let x, y;
+      if(side === 0){ x = B2.x + Math.random()*B2.w; y = B2.y - 12; } else if(side === 1){ x = B2.x + B2.w + 12; y = B2.y + Math.random()*B2.h; } else if(side === 2){ x = B2.x + Math.random()*B2.w; y = B2.y + B2.h + 12; } else { x = B2.x - 12; y = B2.y + Math.random()*B2.h; }
+      const a = Math.atan2(b.soul.y - y, b.soul.x - x), s = 150*k;
+      b.bullets.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, r:6, aim:1 }); } }; },
+  sweep: k => { let acc = 0.6; return (dt, b) => { acc += dt; if(acc > 1.25 / k){ acc = 0; const left = Math.random() < .5, gap = 48, B2 = b.box;
+      const gy = B2.y + 8 + Math.random()*(B2.h - gap - 16), x = left ? B2.x - 14 : B2.x + B2.w + 4, vx = (left ? 1 : -1)*130*k;
+      b.bullets.push({ x, y:B2.y - 4, w:10, h:gy - B2.y + 4, vx, vy:0, rect:1 });
+      b.bullets.push({ x, y:gy + gap, w:10, h:B2.y + B2.h - gy - gap + 4, vx, vy:0, rect:1 }); } }; },
+  ring: k => { let acc = 0.5; return (dt, b) => { acc += dt; if(acc > 1.05 / k){ acc = 0; const cx = b.box.x + 20 + Math.random()*(b.box.w - 40), cy = b.box.y - 26, n = 9, s = 115*k, off = (Math.random()-.5)*.4;
+      for(let i=0;i<n;i++){ const a = Math.PI*(0.12 + 0.76*i/(n-1)) + off; b.bullets.push({ x:cx, y:cy, vx:Math.cos(a)*s, vy:Math.sin(a)*s, r:5 }); } } }; },
+  spiral: k => { let acc = 0, ang = Math.random()*6; return (dt, b) => { acc += dt; ang += dt*1.9; if(acc > 0.13 / k){ acc = 0; const cx = b.box.x + b.box.w/2, cy = b.box.y + b.box.h/2, s = 75*k;
+      for(const o of [0, Math.PI]){ const a = ang + o; b.bullets.push({ x:cx + Math.cos(a)*150, y:cy + Math.sin(a)*150, vx:-Math.cos(a)*s, vy:-Math.sin(a)*s, r:5, life:4 }); } } }; }
+};
+function enemyTurn(){
+  if(!B) return;
+  B.phase = "speech"; B.speech = rand(B.boss.taunts); B.speechT = 0;
+  B.tbox = { ...DODGE_BOX }; B.bullets = [];
+  B.soul = { x:DODGE_BOX.x + DODGE_BOX.w/2, y:DODGE_BOX.y + DODGE_BOX.h - 26 };
+}
+function startDodge(){
+  const k = 1 + (1 - B.hp / B.max)*0.45 + B.zi*0.12;
+  B.spawner = PAT[rand(B.boss.patterns)](k);
+  if(B.zi >= 2 && Math.random() < 0.35){ const s2 = PAT[rand(B.boss.patterns)](k*0.6), s1 = B.spawner; B.spawner = (dt, b) => { s1(dt, b); s2(dt, b); }; }
+  B.dur = 5.5 + B.zi*0.6; B.t = 0; B.phase = "dodge";
+}
+function hurtPlayer(){
+  B.php -= B.boss.atk; B.flawless = false; B.iv = S.owned.charm ? 1.5 : 1.0; B.shake = 6; SFX.hurt(); renderBStat();
+  if(B.php <= 0){ B.php = 0; loseBattle(); }
+}
+function loseBattle(){
+  B.phase = "dead"; B.deadT = 0; B.bullets = []; S.lost[B.boss.id] = true; save(); setBtns(false);
+  const P = $("#bPanel");
+  setTimeout(() => {
+    if(!B) return;
+    P.hidden = false;
+    P.innerHTML = '<p class="q px" style="font-size:22px">GAME OVER</p><p style="color:var(--dim)">' + esc(S.name) + ", stay determined! Every attack pattern can be learned.</p>" + '<div class="actions" style="margin-top:12px"><button class="btn primary" id="retryB">Try again ▸</button><button class="btn" id="mapB">Back to map</button></div>';
+    $("#retryB").onclick = () => { SFX.select(); startBattle(B.zi); };
+    $("#mapB").onclick = () => { B.ended = true; show("map"); };
+    $("#retryB").focus();
+  }, 1800);
+}
+function winBattle(spared){
+  const boss = B.boss, first = !S.boss[boss.id];
+  B.phase = "text";
+  if(!spared){ makeDust(); } else { B.bossAlpha = 0.999; B.spareGlow = true; }
+  S.boss[boss.id] = true;
+  if(spared){ S.spared[boss.id] = true; unlock("pacifist"); }
+  if(first){ addXP(boss.xp); S.gold += boss.gold; }
+  if(B.flawless) unlock("flawless");
+  if(S.lost[boss.id]) unlock("comeback");
+  if(boss.id === "b1") unlock("boss1");
+  if(boss.id === "b4") unlock("grad");
+  save(); renderHUD(); SFX.win();
+  const lines = [spared ? "* You spared " + boss.name + "." : "* " + boss.name + " turned to dust... it'll respawn after you leave.",
+                 first ? "* YOU WON! You earned " + boss.xp + " XP and " + boss.gold + " G." : "* YOU WON! (Rewards were already collected.)"];
+  if(boss.id === "b4") lines.push("* THE KERNEL: \"You understand me now. Go build something of your own.\"", "* You finished SOUL SCRIPT. The Playground is waiting for your first fangame.");
+  else if(first) lines.push("* A new zone has opened: " + ZONES[B.zi + 1].name + ".");
+  say(lines, () => {
+    B.ended = true; B.phase = "over";
+    const P = $("#bPanel"); P.hidden = false;
+    P.innerHTML = '<div class="actions">' + (boss.id === "b4" ? '<button class="btn primary" data-go="play">Open the Playground ▸</button>' : '<button class="btn primary" data-go="map">Continue ▸</button>') + '<button class="btn" data-go="map">Map</button></div>';
+  });
+}
+function makeDust(){
+  const rows = SPR[B.boss.spr], s = 9, w = rows[0].length*s, x0 = 320 - w/2, y0 = 34;
+  rows.forEach((row, r) => [...row].forEach((ch, c) => { if(ch !== ".") B.dust.push({ x:x0 + c*s, y:y0 + r*s, s, col:PAL[ch], vx:(Math.random()-.3)*30, vy:-20 - Math.random()*40, d:r*0.06 + Math.random()*0.2 }); }));
+  B.bossAlpha = 0;
+}
+
+/* pointer drag for touch */
+let drag = null;
+bc.addEventListener("pointerdown", e => {
+  if(!B) return;
+  if(B.phase === "text"){ advance(); return; }
+  if(B.phase === "dodge" || B.phase === "speech"){ drag = { x:e.clientX, y:e.clientY }; bc.setPointerCapture(e.pointerId); }
+});
+bc.addEventListener("pointermove", e => {
+  if(!drag || !B) return;
+  const sc = 640 / bc.getBoundingClientRect().width;
+  B.soul.x += (e.clientX - drag.x)*sc; B.soul.y += (e.clientY - drag.y)*sc;
+  drag = { x:e.clientX, y:e.clientY };
+});
+bc.addEventListener("pointerup", () => drag = null);
+bc.addEventListener("pointercancel", () => drag = null);
+
+function updateBattle(dt){
+  if(!B) return;
+  // box lerp
+  for(const k of ["x","y","w","h"]) B.box[k] += (B.tbox[k] - B.box[k]) * Math.min(1, dt*10);
+  if(B.shake > 0) B.shake = Math.max(0, B.shake - dt*30);
+  if(B.flash > 0) B.flash -= dt;
+  B.fx.forEach(f => f.t += dt); B.fx = B.fx.filter(f => f.t < 1.2);
+  B.dust.forEach(p => { if(p.d > 0){ p.d -= dt; return; } p.x += p.vx*dt; p.y += p.vy*dt; p.vy -= 10*dt; p.s *= (1 - dt*0.6); });
+  if(B.phase === "text" || B.phase === "menu"){
+    const total = B.wrapped.join("").length;
+    if(B.shown < total){ const prev = Math.floor(B.shown); B.shown = Math.min(total, B.shown + dt*45); if(Math.floor(B.shown) !== prev && Math.floor(B.shown) % 2 === 0) SFX.blip(); }
+  }
+  if(B.phase === "question"){
+    B.qT += dt; const el = $("#qTimer"); if(el) el.style.width = clamp(100 - B.qT / B.qLimit * 100, 0, 100) + "%";
+    if(B.qT >= B.qLimit) answer(-1);
+  }
+  if(B.phase === "speech"){ B.speechT += dt; if(B.speechT > 1.5) startDodge(); }
+  if(B.phase === "speech" || B.phase === "dodge"){
+    const sp = 170*dt, s = B.soul;
+    if(keys.ArrowLeft || keys.a) s.x -= sp;
+    if(keys.ArrowRight || keys.d) s.x += sp;
+    if(keys.ArrowUp || keys.w) s.y -= sp;
+    if(keys.ArrowDown || keys.s) s.y += sp;
+    s.x = clamp(s.x, B.box.x + 10, B.box.x + B.box.w - 10);
+    s.y = clamp(s.y, B.box.y + 10, B.box.y + B.box.h - 10);
+  }
+  if(B.phase === "dodge"){
+    B.t += dt; if(B.iv > 0) B.iv -= dt;
+    if(B.t < B.dur - 0.6) B.spawner(dt, B);
+    const bb = B.box;
+    for(const b of B.bullets){ b.x += b.vx*dt; b.y += b.vy*dt; if(b.life !== undefined) b.life -= dt; }
+    B.bullets = B.bullets.filter(b => b.x > bb.x - 180 && b.x < bb.x + bb.w + 180 && b.y > bb.y - 180 && b.y < bb.y + bb.h + 180 && (b.life === undefined || b.life > 0));
+    if(B.iv <= 0){
+      const s = B.soul;
+      for(const b of B.bullets){
+        const hit = b.rect ? (s.x + 5 > b.x && s.x - 5 < b.x + b.w && s.y + 5 > b.y && s.y - 5 < b.y + b.h) : Math.hypot(b.x - s.x, b.y - s.y) < b.r + 5;
+        if(hit){ hurtPlayer(); break; }
+      }
+    }
+    if(B.phase === "dodge" && B.t >= B.dur){ B.bullets = []; toMenu(); }
+  }
+  if(B.phase === "dead") B.deadT += dt;
+}
+function drawBattle(t){
+  const c = bx;
+  c.save();
+  c.fillStyle = "#000"; c.fillRect(0, 0, 640, 480);
+  if(B.shake > 0) c.translate((Math.random()-.5)*B.shake, (Math.random()-.5)*B.shake);
+  if(B.phase === "dead"){ drawDeath(c, B.deadT); c.restore(); return; }
+  // boss
+  const rows = SPR[B.boss.spr], s = 9, w = rows[0].length*s, bob = Math.sin(t/400)*4;
+  if(B.bossAlpha > 0){
+    drawSprite(c, rows, 320 - w/2, 34 + bob, s, B.flash > 0 ? "#ffffff" : null, B.spareGlow ? 0.45 : 1);
+  }
+  for(const p of B.dust){ if(p.s < 0.5) continue; c.fillStyle = p.d > 0 ? p.col : "#ffffff"; c.globalAlpha = p.d > 0 ? 1 : Math.max(0, p.s / 9); c.fillRect(p.x, p.y, p.s, p.s); }
+  c.globalAlpha = 1;
+  // boss hp + mercy
+  const hpW = 160;
+  c.fillStyle = "#3a3560"; c.fillRect(320 - hpW/2, 200, hpW, 8);
+  c.fillStyle = "#59e39b"; c.fillRect(320 - hpW/2, 200, hpW * (B.hp / B.max), 8);
+  c.fillStyle = "#ffd23f"; c.fillRect(320 - hpW/2, 212, hpW * (B.mercy / 100), 4);
+  c.font = '14px "Pixelify Sans", monospace'; c.fillStyle = "#9a94bd"; c.textAlign = "center";
+  c.fillText(B.boss.name + "  HP " + B.hp + " / " + B.max + (B.mercy ? "   MERCY " + B.mercy + "%" : ""), 320, 236);
+  c.textAlign = "left";
+  // speech bubble
+  if(B.phase === "speech" || (B.phase === "dodge" && B.t < 1.2)){
+    c.font = '17px "Pixelify Sans", monospace';
+    const lines = wrapText(c, B.speech, 170), bw = 196, bh = 18 + lines.length*22, bxp = 320 + w/2 + 16, byp = 50;
+    c.fillStyle = "#fff"; c.fillRect(bxp, byp, bw, bh);
+    c.beginPath(); c.moveTo(bxp, byp + 18); c.lineTo(bxp - 14, byp + 26); c.lineTo(bxp, byp + 32); c.fill();
+    c.fillStyle = "#000"; lines.forEach((l, i) => c.fillText(l, bxp + 12, byp + 26 + i*22));
+  }
+  // box
+  const b = B.box;
+  c.strokeStyle = "#f2efe6"; c.lineWidth = 4; c.strokeRect(b.x, b.y, b.w, b.h);
+  if(B.phase === "text" || B.phase === "menu" || B.phase === "question" || B.phase === "wait" || B.phase === "over"){
+    if(b.w > 400){
+      c.font = '22px "Pixelify Sans", monospace'; c.fillStyle = "#f2efe6";
+      let left = Math.floor(B.shown);
+      B.wrapped.slice(0, 4).forEach((ln, i) => { const part = ln.slice(0, Math.max(0, left)); left -= ln.length; c.fillText(part, b.x + 24, b.y + 40 + i*30); });
+      if(B.phase === "text" && B.shown >= B.wrapped.join("").length && Math.floor(t/400) % 2){ c.fillStyle = "#ffd23f"; c.fillText("▸", b.x + b.w - 30, b.y + b.h - 16); }
+    }
+  }
+  if(B.phase === "speech" || B.phase === "dodge"){
+    c.save(); c.beginPath(); c.rect(b.x + 2, b.y + 2, b.w - 4, b.h - 4); c.clip();
+    for(const p of B.bullets){
+      c.fillStyle = p.aim ? "#ff9f43" : "#f2efe6";
+      if(p.rect) c.fillRect(p.x, p.y, p.w, p.h);
+      else { c.beginPath(); c.arc(p.x, p.y, p.r, 0, Math.PI*2); c.fill(); }
+    }
+    c.restore();
+    if(!(B.iv > 0 && Math.floor(t/80) % 2)) drawHeart(c, B.soul.x, B.soul.y, 2.4);
+    if(B.phase === "dodge"){ c.fillStyle = "#3a3560"; c.fillRect(b.x, b.y + b.h + 10, b.w, 4); c.fillStyle = "#ffd23f"; c.fillRect(b.x, b.y + b.h + 10, b.w * (1 - B.t / B.dur), 4); }
+  }
+  // fx
+  for(const f of B.fx){
+    if(f.k === "slash" && f.t < 0.4){ c.strokeStyle = "#ff2a4b"; c.lineWidth = 6; c.beginPath(); const p = f.t / 0.4; c.moveTo(250, 40); c.lineTo(250 + 140*p, 40 + 140*p); c.stroke(); }
+    if(f.k === "num"){ c.font = 'bold 30px "Pixelify Sans", monospace'; c.fillStyle = "#ff2a4b"; c.textAlign = "center"; c.globalAlpha = Math.max(0, 1 - f.t); c.fillText(String(f.v), 320, 80 - f.t*40); c.globalAlpha = 1; c.textAlign = "left"; }
+  }
+  c.restore();
+}
+function drawDeath(c, t){
+  const cx = 320, cy = 240;
+  if(t < 0.6) drawHeart(c, cx, cy, 5);
+  else if(t < 1.2){ drawHeart(c, cx - 6, cy, 5); c.fillStyle = "#000"; c.fillRect(cx - 2, cy - 18, 4, 36); }
+  else { for(let i=0;i<6;i++){ const a = i*1.05, d = (t - 1.2)*120; c.fillStyle = soulColor(); c.fillRect(cx + Math.cos(a)*d, cy + Math.sin(a)*d + (t-1.2)*(t-1.2)*80, 8, 8); } }
+  if(t > 1.4){ c.font = 'bold 56px "Pixelify Sans", monospace'; c.textAlign = "center"; c.fillStyle = "#f2efe6"; c.globalAlpha = Math.min(1, (t - 1.4)); c.fillText("GAME OVER", 320, 150); c.globalAlpha = 1; c.textAlign = "left"; }
+}
+
+/* ============================================================
+   SHOP
+   ============================================================ */
+const kCan = $("#keeperCan"), kCtx = kCan.getContext("2d");
+function renderShop(){
+  $("#shopG").textContent = S.gold; $("#shopHints").textContent = S.hints;
+  $("#shopItems").innerHTML = SHOP.map(it => {
+    const owned = (it.kind === "once" || it.kind === "color") && S.owned[it.id];
+    const count = it.kind === "item" ? (S.items[it.id] || 0) : null;
+    const sw = it.kind === "color" ? '<span class="swatch" style="background:' + SOUL_COLORS[it.id] + '"></span>' : "";
+    return '<div class="item"><div class="top"><h3>' + sw + esc(it.name) + '</h3><span class="price">' + it.price + ' G</span></div><p>' + esc(it.d) + "</p>" +
+      (owned ? '<span class="own">Owned</span>' : '<div class="actions" style="margin:0"><button class="btn small" data-buy="' + it.id + '"' + (S.gold < it.price ? " disabled" : "") + ">Buy</button>" + (count !== null ? '<span class="kbd">You have ' + count + "</span>" : it.kind === "hint" ? '<span class="kbd">You have ' + S.hints + "</span>" : "") + "</div>") + "</div>";
+  }).join("");
+}
+$("#shopItems").addEventListener("click", e => {
+  const b = e.target.closest("[data-buy]"); if(!b) return;
+  const it = SHOP.find(s => s.id === b.dataset.buy);
+  if(S.gold < it.price){ SFX.bad(); return; }
+  S.gold -= it.price;
+  if(it.kind === "item") S.items[it.id] = (S.items[it.id] || 0) + 1;
+  if(it.kind === "hint") S.hints++;
+  if(it.kind === "once" || it.kind === "color") S.owned[it.id] = true;
+  if(it.kind === "color") S.color = it.id;
+  unlock("shopper"); save(); SFX.good(); renderHUD(); renderShop();
+  $("#keeperLine").textContent = rand(["* Thanks! That one was written in only 40 lines.","* Good choice. Use it wisely.","* Pleasure doing business, " + S.name + ".","* Come back after the next boss!"]);
+});
+
+/* ============================================================
+   PLAYGROUND
+   ============================================================ */
+const PRESETS = {
+  "Move the soul": `// Arrow keys move the soul. Change anything, then press Run.
+let soul = { x: 232, y: 172, size: 16, speed: 3 };
+const box = { x: 140, y: 100, w: 200, h: 160 };
+
+function update(keys, frame) {
+  if (keys.ArrowLeft)  soul.x -= soul.speed;
+  if (keys.ArrowRight) soul.x += soul.speed;
+  if (keys.ArrowUp)    soul.y -= soul.speed;
+  if (keys.ArrowDown)  soul.y += soul.speed;
+
+  // keep the soul inside the box
+  soul.x = Math.max(box.x, Math.min(box.x + box.w - soul.size, soul.x));
+  soul.y = Math.max(box.y, Math.min(box.y + box.h - soul.size, soul.y));
+}
+
+function draw(ctx) {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, 480, 360);
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(box.x, box.y, box.w, box.h);
+  ctx.fillStyle = "red";
+  ctx.fillRect(soul.x, soul.y, soul.size, soul.size);
+}`,
+  "Bullet rain with HP": `// Dodge the falling bullets! Try changing speed or spawn rate.
+let soul = { x: 232, y: 230, size: 14, speed: 3 };
+const box = { x: 130, y: 110, w: 220, h: 160 };
+let bullets = [];
+let hp = 20;
+let hurtTimer = 0;
+
+function hits(a, b) {
+  return a.x < b.x + b.size && a.x + a.size > b.x &&
+         a.y < b.y + b.size && a.y + a.size > b.y;
+}
+
+function update(keys, frame) {
+  if (hp <= 0) return;
+  if (keys.ArrowLeft)  soul.x -= soul.speed;
+  if (keys.ArrowRight) soul.x += soul.speed;
+  if (keys.ArrowUp)    soul.y -= soul.speed;
+  if (keys.ArrowDown)  soul.y += soul.speed;
+  soul.x = Math.max(box.x, Math.min(box.x + box.w - soul.size, soul.x));
+  soul.y = Math.max(box.y, Math.min(box.y + box.h - soul.size, soul.y));
+
+  // spawn a bullet every 8 frames
+  if (frame % 8 === 0) {
+    bullets.push({ x: box.x + Math.random() * box.w, y: box.y - 10, size: 8, speed: 2 + Math.random() * 2 });
+  }
+  bullets.forEach(b => b.y += b.speed);
+  bullets = bullets.filter(b => b.y < box.y + box.h);
+
+  if (hurtTimer > 0) hurtTimer--;
+  for (const b of bullets) {
+    if (hurtTimer === 0 && hits(soul, b)) {
+      hp -= 3;
+      hurtTimer = 40;
+      console.log("Ouch! HP is now", hp);
+    }
+  }
+}
+
+function draw(ctx) {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, 480, 360);
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(box.x, box.y, box.w, box.h);
+
+  ctx.fillStyle = "white";
+  bullets.forEach(b => ctx.fillRect(b.x, b.y, b.size, b.size));
+
+  // blink while invincible
+  if (hurtTimer % 8 < 4) {
+    ctx.fillStyle = "red";
+    ctx.fillRect(soul.x, soul.y, soul.size, soul.size);
+  }
+
+  ctx.fillStyle = "yellow";
+  ctx.font = "20px monospace";
+  ctx.fillText("HP " + Math.max(hp, 0) + " / 20", 140, 300);
+  if (hp <= 0) {
+    ctx.fillStyle = "white";
+    ctx.font = "40px monospace";
+    ctx.fillText("GAME OVER", 130, 60);
+  }
+}`,
+  "Typewriter dialogue": `// Classic letter-by-letter text. Edit the lines array!
+const lines = [
+  "* You found a strange glowing box.",
+  "* It hums with JavaScript.",
+  "* You're filled with determination."
+];
+let lineIndex = 0;
+let letters = 0;
+let wasPressed = false;
+
+function update(keys, frame) {
+  const full = lines[lineIndex];
+  if (letters < full.length && frame % 2 === 0) letters++;
+
+  // press Z or Enter to continue
+  const pressed = keys.z || keys.Enter;
+  if (pressed && !wasPressed) {
+    if (letters < full.length) letters = full.length;
+    else if (lineIndex < lines.length - 1) { lineIndex++; letters = 0; }
+  }
+  wasPressed = pressed;
+}
+
+function draw(ctx) {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, 480, 360);
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(20, 220, 440, 120);
+  ctx.fillStyle = "white";
+  ctx.font = "20px monospace";
+  ctx.fillText(lines[lineIndex].slice(0, letters), 40, 265);
+  ctx.fillStyle = "gray";
+  ctx.font = "14px monospace";
+  ctx.fillText("Z / Enter", 380, 325);
+}`,
+  "Ring attack": `// A boss-style ring of bullets using Math.cos and Math.sin.
+let bullets = [];
+const cx = 240, cy = 120;
+
+function spawnRing(count, speed, offset) {
+  for (let i = 0; i < count; i++) {
+    const a = (i / count) * Math.PI * 2 + offset;
+    bullets.push({ x: cx, y: cy, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed });
+  }
+}
+
+function update(keys, frame) {
+  if (frame % 30 === 0) spawnRing(16, 2, frame * 0.02);
+  bullets.forEach(b => { b.x += b.vx; b.y += b.vy; });
+  bullets = bullets.filter(b => b.x > -10 && b.x < 490 && b.y > -10 && b.y < 370);
+}
+
+function draw(ctx) {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, 480, 360);
+  ctx.fillStyle = "white";
+  for (const b of bullets) {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = "purple";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+  ctx.fill();
+}`
+};
+const plEd = makeEditor($("#pEditor"), true);
+const pc = $("#pc"), pctx = pc.getContext("2d");
+let PG = null, lastPlayErr = "";
+$("#preset").innerHTML = Object.keys(PRESETS).map(k => '<option>' + esc(k) + "</option>").join("");
+plEd.onChange(v => { S.drafts.__play = v; save(); });
+plEd.onRun(() => runPlay());
+$("#preset").addEventListener("change", () => { plEd.set(PRESETS[$("#preset").value]); S.drafts.__play = plEd.get(); save(); runPlay(); });
+function openPlay(){ if(!plEd.get()) plEd.set(S.drafts.__play || PRESETS["Move the soul"]); if(!PG) runPlay(); }
+function stopPlay(){ PG = null; }
+function runPlay(){
+  const out = $("#pOut"), logs = [];
+  const con = { log:(...a) => { logs.push(a.map(v => typeof v === "string" ? v : (() => { try{ return JSON.stringify(v); }catch(e){ return String(v); } })()).join(" ")); if(logs.length > 60) logs.shift(); out.textContent = logs.join("\n"); out.scrollTop = out.scrollHeight; } };
+  con.info = con.warn = con.error = con.log;
+  lastPlayErr = "";
+  out.innerHTML = '<span class="muted">Running. Click the game screen, then use your keys.</span>';
+  try{
+    const f = new Function("console", "canvas", plEd.get() + '\n;return { update: typeof update === "function" ? update : null, draw: typeof draw === "function" ? draw : null };');
+    const api = f(con, { width:480, height:360 });
+    if(!api.draw){ out.innerHTML = '<span class="err">No draw(ctx) function found. Add one so something shows up.</span>'; PG = null; return; }
+    PG = { api, frame:0 };
+    unlock("tinker"); SFX.select();
+    pc.focus({ preventScroll:true });
+  }catch(e){ lastPlayErr = e.name + ": " + e.message; out.innerHTML = '<span class="err">' + esc(e.name + ": " + e.message) + "</span>"; PG = null; }
+}
+function stepPlay(){
+  if(!PG) return;
+  try{
+    PG.frame++;
+    if(PG.api.update) PG.api.update(keys, PG.frame);
+    pctx.save(); PG.api.draw(pctx); pctx.restore();
+  }catch(e){ lastPlayErr = e.name + ": " + e.message; $("#pOut").innerHTML = '<span class="err">' + esc(e.name + ": " + e.message) + " (stopped)</span>"; PG = null; }
+}
+$("#pRun").addEventListener("click", runPlay);
+$("#pStop").addEventListener("click", () => { stopPlay(); $("#pOut").innerHTML = '<span class="muted">Stopped.</span>'; });
+
+/* ============================================================
+   STATS
+   ============================================================ */
+function renderStats(){
+  $("#stName").textContent = S.name;
+  const lessons = ZONES.reduce((n, z) => n + z.levels.filter(l => S.done[l.id]).length, 0);
+  const bosses = Object.keys(S.boss).length, spares = Object.keys(S.spared).length;
+  $("#statsGrid").innerHTML = [["LV", lv()], ["Max HP", maxHP()], ["Lessons", lessons + " / 16"], ["Bosses", bosses + " / 4"], ["XP", S.xp], ["Gold", S.gold], ["Spared", spares], ["Hint tokens", S.hints]]
+    .map(([l, v]) => '<div class="sbox"><div class="v">' + v + '</div><div class="l">' + l + "</div></div>").join("");
+  $("#colorPick").innerHTML = Object.keys(SOUL_COLORS).filter(c => c === "red" || S.owned[c]).map(c => '<button data-color="' + c + '" aria-pressed="' + (S.color === c) + '"><span class="swatch" style="background:' + SOUL_COLORS[c] + '"></span>' + c[0].toUpperCase() + c.slice(1) + "</button>").join("") + (Object.keys(S.owned).some(k => SOUL_COLORS[k]) ? "" : '<span class="kbd" style="align-self:center">Buy more colors in the shop.</span>');
+  $("#achList").innerHTML = ACH.map(a => '<div class="ach' + (S.ach[a.id] ? " got" : "") + '"><b>' + (S.ach[a.id] ? "★ " : "☆ ") + esc(a.n) + "</b><span>" + esc(a.d) + "</span></div>").join("");
+}
+$("#colorPick").addEventListener("click", e => { const b = e.target.closest("[data-color]"); if(!b) return; S.color = b.dataset.color; save(); SFX.select(); renderStats(); drawBrand(); });
+$("#resetBtn").addEventListener("click", () => { $("#resetConfirm").hidden = false; });
+$("#resetNo").addEventListener("click", () => { $("#resetConfirm").hidden = true; });
+$("#resetYes").addEventListener("click", () => { S = fresh(); save(); $("#resetConfirm").hidden = true; plEd.set(""); $("#nameIn").value = "KID"; show("title"); updateTitleNote(); });
+
+/* ============================================================
+   INPUT + MAIN LOOP
+   ============================================================ */
+document.addEventListener("keydown", e => {
+  const tag = document.activeElement && document.activeElement.tagName;
+  const inField = /TEXTAREA|INPUT|SELECT/.test(tag);
+  if(!inField) keys[e.key] = true;
+  if(screen === "battle" && B){
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key) && (B.phase === "dodge" || B.phase === "speech")) e.preventDefault();
+    if((e.key === "z" || e.key === "Z" || e.key === "Enter") && B.phase === "text" && !inField){ e.preventDefault(); advance(); }
+  }
+  if(screen === "play" && !inField && ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key) && PG) e.preventDefault();
+  if(screen === "lesson" && L && L.step === "learn" && !inField && (e.key === "Enter" || e.key === "ArrowRight")){ if(document.activeElement && document.activeElement.tagName === "BUTTON") return; e.preventDefault(); nextPage(); }
+});
+document.addEventListener("keyup", e => { keys[e.key] = false; });
+window.addEventListener("blur", () => { for(const k in keys) keys[k] = false; });
+
+const byteCan = $("#byteCan"), byteCtx = byteCan.getContext("2d");
+function drawByte(ctx, t){ ctx.clearRect(0, 0, 12, 12); drawSprite(ctx, SPR.byte, 0, 0, 1, null, 0.85 + Math.sin(t/300)*0.15); }
+const fabCtx = $("#fabCan").getContext("2d"), chatCtx2 = $("#chatCan").getContext("2d");
+function drawBrand(){ const c = $("#brandHeart").getContext("2d"); c.clearRect(0, 0, 7, 6); drawSprite(c, SPR.heart, 0, 0, 1, soulColor()); }
+
+let last = performance.now();
+function frame(t){
+  const dt = Math.min(0.05, (t - last) / 1000); last = t;
+  if(screen === "title") drawTitle(t);
+  if(screen === "lesson") drawByte(byteCtx, t);
+  if(screen === "shop") drawByte(kCtx, t);
+  if(screen === "battle" && B){ updateBattle(dt); if(B) drawBattle(t); }
+  if(screen === "play") stepPlay();
+  if(!$("#askFab").hidden) drawByte(fabCtx, t);
+  if(!$("#chat").hidden) drawByte(chatCtx2, t);
+  requestAnimationFrame(frame);
+}
+
+function updateTitleNote(){
+  $("#saveNote").textContent = S.started ? "Continuing " + S.name + "'s save · LV " + lv() : "Progress saves in this browser.";
+  $("#startBtn").textContent = S.started ? "Continue ▸" : "Start ▸";
+}
+
+/* ============================================================
+   ASK BYTE — AI helper (uses the viewer's Claude via the sample capability)
+   ============================================================ */
+const BYTE_RULES = `You are Byte, a friendly lantern spirit who is the mentor inside "Soul Script", a browser game that teaches JavaScript through an Undertale-style adventure. The player knows some Python and wants to build their own browser Undertale fangames (bullet-hell battles, dialogue boxes, menus) with HTML, CSS and JavaScript.
+
+How to answer:
+- Be a genuinely excellent teacher: accurate, specific, and practical. Never make things up. If something depends on details you don't have, say so.
+- Keep answers short and focused (usually under 150 words) unless the player asks for depth or a full program.
+- Compare to Python when it helps ("in Python you'd write ...").
+- Put code in fenced blocks marked js (or html/css). Keep code correct, modern (let/const, arrow functions) and runnable.
+- Use light Markdown only: short paragraphs, bullet lists, **bold**, inline code. No headings, no tables.
+- Speak warmly with a little Undertale-style flavor (an occasional "* " line is fine), but substance comes first.
+
+When the player is on a code challenge (you'll get the task, tests, their code and the last run):
+- Read their code carefully. Point to the exact line or mistake and explain WHY it fails.
+- Default to hints that lead them to fix it themselves. Give the complete solution only if they clearly ask for it (e.g. "just show me the answer").
+
+During a boss-battle question with a timer, don't say which option is correct. Give a quick nudge about the concept instead. Outside a question, explain anything freely.
+
+For Playground or fangame questions, help them build real features: game loops, canvas drawing, collision, attack patterns, dialogue typewriters, menus, sprites, sound, saving. Their Playground code uses update(keys, frame) and draw(ctx) on a 480x360 canvas.
+
+If asked what you are: you're Byte, the game's helper, powered by Claude.`;
+
+let SAMPLE = null, chatTurns = [], chatBusy = false, chatCtl = null;
+(async () => {
+  try{ SAMPLE = window.claude && window.claude.use ? await window.claude.use("sample") : null; }catch(e){ SAMPLE = null; }
+  if(SAMPLE){ $("#askFab").hidden = screen === "title"; $("#cAsk").hidden = false; $("#exAsk").hidden = false; }
+})();
+
+function aiContext(){
+  const out = ["Player: " + S.name + ", LV " + lv() + ". Lessons cleared: " + Object.keys(S.done).length + "/16. Bosses beaten: " + Object.keys(S.boss).length + "/4."];
+  if(screen === "lesson" && L){
+    const z = ZONES[L.zi];
+    out.push("Screen: lesson \"" + L.lv.title + "\" (concept: " + L.lv.concept + ") in zone " + z.name + ".");
+    if(L.step === "learn"){ const p = L.lv.pages[L.page]; out.push("They are reading this lesson page:\n" + p.t + (p.code ? "\nExample code:\n```js\n" + p.code + "\n```" : "")); }
+    if(L.step === "quiz"){ const q = L.lv.quiz; out.push("They are on the quick-check quiz: " + q.q + (q.code ? "\n```js\n" + q.code + "\n```" : "") + "\nOptions: " + q.o.join(" | ") + ". (Nudge, don't just reveal.)"); }
+    if(L.step === "code" || L.step === "done"){
+      const c = L.lv.ch;
+      out.push("Code challenge task: " + c.task);
+      const statuses = [...$("#cTests").children].map((li, i) => "- " + c.tests[i][0] + ": " + (li.classList.contains("pass") ? "PASS" : li.classList.contains("fail") ? "FAIL" : "not run yet"));
+      out.push("Tests:\n" + statuses.join("\n"));
+      out.push("Their current code:\n```js\n" + chEd.get().slice(0, 6000) + "\n```");
+      if(L.lastRun){ const r = L.lastRun.r; out.push("Last run: " + (r.error ? "ERROR " + r.error : "no error") + ". Console output: " + ((r.logs || []).slice(0, 20).join(" / ") || "(nothing)")); }
+      out.push("Failed runs so far: " + L.fails + ". Hints used: " + L.hintsShown + ".");
+    }
+  } else if(screen === "battle" && B){
+    out.push("Screen: boss battle against " + B.boss.name + " (boss HP " + B.hp + "/" + B.max + ", mercy " + B.mercy + "%, player HP " + Math.ceil(B.php) + "/" + B.pmax + "). In battle, FIGHT asks a code question; ACT raises mercy; MERCY spares at 100% mercy or under 20% boss HP; ITEM heals.");
+    if(B.phase === "question" && B.q) out.push("A timed question is on screen right now (do NOT reveal the answer): " + B.q.q + (B.q.code ? "\n```js\n" + B.q.code + "\n```" : "") + "\nOptions: " + B.q.o.join(" | "));
+  } else if(screen === "play"){
+    out.push("Screen: Fangame Playground.\nTheir code:\n```js\n" + plEd.get().slice(0, 8000) + "\n```" + (lastPlayErr ? "\nLast error: " + lastPlayErr : ""));
+  } else if(screen === "map"){
+    const next = []; ZONES.forEach((z, zi) => z.levels.forEach((l, li) => { if(!S.done[l.id] && levelOpen(zi, li)) next.push(l.title + " (" + l.concept + ")"); }));
+    out.push("Screen: world map." + (next.length ? " Next open lesson: " + next[0] + "." : ""));
+  } else {
+    out.push("Screen: " + screen + ".");
+  }
+  return out.join("\n\n");
+}
+function ctxLabel(){
+  if(screen === "lesson" && L) return "Sees: " + L.lv.title + (L.step === "code" ? " · your code + tests" : "");
+  if(screen === "battle" && B) return "Sees: battle vs " + B.boss.name;
+  if(screen === "play") return "Sees: your Playground code";
+  return "Ask about JavaScript or fangames";
+}
+function chipsFor(){
+  if(screen === "lesson" && L && L.step === "code") return ["Why is my code failing?","Give me a small hint","Explain the task in simpler words","Just show me the answer"];
+  if(screen === "lesson" && L && L.step === "quiz") return ["Help me think through this","Explain this concept another way"];
+  if(screen === "lesson" && L) return ["Explain this page more simply","How would I use this in a fangame?","Show me another example"];
+  if(screen === "battle") return ["How do I win this fight?","Tips for dodging","Explain this question's topic"];
+  if(screen === "play") return ["Explain my code","Add a boss that shoots rings","Add a typewriter dialogue box","Why isn't it working?"];
+  return ["How do Undertale fangames make attacks?","What should I learn next?","How do I start my own fangame?"];
+}
+function openChat(prefill){
+  if(!SAMPLE) return;
+  $("#chat").hidden = false; $("#chatCtx").textContent = ctxLabel();
+  $("#chips").innerHTML = chipsFor().map(c => "<button type=\"button\">" + esc(c) + "</button>").join("");
+  if(!$("#msgs").children.length) addBot("* Hi, " + S.name + "! Ask me anything about JavaScript, this lesson, your code, or making your own fangame. I can see what's on your screen.");
+  if(prefill) sendChat(prefill); else $("#chatIn").focus();
+}
+function closeChat(){ $("#chat").hidden = true; }
+$("#askFab").addEventListener("click", () => { SFX.select(); openChat(); });
+$("#chatClose").addEventListener("click", closeChat);
+$("#cAsk").addEventListener("click", () => openChat("Why is my code failing, and what should I look at?"));
+$("#exAsk").addEventListener("click", () => openChat("Can you explain this example step by step?"));
+$("#chips").addEventListener("click", e => { const b = e.target.closest("button"); if(b) sendChat(b.textContent); });
+$("#chatForm").addEventListener("submit", e => { e.preventDefault(); const v = $("#chatIn").value.trim(); if(v) sendChat(v); });
+$("#chatIn").addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); $("#chatForm").requestSubmit(); } });
+$("#chatStop").addEventListener("click", () => chatCtl && chatCtl.abort());
+document.addEventListener("keydown", e => { if(e.key === "Escape" && !$("#chat").hidden) closeChat(); });
+
+function addMe(t){ const d = document.createElement("div"); d.className = "msg me"; d.textContent = t; $("#msgs").appendChild(d); scrollChat(); }
+function addBot(t){ const d = document.createElement("div"); d.className = "msg bot"; d.innerHTML = t ? renderMD(t) : '<span class="think">Byte is thinking</span>'; $("#msgs").appendChild(d); scrollChat(); return d; }
+function scrollChat(){ const m = $("#msgs"); m.scrollTop = m.scrollHeight; }
+
+function inlineMD(t){ return esc(t).replace(/`([^`]+)`/g, '<code class="i">$1</code>').replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>"); }
+function renderMD(src){
+  const parts = src.split(/```/); let html = "";
+  parts.forEach((part, i) => {
+    if(i % 2 === 1){
+      const nl = part.indexOf("\n"); const code = (nl >= 0 ? part.slice(nl + 1) : part).replace(/\n$/, "");
+      const done = i < parts.length - 1;
+      html += '<div class="cblock"><pre>' + hl(code) + "</pre>" + (done ? '<div class="cb-bar"><button type="button" data-copy>Copy</button>' + ((screen === "play") || (screen === "lesson" && L && L.step === "code") ? '<button type="button" data-insert>Put in editor</button>' : "") + "</div>" : "") + "</div>";
+    } else {
+      const lines = part.split("\n"); let list = null;
+      const flush = () => { if(list){ html += "<" + list.t + ">" + list.items.map(x => "<li>" + inlineMD(x) + "</li>").join("") + "</" + list.t + ">"; list = null; } };
+      let para = [];
+      const flushP = () => { if(para.length){ html += "<p>" + para.map(inlineMD).join("<br>") + "</p>"; para = []; } };
+      for(const ln of lines){
+        const ul = ln.match(/^\s*[-*]\s+(.*)/), ol = ln.match(/^\s*\d+[.)]\s+(.*)/);
+        if(ul || ol){ flushP(); const t = ul ? "ul" : "ol"; if(!list || list.t !== t){ flush(); list = { t, items:[] }; } list.items.push((ul || ol)[1]); }
+        else if(!ln.trim()){ flushP(); flush(); }
+        else { flush(); para.push(ln.replace(/^#+\s*/, "")); }
+      }
+      flushP(); flush();
+    }
+  });
+  return html;
+}
+$("#msgs").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  const pre = b.closest(".cblock").querySelector("pre"), code = pre.textContent;
+  if(b.hasAttribute("data-copy")){
+    try{ navigator.clipboard.writeText(code).then(() => { b.textContent = "Copied"; }, () => selectText(pre)); }catch(err){ selectText(pre); }
+  }
+  if(b.hasAttribute("data-insert")){
+    if(screen === "play"){ plEd.set(code); S.drafts.__play = code; save(); runPlay(); }
+    else if(screen === "lesson" && L){ chEd.set(code); S.drafts[L.lv.id] = code; save(); }
+    b.textContent = "Added"; SFX.select();
+  }
+});
+function selectText(el){ const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+
+async function sendChat(text){
+  if(!SAMPLE || chatBusy) return;
+  chatBusy = true; $("#chatIn").value = ""; $("#chatSend").hidden = true; $("#chatStop").hidden = false;
+  $("#chatCtx").textContent = ctxLabel();
+  addMe(text);
+  const bubble = addBot("");
+  const ctx = aiContext();
+  const history = chatTurns.slice(-10);
+  const input = [{ role:"user", content:BYTE_RULES }].concat(history, [{ role:"user", content:"[What's on the player's screen right now]\n" + ctx + "\n\n[Player's message]\n" + text }]);
+  chatCtl = new AbortController();
+  try{
+    const { text:answer, truncated } = await SAMPLE(input, { cache:false, signal:chatCtl.signal, onText:({ text:t }) => { bubble.innerHTML = renderMD(t); scrollChat(); } });
+    bubble.innerHTML = renderMD(answer) + (truncated ? '<p style="color:var(--dim)">(Cut short. Ask me to continue.)</p>' : "");
+    chatTurns.push({ role:"user", content:text }, { role:"assistant", content:answer });
+    SFX.blip();
+  }catch(e){
+    const code = e && e.code;
+    if(code === "cancelled"){ bubble.innerHTML = e.text ? renderMD(e.text) : '<p style="color:var(--dim)">Stopped.</p>'; }
+    else {
+      const msg = { not_granted:"Byte needs permission to use Claude on this page. Allow it when asked, then try again on your next visit.", sampling_disabled:"Claude isn't available for this account, so Byte can't answer here.", rate_limited:"Too many questions at once. Wait a moment, then ask again.", session_expired:"Your Claude session ended. Sign in again, then ask.", refused:"Byte can't help with that one. Try asking a different way.", prompt_too_large:"That's too much code for one question. Ask about a smaller piece." }[code] || "Byte lost the connection. Try asking again.";
+      bubble.className = "msg bot" + (e && e.text ? "" : " err");
+      bubble.innerHTML = (e && e.text && code !== "refused" ? renderMD(e.text) : "") + "<p class=\"" + (e && e.text ? "err" : "") + "\" style=\"color:var(--bad)\">" + esc(msg) + "</p>";
+      if(code === "not_granted" || code === "sampling_disabled"){ SAMPLE = null; $("#askFab").hidden = true; $("#cAsk").hidden = true; $("#exAsk").hidden = true; }
+    }
+  }finally{
+    chatBusy = false; chatCtl = null; $("#chatSend").hidden = false; $("#chatStop").hidden = true; scrollChat();
+  }
+}
+
+load();
+try{ muted = localStorage.getItem("soulscript-mute") === "1"; }catch(e){}
+$("#muteBtn").textContent = "Sound: " + (muted ? "off" : "on");
+$("#nameIn").value = S.name;
+updateTitleNote(); drawBrand();
+show("title");
+requestAnimationFrame(frame);
+</script>
+
+</body>
+</html>
