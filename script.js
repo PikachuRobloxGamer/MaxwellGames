@@ -485,3 +485,6 @@ loadAll();
 
 /* load install / download kit (PWA) */
 (function(){try{if(!document.querySelector("script[src=\"install.js\"]")){var s=document.createElement("script");s.src="install.js";document.head.appendChild(s);}}catch(e){}})();
+
+/* load revamp (animated bg, dark skin, hero, panic) */
+(function(){try{if(!document.querySelector("script[src=\"revamp.js\"]")){var s=document.createElement("script");s.src="revamp.js";document.head.appendChild(s);}}catch(e){}})();
