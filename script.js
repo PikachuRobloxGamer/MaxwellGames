@@ -482,3 +482,6 @@ loadAll();
 
 /* load stealth kit (tab cloak + panic key + about:blank) */
 (function(){try{if(!document.querySelector("script[src=\"stealth.js\"]")){var s=document.createElement("script");s.src="stealth.js";document.head.appendChild(s);}}catch(e){}})();
+
+/* load install / download kit (PWA) */
+(function(){try{if(!document.querySelector("script[src=\"install.js\"]")){var s=document.createElement("script");s.src="install.js";document.head.appendChild(s);}}catch(e){}})();

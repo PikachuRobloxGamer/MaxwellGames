@@ -16,12 +16,14 @@
     { id: "classes",   label: "Clever",       title: "Clever | Portal",                        icon: "https://clever.com/favicon.ico" }
   ];
   var PANIC_URLS = [
+    { label: "Canvas (FISD)",    url: "https://fisd.instructure.org" },
     { label: "Google Classroom", url: "https://classroom.google.com" },
     { label: "Google",           url: "https://www.google.com" },
     { label: "Google Docs",      url: "https://docs.google.com" },
     { label: "Wikipedia",        url: "https://www.wikipedia.org" },
     { label: "Khan Academy",     url: "https://www.khanacademy.org" }
   ];
+  var DEFAULT_PANIC = "https://fisd.instructure.org";
 
   function lsg(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
   function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -45,7 +47,7 @@
 
   // ---------- panic key ----------
   function panicKey() { return lsg("mg-panic-key", "`"); }
-  function panicUrl() { return lsg("mg-panic-url", "https://classroom.google.com"); }
+  function panicUrl() { return lsg("mg-panic-url", DEFAULT_PANIC); }
   function panicOn() { return lsg("mg-panic-on", "1") === "1"; }
   function doPanic() { try { window.top.location.replace(panicUrl()); } catch (e) { location.replace(panicUrl()); } }
   function onKey(e) {
@@ -107,7 +109,10 @@
       var ic = c.id === "off" ? '<span class="noico">🐱</span>' : (c.icon ? '<img src="' + c.icon + '" alt="" onerror="this.outerHTML=\'<span class=noico>🌐</span>\'">' : '<span class="noico">🌐</span>');
       return '<div class="stl-opt' + (c.id === cur ? " on" : "") + '" data-cloak="' + c.id + '">' + ic + '<span>' + c.label + '</span></div>';
     }).join("");
-    var urlOpts = PANIC_URLS.map(function (p) { return '<option value="' + p.url + '"' + (p.url === panicUrl() ? " selected" : "") + '>' + p.label + '</option>'; }).join("");
+    var curUrl = panicUrl();
+    var isPreset = PANIC_URLS.some(function (p) { return p.url === curUrl; });
+    var urlOpts = PANIC_URLS.map(function (p) { return '<option value="' + p.url + '"' + (p.url === curUrl ? " selected" : "") + '>' + p.label + '</option>'; }).join("") +
+      (isPreset ? "" : '<option value="' + curUrl + '" selected>Custom: ' + curUrl + '</option>');
     body.innerHTML =
       '<p class="stl-intro">Make this site blend in. Disguise the browser tab, jump away instantly with a panic key, or run the whole site inside a blank tab. 🥷</p>' +
       '<div class="stl-sec">🎭 Tab disguise</div>' +
@@ -116,8 +121,9 @@
       '<div class="stl-sec">🚨 Panic key</div>' +
       '<label class="stl-toggle"><input type="checkbox" id="stlPanicOn"' + (panicOn() ? " checked" : "") + '> Panic key on</label>' +
       '<div class="stl-row"><label>Press</label><input class="stl-key" id="stlKey" value="' + (panicKey() === " " ? "Space" : panicKey()) + '" readonly><button class="stl-btn ghost" id="stlRebind">Change key</button></div>' +
-      '<div class="stl-row"><label>Jump to</label><select id="stlUrl">' + urlOpts + '</select></div>' +
-      '<p class="stl-note">Tap the key anytime and the whole page instantly goes to the safe site. (Won\'t fire while you\'re typing in a box.)</p>' +
+      '<div class="stl-row"><label>Jump to</label><select id="stlUrl" style="flex:1;min-width:120px">' + urlOpts + '</select><button class="stl-btn ghost" id="stlPen" title="Type your own link">✏️</button></div>' +
+      '<div class="stl-row" id="stlCustomRow" style="display:none"><input id="stlCustom" placeholder="https://..." style="flex:1;min-width:120px" value="' + curUrl + '"><button class="stl-btn" id="stlCustomSave">Save</button></div>' +
+      '<p class="stl-note">Tap the key anytime and the whole page instantly goes to the safe site. Default is Canvas (fisd.instructure.org). Hit ✏️ to use any link you want. (Won\'t fire while you\'re typing in a box.)</p>' +
       '<div class="stl-sec">🕳️ Open in about:blank</div>' +
       '<p class="stl-note">Launches MaxwellGames inside a blank tab — no title, no obvious address, harder to spot or block.</p>' +
       '<div class="stl-btns"><button class="stl-btn" id="stlBlank">🕳️ Open in about:blank</button><button class="stl-btn ghost" id="stlTest">🚨 Test panic</button></div>';
@@ -132,6 +138,20 @@
     });
     body.querySelector("#stlPanicOn").onchange = function (e) { lss("mg-panic-on", e.target.checked ? "1" : "0"); };
     body.querySelector("#stlUrl").onchange = function (e) { lss("mg-panic-url", e.target.value); };
+    body.querySelector("#stlPen").onclick = function () {
+      var row = body.querySelector("#stlCustomRow");
+      row.style.display = row.style.display === "none" ? "flex" : "none";
+      if (row.style.display === "flex") body.querySelector("#stlCustom").focus();
+    };
+    function saveCustom() {
+      var v = (body.querySelector("#stlCustom").value || "").trim();
+      if (!v) return;
+      if (!/^https?:\/\//i.test(v)) v = "https://" + v;
+      lss("mg-panic-url", v); toast("🚨", "Panic link set", "Panic now jumps to " + v);
+      render(body);
+    }
+    body.querySelector("#stlCustomSave").onclick = saveCustom;
+    body.querySelector("#stlCustom").addEventListener("keydown", function (e) { if (e.key === "Enter") saveCustom(); });
     body.querySelector("#stlRebind").onclick = function () {
       var inp = body.querySelector("#stlKey"); inp.value = "Press a key…";
       function grab(ev) { ev.preventDefault(); var k = ev.key; lss("mg-panic-key", k); inp.value = k === " " ? "Space" : k; window.removeEventListener("keydown", grab, true); toast("🚨", "Panic key set", "Now press " + (k === " " ? "Space" : k) + " to bail out."); }
