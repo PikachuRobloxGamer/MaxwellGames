@@ -657,6 +657,15 @@
    "description": "⚔️ Ch.7B Ralsei vs Noelle.",
    "iframe": "https://selene3.itch.io/free-her",
    "external": true
+  },
+  {
+   "id": "deltarun",
+   "title": "DeltaRUN",
+   "category": "Action",
+   "thumbnail": "",
+   "description": "🏃 Endless runner through the world of Deltarune!",
+   "iframe": "https://bipp-dev.itch.io/deltarun",
+   "external": true
   }
  ]
 }
