@@ -183,8 +183,9 @@
   // ---------- boot ----------
   function boot() {
     if (installed()) return; // already an app — no nagging
-    mountNavBtn(); mountFab(); maybeBanner();
-    setTimeout(function () { mountNavBtn(); mountFab(); maybeBanner(); }, 1500);
+    var f = document.getElementById("dlFab"); if (f) f.remove(); // removed the floating Download pill
+    mountNavBtn(); maybeBanner();
+    setTimeout(function () { mountNavBtn(); maybeBanner(); }, 1500);
     setInterval(maybeBanner, 4000);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
