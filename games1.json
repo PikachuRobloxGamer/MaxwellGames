@@ -2457,6 +2457,456 @@
    "description": "🎮 Undertale: The Origins — a browser Undertale/Deltarune fangame.",
    "iframe": "https://retroman1203.itch.io/undertaletheorigins",
    "external": true
+  },
+  {
+   "id": "fg-did-i-just-poop",
+   "title": "Did I Just Poop Myself",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Did I Just Poop Myself — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://zachisagardner.itch.io/did-i-just-poop",
+   "external": true
+  },
+  {
+   "id": "fg-deltarune-the-legend-of-mew-mew-chapter-2",
+   "title": "Legend of Mew Mew Ch.2",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Legend of Mew Mew Ch.2 — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://thebigmigz.itch.io/deltarune-the-legend-of-mew-mew-chapter-2",
+   "external": true
+  },
+  {
+   "id": "fg-deltarune-the-legend-of-mew-mew-chapter-4",
+   "title": "Legend of Mew Mew Ch.4",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Legend of Mew Mew Ch.4 — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://thebigmigz.itch.io/deltarune-the-legend-of-mew-mew-chapter-4",
+   "external": true
+  },
+  {
+   "id": "fg-just-passing-chapter-2",
+   "title": "Just Passing - Chapter 2",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Just Passing - Chapter 2 — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://joellikespigs.itch.io/just-passing-chapter-2",
+   "external": true
+  },
+  {
+   "id": "fg-please-study",
+   "title": "Please Study!",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Please Study! — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://tcreeperdev.itch.io/please-study",
+   "external": true
+  },
+  {
+   "id": "fg-your-taking-too-long",
+   "title": "Your Taking Too Long",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Your Taking Too Long — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://geotone.itch.io/your-taking-too-long",
+   "external": true
+  },
+  {
+   "id": "fg-deltarune-your-taking-too-long",
+   "title": "Deltarune: Your Taking Too Long",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Deltarune: Your Taking Too Long — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://b1t-games.itch.io/deltarune-your-taking-too-long",
+   "external": true
+  },
+  {
+   "id": "fg-moonloose-earthbound-parody-game",
+   "title": "MoonLoose",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 MoonLoose — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://bagelo-masterson.itch.io/moonloose-earthbound-parody-game",
+   "external": true
+  },
+  {
+   "id": "fg-undertale-boxing-remastered",
+   "title": "Undertale Boxing Remastered",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Undertale Boxing Remastered — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://blaze-tsune.itch.io/undertale-boxing-remastered",
+   "external": true
+  },
+  {
+   "id": "fg-systemic-rpg-retrovalou",
+   "title": "Systemic RPG",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Systemic RPG — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://retrovalou.itch.io/systemic-rpg-retrovalou",
+   "external": true
+  },
+  {
+   "id": "fg-out-of-the-bag",
+   "title": "Out Of The Bag",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Out Of The Bag — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://nopersona.itch.io/out-of-the-bag",
+   "external": true
+  },
+  {
+   "id": "fg-typy-battle-system",
+   "title": "Typy Battle System",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Typy Battle System — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://theonedari.itch.io/typy-battle-system",
+   "external": true
+  },
+  {
+   "id": "fg-soundhog-day",
+   "title": "Soundhog Day",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Soundhog Day — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://ewyband.itch.io/soundhog-day",
+   "external": true
+  },
+  {
+   "id": "fg-uf",
+   "title": "UnderFell",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 UnderFell — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://gtdba-weee.itch.io/uf",
+   "external": true
+  },
+  {
+   "id": "fg-epic-sans-fight",
+   "title": "Epic Sans Fight",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Epic Sans Fight — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://waitingforsniper.itch.io/epic-sans-fight",
+   "external": true
+  },
+  {
+   "id": "fg-123",
+   "title": "Underswap Sans",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Underswap Sans — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://onecj.itch.io/123",
+   "external": true
+  },
+  {
+   "id": "fg-underwear-demo",
+   "title": "Underwear Demo",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Underwear Demo — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://johnboy727.itch.io/underwear-demo",
+   "external": true
+  },
+  {
+   "id": "fg-saving-private-sandvich",
+   "title": "Saving Private Sandvich",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Saving Private Sandvich — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://pandyla.itch.io/saving-private-sandvich",
+   "external": true
+  },
+  {
+   "id": "fg-parrydodge",
+   "title": "ParryDodge",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 ParryDodge — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://rear9.itch.io/parrydodge",
+   "external": true
+  },
+  {
+   "id": "fg-undertale-fangame-contos-da-serra",
+   "title": "Contos da Serra",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Contos da Serra — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://itevee.itch.io/undertale-fangame-contos-da-serra",
+   "external": true
+  },
+  {
+   "id": "fg-scratched-sans-boss-fight",
+   "title": "Scratched Sans Boss Fight",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Scratched Sans Boss Fight — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://darismmj.itch.io/scratched-sans-boss-fight",
+   "external": true
+  },
+  {
+   "id": "fg-basic-wingdings-flashcards",
+   "title": "Basic Wingdings Flashcards",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Basic Wingdings Flashcards — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://tismweed.itch.io/basic-wingdings-flashcards",
+   "external": true
+  },
+  {
+   "id": "fg-the-dark-dog",
+   "title": "The Dark Dog",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 The Dark Dog — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://void-gamesplay.itch.io/the-dark-dog",
+   "external": true
+  },
+  {
+   "id": "fg-undergruz",
+   "title": "UnderBOX",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 UnderBOX — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://shvap.itch.io/undergruz",
+   "external": true
+  },
+  {
+   "id": "fg-puzzle-pieces",
+   "title": "IF - Puzzle Pieces",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 IF - Puzzle Pieces — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://stardust-sys.itch.io/puzzle-pieces",
+   "external": true
+  },
+  {
+   "id": "fg-space-chip-vs-undertale",
+   "title": "Space Chip Vs. Undertale",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Space Chip Vs. Undertale — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://paranoidfbi.itch.io/space-chip-vs-undertale",
+   "external": true
+  },
+  {
+   "id": "fg-dust",
+   "title": "Dust",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Dust — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://onecj.itch.io/dust",
+   "external": true
+  },
+  {
+   "id": "fg-pikrune",
+   "title": "Pikrune",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Pikrune — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://dinoliker.itch.io/pikrune",
+   "external": true
+  },
+  {
+   "id": "fg-last-breath",
+   "title": "Last Breath",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Last Breath — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://onecj.itch.io/last-breath",
+   "external": true
+  },
+  {
+   "id": "fg-performance-underswap-thanatos",
+   "title": "Performance! Underswap Thanatos",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Performance! Underswap Thanatos — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://dinix-neverosc-ut.itch.io/performance-underswap-thanatos",
+   "external": true
+  },
+  {
+   "id": "fg-sans-tts",
+   "title": "Sans TTS",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Sans TTS — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://boyfriendy.itch.io/sans-tts",
+   "external": true
+  },
+  {
+   "id": "fg-an-aprentices-duel",
+   "title": "An Apprentice's Duel",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 An Apprentice's Duel — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://clever-user-name.itch.io/an-aprentices-duel",
+   "external": true
+  },
+  {
+   "id": "fg-blue-sans-did-ur-mom",
+   "title": "Blue Sans",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Blue Sans — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://william-dang-2.itch.io/blue-sans-did-ur-mom",
+   "external": true
+  },
+  {
+   "id": "fg-learning-good-from-skeletons",
+   "title": "Learning Good from Skeletons",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Learning Good from Skeletons — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://ilovetheworkonitcando.itch.io/learning-good-from-skeletons",
+   "external": true
+  },
+  {
+   "id": "fg-the-talent-showly-rpg",
+   "title": "The Talent Showly RPG",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 The Talent Showly RPG — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://touchcreator.itch.io/the-talent-showly-rpg",
+   "external": true
+  },
+  {
+   "id": "fg-undyne-fight",
+   "title": "Undyne Fight",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Undyne Fight — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://astral-labs.itch.io/undyne-fight",
+   "external": true
+  },
+  {
+   "id": "fg-funddertem",
+   "title": "Funddertem",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Funddertem — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://keepchatting.itch.io/funddertem",
+   "external": true
+  },
+  {
+   "id": "fg-diapason-of-fate",
+   "title": "Diapason of Fate",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Diapason of Fate — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://leandro4002.itch.io/diapason-of-fate",
+   "external": true
+  },
+  {
+   "id": "fg-defense",
+   "title": "D.E.F.E.N.S.E.",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 D.E.F.E.N.S.E. — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://flat-roller-coaster.itch.io/defense",
+   "external": true
+  },
+  {
+   "id": "fg-help-tale-fresh-sans-fight-remake",
+   "title": "Help_Tale: Fresh Sans",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Help_Tale: Fresh Sans — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://deel72.itch.io/help-tale-fresh-sans-fight-remake",
+   "external": true
+  },
+  {
+   "id": "fg-pixelamtale-revenge",
+   "title": "PixelamTale Revenge",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 PixelamTale Revenge — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://espadachin-20.itch.io/pixelamtale-revenge",
+   "external": true
+  },
+  {
+   "id": "fg-omega-verity-fight",
+   "title": "Omega Verity Fight",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Omega Verity Fight — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://herbetsmith34-netizen.itch.io/omega-verity-fight",
+   "external": true
+  },
+  {
+   "id": "fg-the-mouse",
+   "title": "The Mouse",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 The Mouse — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://sharp-team.itch.io/the-mouse",
+   "external": true
+  },
+  {
+   "id": "fg-mankinds-last-card",
+   "title": "Mankind's Last Card",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Mankind's Last Card — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://crafto.itch.io/mankinds-last-card",
+   "external": true
+  },
+  {
+   "id": "fg-ninarune",
+   "title": "Ninarune Vs Milo",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Ninarune Vs Milo — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://desayunomortal.itch.io/ninarune",
+   "external": true
+  },
+  {
+   "id": "fg-the-fight-against-judgment",
+   "title": "The Fight Against Judgment",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 The Fight Against Judgment — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://ibruh64.itch.io/the-fight-against-judgment",
+   "external": true
+  },
+  {
+   "id": "fg-youre-gonna-have-a-bat-time",
+   "title": "You're Gonna Have a Bat Time",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 You're Gonna Have a Bat Time — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://veyleth.itch.io/youre-gonna-have-a-bat-time",
+   "external": true
+  },
+  {
+   "id": "fg-a-winter-tale",
+   "title": "A Winter Tale",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 A Winter Tale — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://pulyau.itch.io/a-winter-tale",
+   "external": true
+  },
+  {
+   "id": "fg-holfinite",
+   "title": "Holfinite",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 Holfinite — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://wilmixt.itch.io/holfinite",
+   "external": true
+  },
+  {
+   "id": "fg-fpstale",
+   "title": "FPStale",
+   "category": "🐱 Fangames",
+   "thumbnail": "",
+   "description": "🎮 FPStale — a browser Undertale/Deltarune fangame.",
+   "iframe": "https://silversg.itch.io/fpstale",
+   "external": true
   }
  ]
 }
