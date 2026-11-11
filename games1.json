@@ -2907,6 +2907,15 @@
    "description": "🎮 FPStale — a browser Undertale/Deltarune fangame.",
    "iframe": "https://silversg.itch.io/fpstale",
    "external": true
+  },
+  {
+   "id": "marblebuilds",
+   "title": "Marblebuilds Demo",
+   "category": "Action",
+   "thumbnail": "",
+   "description": "🪨 Build wild marble-run courses and watch them roll! (by griz)",
+   "iframe": "https://grizzyyo.itch.io/marblebuilds",
+   "external": true
   }
  ]
 }
