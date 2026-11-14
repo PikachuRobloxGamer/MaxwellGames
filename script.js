@@ -45,6 +45,7 @@ function getSrc(field) {
 // (no laggy embedded iframe). Local games (games/builtin/...) stay embedded.
 function isExternalGame(item) {
   if (!item) return false;
+  if (item.embed) return false; // force-embed override (e.g. Kaizo Knight)
   if (item.external) return true;
   const s = getSrc(item.iframe || item.url);
   if (/^https?:\/\//i.test(s)) {

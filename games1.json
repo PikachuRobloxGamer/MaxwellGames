@@ -504,7 +504,8 @@
    "category": "Action",
    "thumbnail": "",
    "description": "⚔️ A brutally tough knight platformer — precise jumps and no mercy!",
-   "iframe": "https://mezu-bezu.github.io/kaizo-knight-browser/"
+   "iframe": "https://mezu-bezu.github.io/kaizo-knight-browser/",
+   "embed": true
   },
   {
    "id": "sans-simulator",
