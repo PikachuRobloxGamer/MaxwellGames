@@ -501,3 +501,6 @@ loadAll();
 
 /* load revamp (animated bg, dark skin, hero, panic) */
 (function(){try{if(!document.querySelector("script[src=\"revamp.js\"]")){var s=document.createElement("script");s.src="revamp.js";document.head.appendChild(s);}}catch(e){}})();
+
+/* load chat (friends + gated group chats) */
+(function(){try{if(!document.querySelector("script[src=\"chat.js\"]")){var s=document.createElement("script");s.src="chat.js";document.head.appendChild(s);}}catch(e){}})();
