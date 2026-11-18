@@ -5,8 +5,8 @@
    "title": "Undertale",
    "category": "RPG",
    "thumbnail": "images/undertale.png",
-   "description": "The classic RPG where nobody has to die. Arrow keys to move, Z to confirm, X to cancel.",
-   "iframe": "https://pluhmath.github.io/undertale.html"
+   "description": "🎮 Play the full Undertale in your browser (UNDERWEB port).",
+   "iframe": "https://web-ports-cool.itch.io/underweb"
   },
   {
    "id": "deltarune",
@@ -972,15 +972,6 @@
    "thumbnail": "",
    "description": "🎮 Annoying Dog Clicker — a browser Undertale/Deltarune fangame.",
    "iframe": "https://arthuportal.itch.io/annoying-dog-clicker",
-   "external": true
-  },
-  {
-   "id": "fg-underweb",
-   "title": "UNDERWEB",
-   "category": "🐱 Fangames",
-   "thumbnail": "",
-   "description": "🎮 UNDERWEB — a browser Undertale/Deltarune fangame.",
-   "iframe": "https://web-ports-cool.itch.io/underweb",
    "external": true
   },
   {
