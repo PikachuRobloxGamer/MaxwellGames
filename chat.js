@@ -3,7 +3,7 @@
 // before the message box unlocks. Otherwise: "You need to make a friend!"
 (function () {
   "use strict";
-  var U = window.MGUI;
+  var U = window.MGUI || null; // may not be ready yet (load-order race) — resolved in open()
   function fbUrl() { return (window.MG_FIREBASE_CONFIG && window.MG_FIREBASE_CONFIG.databaseURL) || ""; }
   function me() { try { return (window.MG_ACCOUNT && window.MG_ACCOUNT.user && window.MG_ACCOUNT.user()) || ""; } catch (e) { return ""; } }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]; }); }
@@ -270,6 +270,8 @@
 
   // ===================== OPEN =====================
   function open() {
+    U = window.MGUI; // resolve now (ui-kit.js is loaded by click time; guard just in case)
+    if (!U || !U.panel) { setTimeout(open, 150); return; }
     css();
     pane = U.panel("mgChat", "💬 Chat", "chat-head");
     pane.body.innerHTML = '<div class="mgc-note" style="padding:30px">Loading your friends…</div>';
