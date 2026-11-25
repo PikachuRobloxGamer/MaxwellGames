@@ -504,3 +504,6 @@ loadAll();
 
 /* load chat (friends + gated group chats) */
 (function(){try{if(!document.querySelector("script[src=\"chat.js\"]")){var s=document.createElement("script");s.src="chat.js";document.head.appendChild(s);}}catch(e){}})();
+
+/* load live subscriber counter */
+(function(){try{if(!document.querySelector("script[src=\"subs.js\"]")){var s=document.createElement("script");s.src="subs.js";document.head.appendChild(s);}}catch(e){}})();
