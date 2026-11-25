@@ -34,6 +34,27 @@
 
   function myChatId() { return me(); }
 
+  // ---- special pair: admin accounts that are always friends with a ready-made group chat ----
+  var BROS = ["zaiduh786", "samizh786"];
+  function broChatId() { return "c_" + BROS.slice().sort().join("_"); }
+  function ensureBros(u) {
+    if (BROS.indexOf(u) < 0) return Promise.resolve();
+    var other = BROS[0] === u ? BROS[1] : BROS[0];
+    var id = broChatId();
+    var jobs = [
+      put("social/users/" + u + "/friends/" + other, true),
+      put("social/users/" + other + "/friends/" + u, true),
+      put("social/users/" + u + "/chats/" + id, true),
+      put("social/users/" + other + "/chats/" + id, true),
+      get("social/chats/" + id).then(function (c) {
+        if (c) return;
+        var members = {}; members[BROS[0]] = true; members[BROS[1]] = true;
+        return put("social/chats/" + id, { name: "Zaiden & Sami", owner: u, members: members, ts: Date.now() });
+      })
+    ];
+    return Promise.all(jobs).catch(function () {});
+  }
+
   // ---- data loads ----
   function loadAll() {
     var u = me(); if (!u) return Promise.resolve();
@@ -277,7 +298,7 @@
     pane.body.innerHTML = '<div class="mgc-note" style="padding:30px">Loading your friends…</div>';
     pane.onClean(function () { stopPoll(); pane = null; });
     if (!me()) { render(); return; }
-    loadAll().then(render);
+    ensureBros(me()).then(loadAll).then(render);
   }
   window.MG_CHAT = { open: open };
 

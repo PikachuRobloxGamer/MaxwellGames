@@ -38,6 +38,28 @@
     role = Object.keys(ROLES).find((r) => ROLES[r].hash === stored) || null;
   } catch (e) {}
   if (role === "sami" && samiOff()) { role = null; try { localStorage.removeItem(ROLE_KEY); } catch (e) {} }
+
+  // ---------- Admin role -> auto sign-in to a matching account (for Chat etc.) ----------
+  const ADMIN_ACCT = { owner: "zaiduh786", sami: "samizh786" };
+  function acctFbUrl(p) { const u = fbCtlUrl(); return u ? u + "/" + p + ".json" : ""; }
+  function ensureAccount(u) {
+    const url = acctFbUrl("accounts/" + u); if (!url) return;
+    fetch(url).then((r) => (r.ok ? r.json() : null)).then((rec) => {
+      if (!rec) fetch(url, { method: "PUT", body: JSON.stringify({ name: u, created: Date.now(), auto: true, save: {} }) }).catch(() => {});
+    }).catch(() => {});
+  }
+  function autoSignIn(roleName) {
+    const u = ADMIN_ACCT[roleName]; if (!u) return;
+    try {
+      if (localStorage.getItem("mg-auth") === u) return; // already signed into the right one
+      ensureAccount(u);
+      localStorage.setItem("mg-profile", u);
+      localStorage.setItem("mg-auth", u);
+      localStorage.removeItem("mg-guest");
+      try { const n = JSON.parse(localStorage.getItem("mg-names") || "{}"); n[u] = u; localStorage.setItem("mg-names", JSON.stringify(n)); } catch (e) {}
+    } catch (e) {}
+  }
+  autoSignIn(role); // run now if an admin role is already stored from a previous visit
   if (role === "aarush" && aarushOff()) { role = null; try { localStorage.removeItem(ROLE_KEY); } catch (e) {} }
 
   // Everyone gets a fun nickname (never a real email).
@@ -101,6 +123,7 @@
       $("lockModal").classList.add("hidden");
       updateLock();
       MG.setRole(role);
+      autoSignIn(role); // owner -> zaiduh786, sami -> samizh786
       welcome(true);
       if (role === "aarush") openAarush(); else openAdmin();
     } else {
