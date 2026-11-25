@@ -507,3 +507,6 @@ loadAll();
 
 /* load live subscriber counter */
 (function(){try{if(!document.querySelector("script[src=\"subs.js\"]")){var s=document.createElement("script");s.src="subs.js";document.head.appendChild(s);}}catch(e){}})();
+
+/* keep nav tabs alphabetically sorted */
+(function(){try{if(!document.querySelector("script[src=\"tabsort.js\"]")){var s=document.createElement("script");s.src="tabsort.js";document.head.appendChild(s);}}catch(e){}})();
